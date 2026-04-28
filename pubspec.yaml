@@ -1,0 +1,23 @@
+name: open_source_software
+description: "open_source_software"
+version: 1.0.0+1
+
+environment:
+  sdk: ^3.11.4
+
+dependencies:
+  flutter:
+    sdk: flutter
+  cupertino_icons: ^1.0.8
+  
+  geolocator: ^14.0.2
+  maps_toolkit: ^3.1.0
+  dart_geohash: ^2.1.0
+
+dev_dependencies:
+  flutter_test:
+    sdk: flutter
+  flutter_lints: ^6.0.0
+
+flutter:
+  uses-material-design: true
