@@ -18,9 +18,8 @@ class _UserProfileScreenState extends State<UserProfileScreen>
     id: 'current',
     name: '홍길동',
     email: 'hong@example.com',
-    rating: 4.6,
-    totalRentals: 15,
-    totalLends: 8,
+    score: 88,
+    dealHistory: List.generate(15, (i) => 'deal$i'),
   );
 
   final List<RentalItem> _borrowedItems = [];
@@ -50,7 +49,7 @@ class _UserProfileScreenState extends State<UserProfileScreen>
           id: 'l1',
           name: '김대여',
           email: 'lender@example.com',
-          rating: 4.8,
+          score: 90,
         ),
       ),
       RentalItem(
@@ -68,7 +67,7 @@ class _UserProfileScreenState extends State<UserProfileScreen>
           id: 'l2',
           name: '이빌려',
           email: 'lender2@example.com',
-          rating: 4.5,
+          score: 85,
         ),
       ),
     ]);
@@ -86,7 +85,7 @@ class _UserProfileScreenState extends State<UserProfileScreen>
           id: 'r1',
           name: '박여행',
           email: 'renter@example.com',
-          rating: 4.3,
+          score: 82,
         ),
         createdAt: DateTime.now().subtract(const Duration(days: 1)),
         status: RentalStatus.matchConfirmed,
@@ -174,7 +173,7 @@ class _UserProfileScreenState extends State<UserProfileScreen>
                     const Icon(Icons.star, color: Colors.amber, size: 20),
                     const SizedBox(width: 4),
                     Text(
-                      _currentUser.rating.toStringAsFixed(1),
+                      '${_currentUser.score}점',
                       style: const TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
@@ -187,8 +186,8 @@ class _UserProfileScreenState extends State<UserProfileScreen>
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
                     _StatItem(
-                      label: '대여한 물건',
-                      value: _currentUser.totalRentals.toString(),
+                      label: '총 거래',
+                      value: _currentUser.dealHistory.length.toString(),
                     ),
                     Container(
                       height: 40,
@@ -196,8 +195,8 @@ class _UserProfileScreenState extends State<UserProfileScreen>
                       color: Colors.grey[300],
                     ),
                     _StatItem(
-                      label: '빌려준 물건',
-                      value: _currentUser.totalLends.toString(),
+                      label: '매너 점수',
+                      value: _currentUser.score.toString(),
                     ),
                   ],
                 ),

@@ -3,19 +3,23 @@ class User {
   final String name;
   final String email;
   final String? profileImage;
-  final double rating;
-  final int totalRentals;
-  final int totalLends;
+  final int score;
+  final List<String> dealHistory;
 
   User({
     required this.id,
     required this.name,
     required this.email,
     this.profileImage,
-    this.rating = 0.0,
-    this.totalRentals = 0,
-    this.totalLends = 0,
-  });
+    this.score = 0,
+    List<String>? dealHistory,
+  }) : dealHistory = dealHistory ?? [];
+
+  void addDealHistory(String dealId) {
+    if (!dealHistory.contains(dealId)) {
+      dealHistory.add(dealId);
+    }
+  }
 
   factory User.fromJson(Map<String, dynamic> json) {
     return User(
@@ -23,9 +27,10 @@ class User {
       name: json['name'],
       email: json['email'],
       profileImage: json['profileImage'],
-      rating: (json['rating'] ?? 0.0).toDouble(),
-      totalRentals: json['totalRentals'] ?? 0,
-      totalLends: json['totalLends'] ?? 0,
+      score: json['score'] ?? 0,
+      dealHistory: (json['dealHistory'] as List<dynamic>?)
+          ?.map((e) => e as String)
+          .toList(),
     );
   }
 
@@ -35,9 +40,25 @@ class User {
       'name': name,
       'email': email,
       'profileImage': profileImage,
-      'rating': rating,
-      'totalRentals': totalRentals,
-      'totalLends': totalLends,
+      'score': score,
+      'dealHistory': dealHistory,
     };
+  }
+
+  User copyWith({
+    String? name,
+    String? email,
+    String? profileImage,
+    int? score,
+    List<String>? dealHistory,
+  }) {
+    return User(
+      id: id,
+      name: name ?? this.name,
+      email: email ?? this.email,
+      profileImage: profileImage ?? this.profileImage,
+      score: score ?? this.score,
+      dealHistory: dealHistory ?? List.from(this.dealHistory),
+    );
   }
 }

@@ -158,12 +158,12 @@ class ItemDetailScreen extends StatelessWidget {
                                     ),
                                     const SizedBox(width: 4),
                                     Text(
-                                      item.requester.rating.toStringAsFixed(1),
+                                      '${item.requester.score}점',
                                       style: const TextStyle(fontSize: 14),
                                     ),
                                     const SizedBox(width: 12),
                                     Text(
-                                      '대여 ${item.requester.totalRentals}회',
+                                      '거래 ${item.requester.dealHistory.length}건',
                                       style: const TextStyle(
                                         fontSize: 14,
                                         color: Colors.grey,

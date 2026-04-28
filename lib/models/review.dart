@@ -1,30 +1,26 @@
+import 'user.dart';
+
 class Review {
   final String id;
-  final String rentalItemId;
-  final String reviewerId;
-  final String revieweeId;
-  final double rating;
-  final String comment;
+  final int score;
+  final String reviewText;
+  final User writer;
   final DateTime createdAt;
 
   Review({
     required this.id,
-    required this.rentalItemId,
-    required this.reviewerId,
-    required this.revieweeId,
-    required this.rating,
-    required this.comment,
+    required this.score,
+    required this.reviewText,
+    required this.writer,
     required this.createdAt,
   });
 
   factory Review.fromJson(Map<String, dynamic> json) {
     return Review(
       id: json['id'],
-      rentalItemId: json['rentalItemId'],
-      reviewerId: json['reviewerId'],
-      revieweeId: json['revieweeId'],
-      rating: (json['rating'] ?? 0.0).toDouble(),
-      comment: json['comment'],
+      score: json['score'] ?? 0,
+      reviewText: json['reviewText'],
+      writer: User.fromJson(json['writer']),
       createdAt: DateTime.parse(json['createdAt']),
     );
   }
@@ -32,12 +28,23 @@ class Review {
   Map<String, dynamic> toJson() {
     return {
       'id': id,
-      'rentalItemId': rentalItemId,
-      'reviewerId': reviewerId,
-      'revieweeId': revieweeId,
-      'rating': rating,
-      'comment': comment,
+      'score': score,
+      'reviewText': reviewText,
+      'writer': writer.toJson(),
       'createdAt': createdAt.toIso8601String(),
     };
+  }
+
+  Review copyWith({
+    int? score,
+    String? reviewText,
+  }) {
+    return Review(
+      id: id,
+      score: score ?? this.score,
+      reviewText: reviewText ?? this.reviewText,
+      writer: writer,
+      createdAt: createdAt,
+    );
   }
 }

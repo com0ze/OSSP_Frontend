@@ -43,7 +43,7 @@ class LenderProfileScreen extends StatelessWidget {
                     const Icon(Icons.star, color: Colors.amber, size: 24),
                     const SizedBox(width: 4),
                     Text(
-                      user.rating.toStringAsFixed(1),
+                      '${user.score}점',
                       style: const TextStyle(
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
@@ -56,14 +56,14 @@ class LenderProfileScreen extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceEvenly,
                   children: [
                     _StatCard(
-                      label: '대여한 물건',
-                      value: user.totalRentals.toString(),
+                      label: '총 거래',
+                      value: user.dealHistory.length.toString(),
                       icon: Icons.shopping_bag_outlined,
                     ),
                     _StatCard(
-                      label: '빌려준 물건',
-                      value: user.totalLends.toString(),
-                      icon: Icons.local_offer_outlined,
+                      label: '매너 점수',
+                      value: user.score.toString(),
+                      icon: Icons.star_outlined,
                     ),
                   ],
                 ),
@@ -126,29 +126,38 @@ class LenderProfileScreen extends StatelessWidget {
     return [
       Review(
         id: '1',
-        rentalItemId: 'item1',
-        reviewerId: 'reviewer1',
-        revieweeId: user.id,
-        rating: 5.0,
-        comment: '매우 친절하시고 물건 상태도 좋았습니다. 감사합니다!',
+        score: 5,
+        reviewText: '매우 친절하시고 물건 상태도 좋았습니다. 감사합니다!',
+        writer: User(
+          id: 'reviewer1',
+          name: '김리뷰',
+          email: 'reviewer1@example.com',
+          score: 85,
+        ),
         createdAt: DateTime.now().subtract(const Duration(days: 3)),
       ),
       Review(
         id: '2',
-        rentalItemId: 'item2',
-        reviewerId: 'reviewer2',
-        revieweeId: user.id,
-        rating: 4.5,
-        comment: '약속 시간도 잘 지키시고 좋았어요.',
+        score: 4,
+        reviewText: '약속 시간도 잘 지키시고 좋았어요.',
+        writer: User(
+          id: 'reviewer2',
+          name: '이후기',
+          email: 'reviewer2@example.com',
+          score: 90,
+        ),
         createdAt: DateTime.now().subtract(const Duration(days: 10)),
       ),
       Review(
         id: '3',
-        rentalItemId: 'item3',
-        reviewerId: 'reviewer3',
-        revieweeId: user.id,
-        rating: 4.0,
-        comment: '대여 과정이 원활했습니다.',
+        score: 4,
+        reviewText: '대여 과정이 원활했습니다.',
+        writer: User(
+          id: 'reviewer3',
+          name: '박평가',
+          email: 'reviewer3@example.com',
+          score: 75,
+        ),
         createdAt: DateTime.now().subtract(const Duration(days: 20)),
       ),
     ];
@@ -215,19 +224,25 @@ class _ReviewCard extends StatelessWidget {
           children: [
             Row(
               children: [
+                Text(
+                  review.writer.name,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
+                ),
+                const SizedBox(width: 8),
                 ...List.generate(
                   5,
                   (index) => Icon(
-                    index < review.rating.floor()
-                        ? Icons.star
-                        : (index < review.rating ? Icons.star_half : Icons.star_border),
+                    index < review.score ? Icons.star : Icons.star_border,
                     color: Colors.amber,
                     size: 20,
                   ),
                 ),
                 const SizedBox(width: 8),
                 Text(
-                  review.rating.toStringAsFixed(1),
+                  '${review.score}점',
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
                   ),
@@ -244,7 +259,7 @@ class _ReviewCard extends StatelessWidget {
             ),
             const SizedBox(height: 8),
             Text(
-              review.comment,
+              review.reviewText,
               style: const TextStyle(fontSize: 15, height: 1.4),
             ),
           ],

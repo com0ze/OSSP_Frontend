@@ -18,8 +18,8 @@ class _RentalListScreenState extends State<RentalListScreen> {
       id: '1',
       name: '김철수',
       email: 'kim@example.com',
-      rating: 4.5,
-      totalRentals: 12,
+      score: 85,
+      dealHistory: ['deal1', 'deal2', 'deal3'],
     );
 
     return [
@@ -46,8 +46,8 @@ class _RentalListScreenState extends State<RentalListScreen> {
           id: '2',
           name: '이영희',
           email: 'lee@example.com',
-          rating: 4.8,
-          totalRentals: 8,
+          score: 92,
+          dealHistory: ['deal4', 'deal5'],
         ),
         createdAt: DateTime.now().subtract(const Duration(hours: 5)),
       ),
@@ -63,8 +63,8 @@ class _RentalListScreenState extends State<RentalListScreen> {
           id: '3',
           name: '박민수',
           email: 'park@example.com',
-          rating: 4.2,
-          totalRentals: 5,
+          score: 78,
+          dealHistory: ['deal6'],
         ),
         createdAt: DateTime.now().subtract(const Duration(hours: 1)),
       ),
@@ -229,7 +229,7 @@ class _RentalItemCard extends StatelessWidget {
                   const Icon(Icons.star, size: 14, color: Colors.amber),
                   const SizedBox(width: 2),
                   Text(
-                    item.requester.rating.toStringAsFixed(1),
+                    '${item.requester.score}점',
                     style: const TextStyle(fontSize: 14),
                   ),
                 ],
