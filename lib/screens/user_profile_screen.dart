@@ -133,10 +133,7 @@ class _UserProfileScreenState extends State<UserProfileScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('내 정보'),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: const Text('내 정보'), centerTitle: true),
       body: Column(
         children: [
           Container(
@@ -161,10 +158,7 @@ class _UserProfileScreenState extends State<UserProfileScreen>
                 const SizedBox(height: 4),
                 Text(
                   _currentUser.email,
-                  style: const TextStyle(
-                    fontSize: 14,
-                    color: Colors.grey,
-                  ),
+                  style: const TextStyle(fontSize: 14, color: Colors.grey),
                 ),
                 const SizedBox(height: 12),
                 Row(
@@ -189,11 +183,7 @@ class _UserProfileScreenState extends State<UserProfileScreen>
                       label: '총 거래',
                       value: _currentUser.dealHistory.length.toString(),
                     ),
-                    Container(
-                      height: 40,
-                      width: 1,
-                      color: Colors.grey[300],
-                    ),
+                    Container(height: 40, width: 1, color: Colors.grey[300]),
                     _StatItem(
                       label: '매너 점수',
                       value: _currentUser.score.toString(),
@@ -260,10 +250,8 @@ class _UserProfileScreenState extends State<UserProfileScreen>
               Navigator.push(
                 context,
                 MaterialPageRoute(
-                  builder: (context) => ChatScreen(
-                    rentalItem: item,
-                    otherUser: otherUser,
-                  ),
+                  builder: (context) =>
+                      ChatScreen(rentalItem: item, otherUser: otherUser),
                 ),
               );
             },
@@ -290,7 +278,9 @@ class _UserProfileScreenState extends State<UserProfileScreen>
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: _getStatusColor(item.status).withOpacity(0.2),
+                          color: _getStatusColor(
+                            item.status,
+                          ).withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
@@ -323,10 +313,7 @@ class _UserProfileScreenState extends State<UserProfileScreen>
                       Text(otherUser.name),
                       const Spacer(),
                       Text(
-                        '${item.price.toString().replaceAllMapped(
-                              RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-                              (Match m) => '${m[1]},',
-                            )}원',
+                        '${item.price.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}원',
                         style: const TextStyle(
                           fontWeight: FontWeight.bold,
                           color: Colors.blue,
@@ -348,10 +335,7 @@ class _StatItem extends StatelessWidget {
   final String label;
   final String value;
 
-  const _StatItem({
-    required this.label,
-    required this.value,
-  });
+  const _StatItem({required this.label, required this.value});
 
   @override
   Widget build(BuildContext context) {
@@ -359,19 +343,10 @@ class _StatItem extends StatelessWidget {
       children: [
         Text(
           value,
-          style: const TextStyle(
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-          ),
+          style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: 4),
-        Text(
-          label,
-          style: const TextStyle(
-            fontSize: 14,
-            color: Colors.grey,
-          ),
-        ),
+        Text(label, style: const TextStyle(fontSize: 14, color: Colors.grey)),
       ],
     );
   }

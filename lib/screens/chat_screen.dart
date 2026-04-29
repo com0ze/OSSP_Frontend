@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/rental_item.dart';
 import '../models/user.dart';
-import '../models/chat_message.dart';
+import '../models/chat.dart';
 import 'review_screen.dart';
 
 class ChatScreen extends StatefulWidget {
@@ -20,7 +20,7 @@ class ChatScreen extends StatefulWidget {
 
 class _ChatScreenState extends State<ChatScreen> {
   final TextEditingController _messageController = TextEditingController();
-  final List<ChatMessage> _messages = [];
+  final List<Chat> _messages = [];
   late RentalStatus _currentStatus;
 
   @override
@@ -31,18 +31,23 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   void _loadSampleMessages() {
+    // 현재 사용자를 위한 임시 User 객체
+    final currentUser = User(id: 'current', name: '나', email: '');
+
     _messages.addAll([
-      ChatMessage(
+      Chat(
         id: '1',
-        senderId: widget.otherUser.id,
-        message: '안녕하세요! ${widget.rentalItem.itemName} 관련해서 문의드립니다.',
-        timestamp: DateTime.now().subtract(const Duration(hours: 2)),
+        sendUser: widget.otherUser,
+        chatText: '안녕하세요! ${widget.rentalItem.itemName} 관련해서 문의드립니다.',
+        sendTime: DateTime.now().subtract(const Duration(hours: 2)),
       ),
-      ChatMessage(
+      Chat(
         id: '2',
-        senderId: 'current',
-        message: '네, 말씀하세요!',
-        timestamp: DateTime.now().subtract(const Duration(hours: 1, minutes: 55)),
+        sendUser: currentUser,
+        chatText: '네, 말씀하세요!',
+        sendTime: DateTime.now().subtract(
+          const Duration(hours: 1, minutes: 55),
+        ),
       ),
     ]);
   }
@@ -56,13 +61,17 @@ class _ChatScreenState extends State<ChatScreen> {
   void _sendMessage() {
     if (_messageController.text.trim().isEmpty) return;
 
+    final currentUser = User(id: 'current', name: '나', email: '');
+
     setState(() {
-      _messages.add(ChatMessage(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-        senderId: 'current',
-        message: _messageController.text,
-        timestamp: DateTime.now(),
-      ));
+      _messages.add(
+        Chat(
+          id: DateTime.now().millisecondsSinceEpoch.toString(),
+          sendUser: currentUser,
+          chatText: _messageController.text,
+          sendTime: DateTime.now(),
+        ),
+      );
     });
 
     _messageController.clear();
@@ -172,7 +181,7 @@ class _ChatScreenState extends State<ChatScreen> {
         children: [
           Container(
             padding: const EdgeInsets.all(12),
-            color: _getStatusColor().withOpacity(0.1),
+            color: _getStatusColor().withValues(alpha: 0.1),
             child: Row(
               children: [
                 Icon(_getStatusIcon(), color: _getStatusColor()),
@@ -193,11 +202,12 @@ class _ChatScreenState extends State<ChatScreen> {
               itemCount: _messages.length,
               itemBuilder: (context, index) {
                 final message = _messages[index];
-                final isMe = message.senderId == 'current';
+                final isMe = message.sendUser.id == 'current';
 
                 return Align(
-                  alignment:
-                      isMe ? Alignment.centerRight : Alignment.centerLeft,
+                  alignment: isMe
+                      ? Alignment.centerRight
+                      : Alignment.centerLeft,
                   child: Container(
                     margin: const EdgeInsets.only(bottom: 12),
                     padding: const EdgeInsets.symmetric(
@@ -215,14 +225,14 @@ class _ChatScreenState extends State<ChatScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          message.message,
+                          message.chatText,
                           style: TextStyle(
                             color: isMe ? Colors.white : Colors.black,
                           ),
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          _formatTime(message.timestamp),
+                          _formatTime(message.sendTime),
                           style: TextStyle(
                             fontSize: 10,
                             color: isMe ? Colors.white70 : Colors.black54,
@@ -242,7 +252,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 color: Colors.white,
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.grey.withOpacity(0.2),
+                    color: Colors.grey.withValues(alpha: 0.2),
                     spreadRadius: 1,
                     blurRadius: 5,
                   ),
