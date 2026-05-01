@@ -31,6 +31,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
     if (_rating == 0) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
+          duration: const Duration(milliseconds: 500),
           content: Text(
             '별점을 선택해주세요',
             style: TextStyle(color: context.onWarningColor),
@@ -44,6 +45,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
     if (_commentController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
+          duration: const Duration(milliseconds: 500),
           content: Text(
             '리뷰 내용을 입력해주세요',
             style: TextStyle(color: context.onWarningColor),
@@ -56,6 +58,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
+        duration: const Duration(milliseconds: 500),
         content: Text(
           '리뷰가 등록되었습니다',
           style: TextStyle(color: context.onGoodColor),

@@ -104,6 +104,16 @@ class _ChatScreenState extends State<ChatScreen> {
         );
         return;
       case RentalStatus.reviewed:
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            duration: const Duration(milliseconds: 500),
+            content: Text(
+              '이미 리뷰가 완료된 상태입니다',
+              style: TextStyle(color: context.onSurfaceColor),
+            ),
+            backgroundColor: context.warningColor.withValues(alpha: 0.8),
+          ),
+        );
         return;
     }
 
@@ -214,61 +224,75 @@ class _ChatScreenState extends State<ChatScreen> {
               },
             ),
           ),
-          if (_currentStatus != RentalStatus.reviewed)
-            Container(
-              padding: const EdgeInsets.all(12),
-              child: Column(
-                children: [
-                  SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      onPressed: _updateRentalStatus,
-                      icon: Icon(_getNextStatusIcon()),
-                      label: Text(_currentStatus.nextButtonText),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _currentStatus == RentalStatus.pending
-                            ? RentalStatus.matchConfirmed.color
-                            : _currentStatus == RentalStatus.matchConfirmed
-                            ? RentalStatus.inProgress.color
-                            : _currentStatus == RentalStatus.inProgress
-                            ? RentalStatus.returned.color
-                            : _currentStatus == RentalStatus.returned
-                            ? RentalStatus.reviewed.color
-                            : Colors.grey,
-                        foregroundColor: context.onSurfaceColor,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                      ),
-                    ),
+        ],
+      ),
+      bottomNavigationBar: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: context.surfaceColor,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.black.withValues(alpha: 0.1),
+                  blurRadius: 4,
+                  offset: const Offset(0, -2),
+                ),
+              ],
+            ),
+            child: SafeArea(
+              child: SizedBox(
+                width: double.infinity,
+                child: ElevatedButton.icon(
+                  onPressed: _updateRentalStatus,
+                  icon: Icon(_getNextStatusIcon()),
+                  label: Text(_currentStatus.nextButtonText),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: _currentStatus == RentalStatus.pending
+                        ? RentalStatus.matchConfirmed.color
+                        : _currentStatus == RentalStatus.matchConfirmed
+                        ? RentalStatus.inProgress.color
+                        : _currentStatus == RentalStatus.inProgress
+                        ? RentalStatus.returned.color
+                        : _currentStatus == RentalStatus.returned
+                        ? RentalStatus.reviewed.color
+                        : Colors.grey,
+                    foregroundColor: context.onSurfaceColor,
+                    padding: const EdgeInsets.symmetric(vertical: 12),
                   ),
-                  const SizedBox(height: 8),
-                  Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: _messageController,
-                          decoration: const InputDecoration(
-                            hintText: '메시지를 입력하세요',
-                            border: OutlineInputBorder(),
-                            contentPadding: EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 12,
-                            ),
-                          ),
-                          onSubmitted: (_) => _sendMessage(),
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      IconButton(
-                        onPressed: _sendMessage,
-                        icon: const Icon(Icons.send),
-                        color: context.primaryColor,
-                        iconSize: 28,
-                      ),
-                    ],
-                  ),
-                ],
+                ),
               ),
             ),
+          ),
+          Container(
+            padding: const EdgeInsets.all(12),
+            child: Row(
+              children: [
+                Expanded(
+                  child: TextField(
+                    controller: _messageController,
+                    decoration: const InputDecoration(
+                      hintText: '메시지를 입력하세요',
+                      border: OutlineInputBorder(),
+                      contentPadding: EdgeInsets.symmetric(
+                        horizontal: 16,
+                        vertical: 12,
+                      ),
+                    ),
+                    onSubmitted: (_) => _sendMessage(),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                IconButton(
+                  onPressed: _sendMessage,
+                  icon: const Icon(Icons.send),
+                  color: context.primaryColor,
+                  iconSize: 28,
+                ),
+              ],
+            ),
+          ),
         ],
       ),
     );

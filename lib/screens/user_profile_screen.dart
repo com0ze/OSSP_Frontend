@@ -48,7 +48,7 @@ class _UserProfileScreenState extends State<UserProfileScreen>
         preferences: '',
         requester: _currentUser,
         createdAt: DateTime.now().subtract(const Duration(days: 2)),
-        status: RentalStatus.inProgress,
+        status: RentalStatus.reviewed,
         lender: User(
           id: 'l1',
           name: '김대여',
@@ -58,6 +58,24 @@ class _UserProfileScreenState extends State<UserProfileScreen>
       ),
       RentalItem(
         id: 'b2',
+        title: '드릴 대여',
+        itemName: '전동 드릴',
+        location: '서울시 강남구',
+        price: 10000,
+        description: '가구 조립용',
+        preferences: '',
+        requester: _currentUser,
+        createdAt: DateTime.now().subtract(const Duration(days: 2)),
+        status: RentalStatus.inProgress,
+        lender: User(
+          id: 'l1',
+          name: '김대여',
+          email: 'lender@example.com',
+          score: 90,
+        ),
+      ),
+      RentalItem(
+        id: 'b3',
         title: '캠핑 텐트',
         itemName: '4인용 텐트',
         location: '서울시 마포구',
