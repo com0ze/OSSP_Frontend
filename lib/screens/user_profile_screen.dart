@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
-import '../models/rental_item.dart';
 import '../models/user.dart';
+import '../models/rental_item.dart';
+import '../extensions/rental_status_extension.dart';
 import 'chat_screen.dart';
+import 'lender_profile_screen.dart';
+import 'package:open_source_software/extensions/theme_extension.dart';
+import '../screens/setting_screen.dart';
 
 class UserProfileScreen extends StatefulWidget {
   const UserProfileScreen({super.key});
@@ -100,99 +104,35 @@ class _UserProfileScreenState extends State<UserProfileScreen>
     super.dispose();
   }
 
-  String _getStatusText(RentalStatus status) {
-    switch (status) {
-      case RentalStatus.pending:
-        return '대기 중';
-      case RentalStatus.matchConfirmed:
-        return '매칭 확정';
-      case RentalStatus.inProgress:
-        return '대여 중';
-      case RentalStatus.returned:
-        return '반납 완료';
-      case RentalStatus.reviewed:
-        return '리뷰 완료';
-    }
-  }
-
-  Color _getStatusColor(RentalStatus status) {
-    switch (status) {
-      case RentalStatus.pending:
-        return Colors.grey;
-      case RentalStatus.matchConfirmed:
-        return Colors.blue;
-      case RentalStatus.inProgress:
-        return Colors.orange;
-      case RentalStatus.returned:
-        return Colors.green;
-      case RentalStatus.reviewed:
-        return Colors.purple;
-    }
-  }
-
   @override
   Widget build(BuildContext context) {
+    final double screenWidth = MediaQuery.of(context).size.width;
+    final double responsivePadding = screenWidth * 0.01; // 1% 여백
+
     return Scaffold(
-      appBar: AppBar(title: const Text('내 정보'), centerTitle: true),
-      body: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(24),
-            child: Column(
-              children: [
-                CircleAvatar(
-                  radius: 40,
-                  child: Text(
-                    _currentUser.name[0],
-                    style: const TextStyle(fontSize: 32),
+      appBar: AppBar(
+        title: const Text('내 정보'),
+        centerTitle: true,
+        actions: [
+          Padding(
+            padding: EdgeInsets.only(right: responsivePadding),
+            child: IconButton(
+              icon: const Icon(Icons.settings),
+              onPressed: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const SettingScreen(),
                   ),
-                ),
-                const SizedBox(height: 12),
-                Text(
-                  _currentUser.name,
-                  style: const TextStyle(
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const SizedBox(height: 4),
-                Text(
-                  _currentUser.email,
-                  style: const TextStyle(fontSize: 14, color: Colors.grey),
-                ),
-                const SizedBox(height: 12),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(Icons.star, color: Colors.amber, size: 20),
-                    const SizedBox(width: 4),
-                    Text(
-                      '${_currentUser.score}점',
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 16),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                  children: [
-                    _StatItem(
-                      label: '총 거래',
-                      value: _currentUser.dealHistory.length.toString(),
-                    ),
-                    Container(height: 40, width: 1, color: Colors.grey[300]),
-                    _StatItem(
-                      label: '매너 점수',
-                      value: _currentUser.score.toString(),
-                    ),
-                  ],
-                ),
-              ],
+                );
+              },
             ),
           ),
+        ],
+      ),
+      body: Column(
+        children: [
+          UserInfoHeader(user: _currentUser, showEmail: true),
           const Divider(height: 1),
           TabBar(
             controller: _tabController,
@@ -224,12 +164,15 @@ class _UserProfileScreenState extends State<UserProfileScreen>
             Icon(
               isBorrowed ? Icons.inbox : Icons.folder_open,
               size: 64,
-              color: Colors.grey,
+              color: context.onSurfaceVariantColor,
             ),
             const SizedBox(height: 16),
             Text(
               isBorrowed ? '빌린 물건이 없습니다' : '빌려준 물건이 없습니다',
-              style: const TextStyle(fontSize: 16, color: Colors.grey),
+              style: TextStyle(
+                fontSize: 16,
+                color: context.onSurfaceVariantColor,
+              ),
             ),
           ],
         ),
@@ -278,16 +221,14 @@ class _UserProfileScreenState extends State<UserProfileScreen>
                           vertical: 4,
                         ),
                         decoration: BoxDecoration(
-                          color: _getStatusColor(
-                            item.status,
-                          ).withValues(alpha: 0.2),
+                          color: item.status.color.withValues(alpha: 0.2),
                           borderRadius: BorderRadius.circular(12),
                         ),
                         child: Text(
-                          _getStatusText(item.status),
+                          item.status.text,
                           style: TextStyle(
                             fontSize: 12,
-                            color: _getStatusColor(item.status),
+                            color: item.status.color,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -297,7 +238,7 @@ class _UserProfileScreenState extends State<UserProfileScreen>
                   const SizedBox(height: 8),
                   Text(
                     item.description,
-                    style: const TextStyle(color: Colors.grey),
+                    style: TextStyle(color: context.onSurfaceVariantColor),
                   ),
                   const SizedBox(height: 8),
                   Row(
@@ -314,9 +255,9 @@ class _UserProfileScreenState extends State<UserProfileScreen>
                       const Spacer(),
                       Text(
                         '${item.price.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}원',
-                        style: const TextStyle(
+                        style: TextStyle(
                           fontWeight: FontWeight.bold,
-                          color: Colors.blue,
+                          color: context.primaryColor,
                         ),
                       ),
                     ],
@@ -327,27 +268,6 @@ class _UserProfileScreenState extends State<UserProfileScreen>
           ),
         );
       },
-    );
-  }
-}
-
-class _StatItem extends StatelessWidget {
-  final String label;
-  final String value;
-
-  const _StatItem({required this.label, required this.value});
-
-  @override
-  Widget build(BuildContext context) {
-    return Column(
-      children: [
-        Text(
-          value,
-          style: const TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 4),
-        Text(label, style: const TextStyle(fontSize: 14, color: Colors.grey)),
-      ],
     );
   }
 }

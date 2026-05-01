@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import '../models/rental_item.dart';
 import '../models/user.dart';
 import '../models/chat.dart';
+import '../extensions/rental_status_extension.dart';
 import 'review_screen.dart';
+import 'package:open_source_software/extensions/theme_extension.dart';
 
 class ChatScreen extends StatefulWidget {
   final RentalItem rentalItem;
@@ -111,55 +113,14 @@ class _ChatScreenState extends State<ChatScreen> {
 
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: Text('상태가 ${_getStatusText(nextStatus)}(으)로 변경되었습니다'),
-        backgroundColor: Colors.green,
+        duration: const Duration(milliseconds: 500),
+        content: Text(
+          '상태가 ${nextStatus.text}(으)로 변경되었습니다',
+          style: TextStyle(color: context.onSurfaceColor),
+        ),
+        backgroundColor: nextStatus.color.withValues(alpha: 0.8),
       ),
     );
-  }
-
-  String _getStatusText(RentalStatus status) {
-    switch (status) {
-      case RentalStatus.pending:
-        return '대기 중';
-      case RentalStatus.matchConfirmed:
-        return '매칭 확정';
-      case RentalStatus.inProgress:
-        return '대여 중';
-      case RentalStatus.returned:
-        return '반납 완료';
-      case RentalStatus.reviewed:
-        return '리뷰 완료';
-    }
-  }
-
-  String _getNextButtonText() {
-    switch (_currentStatus) {
-      case RentalStatus.pending:
-        return '매칭 확정';
-      case RentalStatus.matchConfirmed:
-        return '대여 시작';
-      case RentalStatus.inProgress:
-        return '반납 완료';
-      case RentalStatus.returned:
-        return '리뷰 작성';
-      case RentalStatus.reviewed:
-        return '완료됨';
-    }
-  }
-
-  Color _getStatusColor() {
-    switch (_currentStatus) {
-      case RentalStatus.pending:
-        return Colors.grey;
-      case RentalStatus.matchConfirmed:
-        return Colors.blue;
-      case RentalStatus.inProgress:
-        return Colors.orange;
-      case RentalStatus.returned:
-        return Colors.green;
-      case RentalStatus.reviewed:
-        return Colors.purple;
-    }
   }
 
   @override
@@ -181,16 +142,16 @@ class _ChatScreenState extends State<ChatScreen> {
         children: [
           Container(
             padding: const EdgeInsets.all(12),
-            color: _getStatusColor().withValues(alpha: 0.1),
+            color: _currentStatus.color.withValues(alpha: 0.1),
             child: Row(
               children: [
-                Icon(_getStatusIcon(), color: _getStatusColor()),
+                Icon(_getStatusIcon(), color: _currentStatus.color),
                 const SizedBox(width: 8),
                 Text(
-                  '현재 상태: ${_getStatusText(_currentStatus)}',
+                  '현재 상태: ${_currentStatus.text}',
                   style: TextStyle(
                     fontWeight: FontWeight.bold,
-                    color: _getStatusColor(),
+                    color: _currentStatus.color,
                   ),
                 ),
               ],
@@ -218,7 +179,9 @@ class _ChatScreenState extends State<ChatScreen> {
                       maxWidth: MediaQuery.of(context).size.width * 0.7,
                     ),
                     decoration: BoxDecoration(
-                      color: isMe ? Colors.blue : Colors.grey[300],
+                      color: isMe
+                          ? context.primaryColor
+                          : context.tertiaryColor,
                       borderRadius: BorderRadius.circular(16),
                     ),
                     child: Column(
@@ -227,7 +190,9 @@ class _ChatScreenState extends State<ChatScreen> {
                         Text(
                           message.chatText,
                           style: TextStyle(
-                            color: isMe ? Colors.white : Colors.black,
+                            color: isMe
+                                ? context.onPrimaryColor
+                                : context.onTertiaryColor,
                           ),
                         ),
                         const SizedBox(height: 4),
@@ -235,7 +200,11 @@ class _ChatScreenState extends State<ChatScreen> {
                           _formatTime(message.sendTime),
                           style: TextStyle(
                             fontSize: 10,
-                            color: isMe ? Colors.white70 : Colors.black54,
+                            color: isMe
+                                ? context.onPrimaryColor.withValues(alpha: 0.5)
+                                : context.onTertiaryColor.withValues(
+                                    alpha: 0.5,
+                                  ),
                           ),
                         ),
                       ],
@@ -248,16 +217,6 @@ class _ChatScreenState extends State<ChatScreen> {
           if (_currentStatus != RentalStatus.reviewed)
             Container(
               padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: Colors.white,
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.grey.withValues(alpha: 0.2),
-                    spreadRadius: 1,
-                    blurRadius: 5,
-                  ),
-                ],
-              ),
               child: Column(
                 children: [
                   SizedBox(
@@ -265,10 +224,18 @@ class _ChatScreenState extends State<ChatScreen> {
                     child: ElevatedButton.icon(
                       onPressed: _updateRentalStatus,
                       icon: Icon(_getNextStatusIcon()),
-                      label: Text(_getNextButtonText()),
+                      label: Text(_currentStatus.nextButtonText),
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: _getStatusColor(),
-                        foregroundColor: Colors.white,
+                        backgroundColor: _currentStatus == RentalStatus.pending
+                            ? RentalStatus.matchConfirmed.color
+                            : _currentStatus == RentalStatus.matchConfirmed
+                            ? RentalStatus.inProgress.color
+                            : _currentStatus == RentalStatus.inProgress
+                            ? RentalStatus.returned.color
+                            : _currentStatus == RentalStatus.returned
+                            ? RentalStatus.reviewed.color
+                            : Colors.grey,
+                        foregroundColor: context.onSurfaceColor,
                         padding: const EdgeInsets.symmetric(vertical: 12),
                       ),
                     ),
@@ -294,7 +261,7 @@ class _ChatScreenState extends State<ChatScreen> {
                       IconButton(
                         onPressed: _sendMessage,
                         icon: const Icon(Icons.send),
-                        color: Colors.blue,
+                        color: context.primaryColor,
                         iconSize: 28,
                       ),
                     ],

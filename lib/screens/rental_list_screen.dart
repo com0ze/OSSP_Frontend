@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/rental_item.dart';
 import '../models/user.dart';
 import 'item_detail_screen.dart';
+import 'package:open_source_software/extensions/theme_extension.dart';
 
 class RentalListScreen extends StatefulWidget {
   const RentalListScreen({super.key});
@@ -74,10 +75,7 @@ class _RentalListScreenState extends State<RentalListScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('대여 가능한 물건'),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: const Text('대여 가능한 물건'), centerTitle: true),
       body: _rentalItems.isEmpty
           ? const Center(
               child: Column(
@@ -118,10 +116,7 @@ class _RentalItemCard extends StatelessWidget {
   final RentalItem item;
   final VoidCallback onTap;
 
-  const _RentalItemCard({
-    required this.item,
-    required this.onTap,
-  });
+  const _RentalItemCard({required this.item, required this.onTap});
 
   String _getTimeAgo(DateTime dateTime) {
     final difference = DateTime.now().difference(dateTime);
@@ -159,9 +154,9 @@ class _RentalItemCard extends StatelessWidget {
                   ),
                   Text(
                     _getTimeAgo(item.createdAt),
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 12,
-                      color: Colors.grey,
+                      color: context.onSurfaceVariantColor,
                     ),
                   ),
                 ],
@@ -169,7 +164,11 @@ class _RentalItemCard extends StatelessWidget {
               const SizedBox(height: 8),
               Row(
                 children: [
-                  const Icon(Icons.shopping_basket, size: 16, color: Colors.blue),
+                  Icon(
+                    Icons.shopping_basket,
+                    size: 16,
+                    color: context.primaryColor,
+                  ),
                   const SizedBox(width: 4),
                   Text(
                     item.itemName,
@@ -183,22 +182,20 @@ class _RentalItemCard extends StatelessWidget {
               const SizedBox(height: 8),
               Row(
                 children: [
-                  const Icon(Icons.location_on, size: 16, color: Colors.grey),
-                  const SizedBox(width: 4),
-                  Text(
-                    item.location,
-                    style: const TextStyle(color: Colors.grey),
+                  Icon(
+                    Icons.location_on,
+                    size: 16,
+                    color: context.primaryColor,
                   ),
+                  const SizedBox(width: 4),
+                  Text(item.location),
                   const Spacer(),
                   Text(
-                    '${item.price.toString().replaceAllMapped(
-                          RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'),
-                          (Match m) => '${m[1]},',
-                        )}원',
-                    style: const TextStyle(
+                    '${item.price.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}원',
+                    style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,
-                      color: Colors.blue,
+                      color: context.primaryColor,
                     ),
                   ),
                 ],
@@ -208,7 +205,7 @@ class _RentalItemCard extends StatelessWidget {
                 item.description,
                 maxLines: 2,
                 overflow: TextOverflow.ellipsis,
-                style: const TextStyle(color: Colors.black87),
+                style: TextStyle(color: context.onSurfaceVariantColor),
               ),
               const SizedBox(height: 8),
               Row(
@@ -226,7 +223,7 @@ class _RentalItemCard extends StatelessWidget {
                     style: const TextStyle(fontSize: 14),
                   ),
                   const SizedBox(width: 8),
-                  const Icon(Icons.star, size: 14, color: Colors.amber),
+                  Icon(Icons.star, size: 14, color: context.starColor),
                   const SizedBox(width: 2),
                   Text(
                     '${item.requester.score}점',

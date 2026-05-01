@@ -3,7 +3,7 @@ class User {
   final String name;
   final String email;
   final String? profileImage;
-  final int score;
+  final double score;
   final List<String> dealHistory;
 
   User({
@@ -49,7 +49,7 @@ class User {
     String? name,
     String? email,
     String? profileImage,
-    int? score,
+    double? score,
     List<String>? dealHistory,
   }) {
     return User(

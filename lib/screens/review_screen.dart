@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import '../models/rental_item.dart';
 import '../models/user.dart';
+import 'package:open_source_software/extensions/theme_extension.dart';
 
 class ReviewScreen extends StatefulWidget {
   final RentalItem rentalItem;
@@ -29,9 +30,12 @@ class _ReviewScreenState extends State<ReviewScreen> {
   void _submitReview() {
     if (_rating == 0) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('별점을 선택해주세요'),
-          backgroundColor: Colors.orange,
+        SnackBar(
+          content: Text(
+            '별점을 선택해주세요',
+            style: TextStyle(color: context.onWarningColor),
+          ),
+          backgroundColor: context.warningColor,
         ),
       );
       return;
@@ -39,18 +43,24 @@ class _ReviewScreenState extends State<ReviewScreen> {
 
     if (_commentController.text.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('리뷰 내용을 입력해주세요'),
-          backgroundColor: Colors.orange,
+        SnackBar(
+          content: Text(
+            '리뷰 내용을 입력해주세요',
+            style: TextStyle(color: context.onWarningColor),
+          ),
+          backgroundColor: context.warningColor,
         ),
       );
       return;
     }
 
     ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('리뷰가 등록되었습니다'),
-        backgroundColor: Colors.green,
+      SnackBar(
+        content: Text(
+          '리뷰가 등록되었습니다',
+          style: TextStyle(color: context.onGoodColor),
+        ),
+        backgroundColor: context.goodColor,
       ),
     );
 
@@ -60,9 +70,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('리뷰 작성'),
-      ),
+      appBar: AppBar(title: const Text('리뷰 작성')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24.0),
         child: Column(
@@ -89,9 +97,9 @@ class _ReviewScreenState extends State<ReviewScreen> {
                   const SizedBox(height: 4),
                   Text(
                     widget.rentalItem.itemName,
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 16,
-                      color: Colors.grey,
+                      color: context.onSurfaceVariantColor,
                     ),
                   ),
                 ],
@@ -100,10 +108,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
             const SizedBox(height: 32),
             const Text(
               '별점',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),
             Center(
@@ -119,7 +124,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
                     },
                     icon: Icon(
                       index < _rating ? Icons.star : Icons.star_border,
-                      color: Colors.amber,
+                      color: context.starColor,
                     ),
                   );
                 }),
@@ -129,20 +134,17 @@ class _ReviewScreenState extends State<ReviewScreen> {
               Center(
                 child: Text(
                   _rating.toStringAsFixed(1),
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
-                    color: Colors.amber,
+                    color: context.starColor,
                   ),
                 ),
               ),
             const SizedBox(height: 32),
             const Text(
               '리뷰',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 12),
             TextField(

@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import '../models/rental_item.dart';
-import 'lender_profile_screen.dart';
+import 'other_user_profile_screen.dart';
 import 'chat_screen.dart';
+import 'package:open_source_software/extensions/theme_extension.dart';
 
 class ItemDetailScreen extends StatelessWidget {
   final RentalItem item;
@@ -22,7 +23,7 @@ class ItemDetailScreen extends StatelessWidget {
               color: Colors.grey[300],
               child: item.imageUrl != null
                   ? Image.network(item.imageUrl!, fit: BoxFit.cover)
-                  : const Icon(Icons.image, size: 80, color: Colors.grey),
+                  : Icon(Icons.image, size: 80, color: Colors.grey[600]),
             ),
             Padding(
               padding: const EdgeInsets.all(16.0),
@@ -39,10 +40,10 @@ class ItemDetailScreen extends StatelessWidget {
                   const SizedBox(height: 8),
                   Text(
                     '${item.price.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}원',
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 28,
                       fontWeight: FontWeight.bold,
-                      color: Colors.blue,
+                      color: context.primaryColor,
                     ),
                   ),
                   const SizedBox(height: 16),
@@ -106,14 +107,16 @@ class ItemDetailScreen extends StatelessWidget {
                         context,
                         MaterialPageRoute(
                           builder: (context) =>
-                              LenderProfileScreen(user: item.requester),
+                              OtherUserProfileScreen(user: item.requester),
                         ),
                       );
                     },
                     child: Container(
                       padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
-                        border: Border.all(color: Colors.grey[300]!),
+                        border: Border.all(
+                          color: context.onSurfaceVariantColor,
+                        ),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       child: Row(
@@ -140,10 +143,10 @@ class ItemDetailScreen extends StatelessWidget {
                                 const SizedBox(height: 4),
                                 Row(
                                   children: [
-                                    const Icon(
+                                    Icon(
                                       Icons.star,
                                       size: 16,
-                                      color: Colors.amber,
+                                      color: context.starColor,
                                     ),
                                     const SizedBox(width: 4),
                                     Text(
@@ -153,9 +156,9 @@ class ItemDetailScreen extends StatelessWidget {
                                     const SizedBox(width: 12),
                                     Text(
                                       '거래 ${item.requester.dealHistory.length}건',
-                                      style: const TextStyle(
+                                      style: TextStyle(
                                         fontSize: 14,
-                                        color: Colors.grey,
+                                        color: context.onSurfaceVariantColor,
                                       ),
                                     ),
                                   ],
@@ -177,16 +180,6 @@ class ItemDetailScreen extends StatelessWidget {
       ),
       bottomNavigationBar: Container(
         padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: Colors.white,
-          boxShadow: [
-            BoxShadow(
-              color: Colors.grey.withValues(alpha: 0.2),
-              spreadRadius: 1,
-              blurRadius: 5,
-            ),
-          ],
-        ),
         child: SafeArea(
           child: ElevatedButton(
             onPressed: () {
@@ -234,16 +227,20 @@ class _InfoRow extends StatelessWidget {
   Widget build(BuildContext context) {
     return Row(
       children: [
-        Icon(icon, size: 20, color: Colors.grey[700]),
+        Icon(icon, size: 20, color: context.primaryColor),
         const SizedBox(width: 8),
         Text(
           '$label: ',
-          style: const TextStyle(fontSize: 16, color: Colors.grey),
+          style: TextStyle(fontSize: 16, color: context.onSurfaceVariantColor),
         ),
         Expanded(
           child: Text(
             value,
-            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w500,
+              color: context.onSurfaceVariantColor,
+            ),
           ),
         ),
       ],

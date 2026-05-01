@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
+import 'package:open_source_software/extensions/theme_extension.dart';
 
 class RentalRequestScreen extends StatefulWidget {
   const RentalRequestScreen({super.key});
@@ -38,7 +39,14 @@ class _RentalRequestScreenState extends State<RentalRequestScreen> {
       if (!serviceEnabled) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('위치 서비스를 켜주세요')),
+            SnackBar(
+              content: Text(
+                '위치 서비스를 켜주세요',
+                style: TextStyle(color: context.onErrorColor),
+              ),
+              duration: const Duration(milliseconds: 500),
+              backgroundColor: context.errorColor,
+            ),
           );
         }
         return;
@@ -50,7 +58,14 @@ class _RentalRequestScreenState extends State<RentalRequestScreen> {
         if (permission == LocationPermission.denied) {
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('위치 권한이 거부되었습니다')),
+              SnackBar(
+                content: Text(
+                  '위치 권한이 거부되었습니다',
+                  style: TextStyle(color: context.onErrorColor),
+                ),
+                duration: const Duration(milliseconds: 500),
+                backgroundColor: context.errorColor,
+              ),
             );
           }
           return;
@@ -67,7 +82,14 @@ class _RentalRequestScreenState extends State<RentalRequestScreen> {
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('위치를 가져올 수 없습니다: $e')),
+          SnackBar(
+            content: Text(
+              '위치를 가져올 수 없습니다',
+              style: TextStyle(color: context.onErrorColor),
+            ),
+            duration: const Duration(milliseconds: 500),
+            backgroundColor: context.errorColor,
+          ),
         );
       }
     } finally {
@@ -80,9 +102,13 @@ class _RentalRequestScreenState extends State<RentalRequestScreen> {
   void _submitRequest() {
     if (_formKey.currentState!.validate()) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('대여 요청이 등록되었습니다'),
-          backgroundColor: Colors.green,
+        SnackBar(
+          duration: const Duration(milliseconds: 500),
+          content: Text(
+            '대여 요청이 등록되었습니다',
+            style: TextStyle(color: context.onGoodColor),
+          ),
+          backgroundColor: context.goodColor,
         ),
       );
 
@@ -99,10 +125,7 @@ class _RentalRequestScreenState extends State<RentalRequestScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('대여 요청하기'),
-        centerTitle: true,
-      ),
+      appBar: AppBar(title: const Text('대여 요청하기'), centerTitle: true),
       body: Form(
         key: _formKey,
         child: ListView(
@@ -110,10 +133,7 @@ class _RentalRequestScreenState extends State<RentalRequestScreen> {
           children: [
             const Text(
               '필요한 물건 정보를 입력해주세요',
-              style: TextStyle(
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 24),
             TextFormField(

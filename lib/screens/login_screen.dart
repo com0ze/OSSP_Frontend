@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'home_navigation.dart';
+import 'package:open_source_software/extensions/theme_extension.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -49,27 +50,24 @@ class _LoginScreenState extends State<LoginScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  const Icon(
+                  Icon(
                     Icons.shopping_bag,
                     size: 80,
-                    color: Colors.blue,
-                  ),
+                    color: context.primaryColor,
+                  ), // TODO:: 앱 아이콘으로 변경
                   const SizedBox(height: 24),
                   const Text(
-                    '물건 대여',
+                    '물건 대여', // TODO:: 앱 이름으로 변경
                     textAlign: TextAlign.center,
-                    style: TextStyle(
-                      fontSize: 32,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 8),
-                  const Text(
-                    '필요한 물건을 빌려보세요',
+                  Text(
+                    '필요한 물건을 빌려보세요', // TODO:: 앱 슬로건으로 변경
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 16,
-                      color: Colors.grey,
+                      color: context.onSurfaceVariantColor,
                     ),
                   ),
                   const SizedBox(height: 48),
@@ -125,9 +123,11 @@ class _LoginScreenState extends State<LoginScreen> {
                     onPressed: _isLoading ? null : _login,
                     style: ElevatedButton.styleFrom(
                       padding: const EdgeInsets.symmetric(vertical: 16),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(8),
+                      shape: const RoundedRectangleBorder(
+                        borderRadius: BorderRadius.all(Radius.circular(8)),
                       ),
+                      backgroundColor: context.primaryColor,
+                      foregroundColor: context.onPrimaryColor,
                     ),
                     child: _isLoading
                         ? const SizedBox(
@@ -135,14 +135,14 @@ class _LoginScreenState extends State<LoginScreen> {
                             width: 20,
                             child: CircularProgressIndicator(strokeWidth: 2),
                           )
-                        : const Text(
-                            '로그인',
-                            style: TextStyle(fontSize: 16),
-                          ),
+                        : const Text('로그인', style: TextStyle(fontSize: 16)),
                   ),
                   const SizedBox(height: 16),
                   TextButton(
                     onPressed: () {},
+                    style: TextButton.styleFrom(
+                      foregroundColor: context.primaryColor,
+                    ),
                     child: const Text('회원가입'),
                   ),
                 ],
