@@ -18,29 +18,53 @@ class SettingScreen extends StatelessWidget {
             trailing: Row(
               mainAxisSize: MainAxisSize.min,
               children: [
-                ElevatedButton(
-                  onPressed: () {
-                    ThemeModeManager().changeThemeMode(ThemeMode.light);
-                  },
-                  child: Icon(Icons.light_mode),
-                ),
-                ElevatedButton(
-                  onPressed: () {
-                    ThemeModeManager().changeThemeMode(ThemeMode.dark);
-                  },
-                  child: Icon(Icons.dark_mode),
-                ),
-                ElevatedButton(
-                  onPressed: () {
-                    ThemeModeManager().changeThemeMode(ThemeMode.system);
-                  },
-                  child: Icon(Icons.brightness_auto),
+                _buildThemeButton(context, ThemeMode.light, Icons.light_mode),
+                _buildThemeButton(context, ThemeMode.dark, Icons.dark_mode),
+                _buildThemeButton(
+                  context,
+                  ThemeMode.system,
+                  Icons.brightness_auto,
                 ),
               ],
             ),
           ),
         ],
       ),
+    );
+  }
+
+  ListenableBuilder _buildThemeButton(
+    BuildContext context,
+    ThemeMode mode,
+    IconData icon,
+  ) {
+    return ListenableBuilder(
+      listenable: ThemeModeManager(),
+      builder: (context, child) {
+        final isSelected = ThemeModeManager().mode == mode;
+        final double screenWidth = MediaQuery.of(context).size.width;
+        return ElevatedButton(
+          onPressed: () {
+            ThemeModeManager().changeThemeMode(mode);
+          },
+          style: ElevatedButton.styleFrom(
+            padding: EdgeInsets.all(5.0),
+            minimumSize: Size.zero,
+
+            // 터치 영역(물결 효과 등)을 버튼의 실제 크기만큼만 딱 맞게 줄입니다.
+            tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+
+            backgroundColor: isSelected
+                ? context.primaryColor
+                : context.secondaryColor.withValues(alpha: 0.3),
+          ),
+          child: Icon(
+            icon,
+            color: context.onPrimaryColor,
+            size: screenWidth * 0.075,
+          ),
+        );
+      },
     );
   }
 }

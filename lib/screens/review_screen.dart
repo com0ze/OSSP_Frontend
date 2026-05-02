@@ -72,6 +72,8 @@ class _ReviewScreenState extends State<ReviewScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final double screenWidth = MediaQuery.of(context).size.width;
+
     return Scaffold(
       appBar: AppBar(title: const Text('리뷰 작성')),
       body: SingleChildScrollView(
@@ -119,7 +121,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: List.generate(5, (index) {
                   return IconButton(
-                    iconSize: 48,
+                    iconSize: screenWidth * 0.1,
                     onPressed: () {
                       setState(() {
                         _rating = (index + 1).toDouble();
