@@ -192,14 +192,19 @@ class ItemDetailScreen extends StatelessWidget {
               );
             },
             style: ElevatedButton.styleFrom(
+              backgroundColor: context.primaryColor,
               padding: const EdgeInsets.symmetric(vertical: 16),
               shape: RoundedRectangleBorder(
                 borderRadius: BorderRadius.circular(8),
               ),
             ),
-            child: const Text(
+            child: Text(
               '채팅하기',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              style: TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
+                color: context.onPrimaryColor,
+              ),
             ),
           ),
         ),
