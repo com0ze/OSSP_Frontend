@@ -249,6 +249,8 @@ class _RentalRequestScreenState extends State<RentalRequestScreen> {
             ElevatedButton(
               onPressed: _submitRequest,
               style: ElevatedButton.styleFrom(
+                backgroundColor: context.primaryColor,
+                foregroundColor: context.onPrimaryColor,
                 padding: const EdgeInsets.symmetric(vertical: 16),
                 shape: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(8),

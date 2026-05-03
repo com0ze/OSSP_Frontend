@@ -37,8 +37,8 @@ class _HomeNavigationState extends State<HomeNavigation> {
             label: '요청하기',
           ),
           BottomNavigationBarItem(
-            icon: Icon(Icons.list_alt),
-            activeIcon: Icon(Icons.list),
+            icon: Icon(Icons.list_alt_outlined),
+            activeIcon: Icon(Icons.list_alt),
             label: '대여 목록',
           ),
           BottomNavigationBarItem(

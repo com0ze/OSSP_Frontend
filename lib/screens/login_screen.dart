@@ -57,13 +57,13 @@ class _LoginScreenState extends State<LoginScreen> {
                   ), // TODO:: 앱 아이콘으로 변경
                   const SizedBox(height: 24),
                   const Text(
-                    '물건 대여', // TODO:: 앱 이름으로 변경
+                    '빌릿 Villit',
                     textAlign: TextAlign.center,
                     style: TextStyle(fontSize: 32, fontWeight: FontWeight.bold),
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    '필요한 물건을 빌려보세요', // TODO:: 앱 슬로건으로 변경
+                    '빌리다 + it',
                     textAlign: TextAlign.center,
                     style: TextStyle(
                       fontSize: 16,
