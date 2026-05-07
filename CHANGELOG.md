@@ -41,3 +41,10 @@
             - feature:
                 - changelog.md의 계층 구조 변경
                 - days -> date로 변경
+- # feature/GPS
+    - ## version: 1.0.1
+        - ### commit: GPS manager 생성
+            - #### author: Seo JeongHun
+            - #### date: 2026-05-07
+            - feature: 
+                - GPS_manager.dart 생성
