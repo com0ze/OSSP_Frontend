@@ -1,34 +1,36 @@
 import 'package:flutter/material.dart';
 import 'package:open_source_software/managers/login_manager.dart';
 import 'package:open_source_software/managers/test_data_manager.dart';
-import 'package:open_source_software/screens/item_detail_screen.dart';
-import 'package:open_source_software/widgets/rental_item_widget_factory.dart';
+import 'package:open_source_software/screens/chat_screen.dart';
+import 'package:open_source_software/widgets/chatting_room_widget_factory.dart';
 
-class RentalListScreen extends StatefulWidget {
-  const RentalListScreen({super.key});
+class ChattingListScreen extends StatefulWidget {
+  const ChattingListScreen({super.key});
 
   @override
-  State<RentalListScreen> createState() => _RentalListScreenState();
+  State<ChattingListScreen> createState() => _ChattingListScreenState();
 }
 
-class _RentalListScreenState extends State<RentalListScreen> {
+class _ChattingListScreenState extends State<ChattingListScreen> {
   final TestDataManager testDataManager = TestDataManager();
   final LoginManager loginManager = LoginManager();
 
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
-      listenable: TestDataManager(),
+      listenable: testDataManager,
       builder: (context, child) {
         final currentUser = loginManager.currentUserOrGuest;
-        final rentalItems = testDataManager.rentalItems.values
+        final matches = testDataManager.matches.values
             .where(
-              (item) => !item.isMatched && item.requesterID != currentUser.id,
+              (m) =>
+                  m.requesterID == currentUser.id ||
+                  m.lenderID == currentUser.id,
             )
             .toList();
         return Scaffold(
-          appBar: AppBar(title: const Text('대여 가능한 물건'), centerTitle: true),
-          body: rentalItems.isEmpty
+          appBar: AppBar(title: const Text('내 채팅'), centerTitle: true),
+          body: matches.isEmpty
               ? const Center(
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
@@ -36,7 +38,7 @@ class _RentalListScreenState extends State<RentalListScreen> {
                       Icon(Icons.inbox, size: 64, color: Colors.grey),
                       SizedBox(height: 16),
                       Text(
-                        '현재 대여 요청이 없습니다',
+                        '채팅이 없습니다',
                         style: TextStyle(fontSize: 16, color: Colors.grey),
                       ),
                     ],
@@ -44,16 +46,22 @@ class _RentalListScreenState extends State<RentalListScreen> {
                 )
               : ListView.builder(
                   padding: const EdgeInsets.all(16),
-                  itemCount: rentalItems.length,
+                  itemCount: matches.length,
                   itemBuilder: (context, index) {
-                    final item = rentalItems[index];
-                    return RentalItemWidgetFactory(
-                      item: item,
+                    final match = matches[index];
+                    final rentalItem =
+                        testDataManager.rentalItems[match.rentalItemID];
+                    return ChattingRoomWidgetFactory(
+                      match: match,
                       onTap: () {
+                        if (rentalItem == null) return;
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => ItemDetailScreen(item: item),
+                            builder: (context) => ChatScreen(
+                              rentalItem: rentalItem,
+                              match: match,
+                            ),
                           ),
                         );
                       },

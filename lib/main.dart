@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'screens/login_screen.dart';
-import 'managers/theme_mode_manager.dart';
+import 'package:open_source_software/managers/theme_mode_manager.dart';
+import 'package:open_source_software/screens/login_screen.dart';
 
 void main() {
   runApp(const MyApp());

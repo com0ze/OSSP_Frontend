@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:open_source_software/extensions/theme_extension.dart';
-import '../managers/theme_mode_manager.dart';
+import 'package:open_source_software/managers/theme_mode_manager.dart';
 
 class SettingScreen extends StatelessWidget {
   const SettingScreen({super.key});

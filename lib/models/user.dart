@@ -4,7 +4,7 @@ class User {
   final String email;
   final String? profileImage;
   final double score;
-  final List<String> dealHistory;
+  final List<String> rentalHistory;
 
   User({
     required this.id,
@@ -12,12 +12,12 @@ class User {
     required this.email,
     this.profileImage,
     this.score = 0,
-    List<String>? dealHistory,
-  }) : dealHistory = dealHistory ?? [];
+    List<String>? rentalHistory,
+  }) : rentalHistory = rentalHistory ?? [];
 
-  void addDealHistory(String dealId) {
-    if (!dealHistory.contains(dealId)) {
-      dealHistory.add(dealId);
+  void addrentalHistory(String dealId) {
+    if (!rentalHistory.contains(dealId)) {
+      rentalHistory.add(dealId);
     }
   }
 
@@ -28,7 +28,7 @@ class User {
       email: json['email'],
       profileImage: json['profileImage'],
       score: json['score'] ?? 0,
-      dealHistory: (json['dealHistory'] as List<dynamic>?)
+      rentalHistory: (json['rentalHistory'] as List<dynamic>?)
           ?.map((e) => e as String)
           .toList(),
     );
@@ -41,7 +41,7 @@ class User {
       'email': email,
       'profileImage': profileImage,
       'score': score,
-      'dealHistory': dealHistory,
+      'rentalHistory': rentalHistory,
     };
   }
 
@@ -50,7 +50,7 @@ class User {
     String? email,
     String? profileImage,
     double? score,
-    List<String>? dealHistory,
+    List<String>? rentalHistory,
   }) {
     return User(
       id: id,
@@ -58,7 +58,7 @@ class User {
       email: email ?? this.email,
       profileImage: profileImage ?? this.profileImage,
       score: score ?? this.score,
-      dealHistory: dealHistory ?? List.from(this.dealHistory),
+      rentalHistory: rentalHistory ?? List.from(this.rentalHistory),
     );
   }
 }

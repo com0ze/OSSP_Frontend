@@ -1,15 +1,20 @@
 import 'package:flutter/material.dart';
-import '../models/rental_item.dart';
-import '../models/user.dart';
 import 'package:open_source_software/extensions/theme_extension.dart';
+import 'package:open_source_software/managers/test_data_manager.dart';
+import 'package:open_source_software/models/match.dart';
+import 'package:open_source_software/models/rental_item.dart';
+import 'package:open_source_software/models/review.dart';
+import 'package:open_source_software/models/user.dart';
 
 class ReviewScreen extends StatefulWidget {
   final RentalItem rentalItem;
+  final Match match;
   final User reviewee;
 
   const ReviewScreen({
     super.key,
     required this.rentalItem,
+    required this.match,
     required this.reviewee,
   });
 
@@ -18,7 +23,7 @@ class ReviewScreen extends StatefulWidget {
 }
 
 class _ReviewScreenState extends State<ReviewScreen> {
-  double _rating = 0;
+  int _rating = 0;
   final TextEditingController _commentController = TextEditingController();
 
   @override
@@ -42,7 +47,8 @@ class _ReviewScreenState extends State<ReviewScreen> {
       return;
     }
 
-    if (_commentController.text.trim().isEmpty) {
+    final reviewText = _commentController.text;
+    if (reviewText.trim().isEmpty) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           duration: const Duration(milliseconds: 500),
@@ -66,6 +72,21 @@ class _ReviewScreenState extends State<ReviewScreen> {
         backgroundColor: context.goodColor,
       ),
     );
+
+    final testDataManager = TestDataManager();
+    final review = Review(
+      id: widget.match.matchID,
+      score: _rating,
+      reviewText: reviewText,
+      writer: widget.reviewee,
+      createdAt: DateTime.now(),
+    );
+
+    if (widget.match.lenderID == widget.reviewee.id) {
+      testDataManager.updateMatchLenderReview(widget.match.matchID, review);
+    } else {
+      testDataManager.updateMatchRequesterReview(widget.match.matchID, review);
+    }
 
     Navigator.of(context).popUntil((route) => route.isFirst);
   }
@@ -101,7 +122,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
                   ),
                   const SizedBox(height: 4),
                   Text(
-                    widget.rentalItem.itemName,
+                    widget.rentalItem.product.name,
                     style: TextStyle(
                       fontSize: 16,
                       color: context.onSurfaceVariantColor,
@@ -124,7 +145,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
                     iconSize: screenWidth * 0.1,
                     onPressed: () {
                       setState(() {
-                        _rating = (index + 1).toDouble();
+                        _rating = index + 1;
                       });
                     },
                     icon: Icon(

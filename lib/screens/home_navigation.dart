@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'rental_request_screen.dart';
-import 'rental_list_screen.dart';
-import 'user_profile_screen.dart';
+import 'package:open_source_software/screens/chatting_list.dart';
+import 'package:open_source_software/screens/rental_list_screen.dart';
+import 'package:open_source_software/screens/rental_request_screen.dart';
+import 'package:open_source_software/screens/user_profile_screen.dart';
 
 class HomeNavigation extends StatefulWidget {
   const HomeNavigation({super.key});
@@ -16,6 +17,7 @@ class _HomeNavigationState extends State<HomeNavigation> {
   final List<Widget> _screens = const [
     RentalRequestScreen(),
     RentalListScreen(),
+    ChattingListScreen(),
     UserProfileScreen(),
   ];
 
@@ -30,6 +32,7 @@ class _HomeNavigationState extends State<HomeNavigation> {
             _currentIndex = index;
           });
         },
+        type: BottomNavigationBarType.fixed,
         items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.add_circle_outline),
@@ -40,6 +43,11 @@ class _HomeNavigationState extends State<HomeNavigation> {
             icon: Icon(Icons.list_alt_outlined),
             activeIcon: Icon(Icons.list_alt),
             label: '대여 목록',
+          ),
+          BottomNavigationBarItem(
+            icon: Icon(Icons.chat_outlined),
+            activeIcon: Icon(Icons.chat),
+            label: '채팅',
           ),
           BottomNavigationBarItem(
             icon: Icon(Icons.person_outline),

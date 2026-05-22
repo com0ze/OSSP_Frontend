@@ -1,4 +1,5 @@
-import '../models/main_user.dart';
+import 'package:open_source_software/models/main_user.dart';
+import 'package:open_source_software/models/user.dart';
 
 class LoginManager {
   static final LoginManager _instance = LoginManager._internal();
@@ -10,6 +11,12 @@ class LoginManager {
   LoginManager._internal();
 
   MainUser? _currentUser;
+  User notLoginStateUser = User(
+    id: 'guest',
+    name: 'Guest',
+    email: '',
+    score: 0,
+  );
   String? _authToken;
 
   MainUser? get currentUser => _currentUser;
@@ -22,10 +29,11 @@ class LoginManager {
 
       _authToken = 'sample_token_${DateTime.now().millisecondsSinceEpoch}';
       _currentUser = MainUser(
-        id: '1',
-        name: 'Sample User',
+        // TODO: 실제 로그인 한 걸로 만들어야함
+        id: '0',
+        name: 'Kim sample',
         email: email,
-        mannerScore: 85,
+        score: 10.0,
         personalInformation: 'Sample user information',
       );
 
@@ -33,6 +41,10 @@ class LoginManager {
     } catch (e) {
       return false;
     }
+  }
+
+  User get currentUserOrGuest {
+    return _currentUser ?? notLoginStateUser;
   }
 
   Future<void> logout() async {
@@ -49,7 +61,7 @@ class LoginManager {
         id: DateTime.now().millisecondsSinceEpoch.toString(),
         name: name,
         email: email,
-        mannerScore: 50,
+        score: 50,
         personalInformation: '',
       );
 

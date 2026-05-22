@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import 'home_navigation.dart';
 import 'package:open_source_software/extensions/theme_extension.dart';
+import 'package:open_source_software/managers/login_manager.dart';
+import 'package:open_source_software/screens/home_navigation.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -15,6 +16,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passwordController = TextEditingController();
   bool _isLoading = false;
   bool _obscurePassword = true;
+  final loginManager = LoginManager();
 
   @override
   void dispose() {
@@ -27,12 +29,26 @@ class _LoginScreenState extends State<LoginScreen> {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
 
-      await Future.delayed(const Duration(seconds: 1));
+      // 3. LoginManager를 통해 실제 로그인 시도
+      bool success = await loginManager.login(
+        _emailController.text,
+        _passwordController.text,
+      );
 
       if (mounted) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => const HomeNavigation()),
-        );
+        setState(() => _isLoading = false);
+
+        if (success) {
+          // 로그인 성공 시 화면 전환
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (context) => const HomeNavigation()),
+          );
+        } else {
+          // 로그인 실패 시 에러 알림
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('로그인에 실패했습니다. 이메일과 비밀번호를 확인해주세요.')),
+          );
+        }
       }
     }
   }

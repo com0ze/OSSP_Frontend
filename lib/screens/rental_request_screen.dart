@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:open_source_software/extensions/theme_extension.dart';
+import 'package:open_source_software/managers/login_manager.dart';
+import 'package:open_source_software/managers/test_data_manager.dart';
+import 'package:open_source_software/models/product.dart';
+import 'package:open_source_software/models/rental_item.dart';
 
 class RentalRequestScreen extends StatefulWidget {
   const RentalRequestScreen({super.key});
@@ -99,8 +103,67 @@ class _RentalRequestScreenState extends State<RentalRequestScreen> {
     }
   }
 
+  // void _submitRequest() {
+  //   if (_formKey.currentState!.validate()) {
+  //     ScaffoldMessenger.of(context).showSnackBar(
+  //       SnackBar(
+  //         duration: const Duration(milliseconds: 500),
+  //         content: Text(
+  //           '대여 요청이 등록되었습니다',
+  //           style: TextStyle(color: context.onGoodColor),
+  //         ),
+  //         backgroundColor: context.goodColor,
+  //       ),
+  //     );
+
+  //     _formKey.currentState!.reset();
+  //     _titleController.clear();
+  //     _itemNameController.clear();
+  //     _locationController.clear();
+  //     _priceController.clear();
+  //     _preferencesController.clear();
+  //     _descriptionController.clear();
+  //   }
+  // }
+
   void _submitRequest() {
     if (_formKey.currentState!.validate()) {
+      // 1. 현재 로그인한 사용자 정보 가져오기
+      final currentUser = LoginManager().currentUser;
+
+      // 로그인이 안 된 상태(null)라면 처리 방지
+      if (currentUser == null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              '로그인이 필요한 서비스입니다.',
+              style: TextStyle(color: context.onErrorColor),
+            ),
+            backgroundColor: context.errorColor,
+          ),
+        );
+        return;
+      }
+
+      // 2. 입력된 데이터로 새로운 RentalItem 생성
+      final newItem = RentalItem(
+        // 고유 ID는 현재 시간의 밀리초를 문자열로 사용
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        title: _titleController.text,
+        // 카테고리는 우선 '기타'로 지정 (필요 시 선택 UI 추가 가능)
+        product: Product(name: _itemNameController.text, category: '기타'),
+        location: _locationController.text,
+        price: int.parse(_priceController.text),
+        description: _descriptionController.text,
+        preferences: _preferencesController.text,
+        requesterID: currentUser.id,
+        createdAt: DateTime.now(),
+      );
+
+      // 3. TestDataManager에 데이터 추가 및 상태 변경 알림
+      TestDataManager().addRentalItem(newItem);
+
+      // 4. 성공 메시지 띄우기
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           duration: const Duration(milliseconds: 500),
@@ -112,6 +175,7 @@ class _RentalRequestScreenState extends State<RentalRequestScreen> {
         ),
       );
 
+      // 5. 폼 초기화
       _formKey.currentState!.reset();
       _titleController.clear();
       _itemNameController.clear();
@@ -119,6 +183,9 @@ class _RentalRequestScreenState extends State<RentalRequestScreen> {
       _priceController.clear();
       _preferencesController.clear();
       _descriptionController.clear();
+
+      // (선택) 등록 완료 후 이전 화면(홈)으로 돌아가기
+      // Navigator.of(context).pop();
     }
   }
 

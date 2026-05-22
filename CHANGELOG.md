@@ -35,9 +35,61 @@
                 - 물건 대여 요청 버튼 색 변경
                 - 로그인 창에 앱 이름 반영
                 - 홈 네비게이션 바 아이콘 버그 수정
+                
         - ### commit: CHANGELOG.md 수정
             - #### author: Seo JeongHun
             - #### date: 2026-05-03
             - feature:
                 - changelog.md의 계층 구조 변경
                 - days -> date로 변경
+
+- # feature/data_widget_refactoring
+    - ## version: 1.1.0
+        - ### UI개선 및 구조 리팩토링
+            - #### author: Seo JeongHun
+            - #### date: 2026-05-23
+            - feature:
+                - 데이터 모델 리팩토링
+                    - 기존 Deal, DealStatus, Duration 모델 삭제
+                    - Match, Chatting 모델로 대체하여 대여 흐름 명확화
+                    - RentalStatus enum을 별도 파일(models/rental_status.dart)로 분리
+                    - RentalStatus에 cancelled, otherUserMatched 상태 추가
+                    - Match.chattingID를 non-nullable(필수값)로 변경
+
+                - TestDataManager 싱글톤 도입
+                    - ChangeNotifier 기반 중앙화된 데이터 저장소 구현
+                    - ListenableBuilder를 활용한 반응형 UI 상태 관리 전환
+                    - 매칭 생성/확정/상태변경/취소 등 비즈니스 로직 일원화
+
+                - 위젯 팩토리 패턴 도입
+                    - WidgetFactory 추상 클래스 기반 팩토리 패턴 적용
+                    - 기존 show_*.dart 위젯들을 *_widget_factory.dart로 전면 교체
+                    - ChatWidgetFactory, ChattingRoomWidgetFactory, RentalItemWidgetFactory, ReviewWidgetFactory 구현
+
+                - 채팅 기능 개선
+                    - 내가 참여한 매치 목록을 보여주는 채팅 목록(ChattingList) 화면 추가
+                    - 채팅방 카드에 상대방 이름, 물건명, 마지막 메시지, 시간, 진행 상태 표시
+                    - 채팅창 상단 우측에 물건 상세정보 이동 버튼 추가
+                    - 채팅창에서 대여 상태(pending → matchConfirmed → inProgress → returned → reviewed) 단계별 진행 구현
+
+                - 대여 흐름 완성
+                    - 매칭 확정 시 동일 아이템의 나머지 매치를 otherUserMatched로 자동 전환
+                    - 반납 완료 시 요청자·대여자 양측 rentalHistory에 아이템 자동 추가
+                    - 리뷰 작성 시 상대방 score를 수신한 전체 리뷰 평균으로 자동 재계산
+                    - 요청자 취소: 해당 아이템의 모든 매치를 cancelled로 처리
+                    - 대여자 취소: 본인 매치 cancelled, 나머지 매치를 pending으로 복원, 아이템 상태 초기화
+
+                - 물건 상세정보 페이지 개선
+                    - 현재 사용자 역할(요청자/대여자)에 따라 버튼 조건부 표시
+                    - 요청자: 매칭 확정 전에는 채팅하기 버튼 숨김
+                    - 대여 전 상태(pending, matchConfirmed)에만 취소하기 버튼 노출
+                    - 취소 전 확인 다이얼로그 표시
+
+                - 마이페이지 개선
+                    - 빌린 물건 / 빌려준 물건 / 받은 리뷰 탭으로 구성
+                    - 빌린 물건 탭에서 매칭 확정 전에는 상대방 정보 대신 '매칭 대기 중' 표시
+                    - 받은 리뷰 탭에서 본인이 아닌 타인이 작성한 리뷰만 표시
+
+                - 홈 네비게이션 개선
+                    - 채팅 탭 추가
+                    - BottomNavigationBarType.fixed 적용으로 4개 탭 색상 유지

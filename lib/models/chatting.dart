@@ -1,4 +1,4 @@
-import 'chat.dart';
+import 'package:open_source_software/models/chat.dart';
 
 class Chatting {
   final String id;
