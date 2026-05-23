@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:open_source_software/managers/data_manager.dart';
 import 'package:open_source_software/models/chat.dart';
 import 'package:open_source_software/models/chatting.dart';
 import 'package:open_source_software/models/match.dart';
@@ -7,14 +7,15 @@ import 'package:open_source_software/models/rental_item.dart';
 import 'package:open_source_software/models/review.dart';
 import 'package:open_source_software/models/user.dart';
 
-class TestDataManager extends ChangeNotifier {
+class TestDataManager extends DataManager {
   static final TestDataManager _instance = TestDataManager._internal();
 
   factory TestDataManager() => _instance;
 
   TestDataManager._internal();
 
-  final Map<String, User> _users = {
+  @override
+  final Map<String, User> users = {
     'guest': User(id: 'guest', name: 'Guest', email: ''),
     '0': User(
       id: '0',
@@ -66,7 +67,8 @@ class TestDataManager extends ChangeNotifier {
     ),
   };
 
-  final Map<String, Review> _reviews = {
+  @override
+  final Map<String, Review> reviews = {
     'b1': Review(
       id: 'b1',
       score: 5,
@@ -117,7 +119,8 @@ class TestDataManager extends ChangeNotifier {
     ),
   };
 
-  final Map<String, Chatting> _chattings = {
+  @override
+  final Map<String, Chatting> chattings = {
     'chat_m_b1': Chatting(id: 'chat_m_b1'),
     'chat_m_b2': Chatting(id: 'chat_m_b2'),
     'chat_m_b3': Chatting(id: 'chat_m_b3'),
@@ -129,7 +132,8 @@ class TestDataManager extends ChangeNotifier {
     'c_test2': Chatting(id: 'c_test2'),
   };
 
-  final Map<String, Match> _matches = {
+  @override
+  final Map<String, Match> matches = {
     'm_b1': const Match(
       matchID: 'm_b1',
       rentalItemID: 'b1',
@@ -199,7 +203,8 @@ class TestDataManager extends ChangeNotifier {
     ),
   };
 
-  final Map<String, RentalItem> _rentalItems = {
+  @override
+  final Map<String, RentalItem> rentalItems = {
     '1': RentalItem(
       id: '1',
       title: '급하게 드릴 필요해요',
@@ -366,40 +371,41 @@ class TestDataManager extends ChangeNotifier {
     ),
   };
 
-  // ── Getters ──────────────────────────────────────────────────────────────
-
-  Map<String, RentalItem> get rentalItems => _rentalItems;
-  Map<String, Match> get matches => _matches;
-
   // ── Lookups ───────────────────────────────────────────────────────────────
 
+  @override
   User getUserById(String id) {
-    return _users[id] ?? User(id: id, name: '알 수 없음', email: '');
+    return users[id] ?? User(id: id, name: '알 수 없음', email: '');
   }
 
-  Review? getReviewById(String id) => _reviews[id];
+  @override
+  Review? getReviewById(String id) => reviews[id];
 
-  Chatting? getChattingById(String id) => _chattings[id];
+  @override
+  Chatting? getChattingById(String id) => chattings[id];
 
   // 특정 아이템에서 해당 유저(요청자 또는 대여자)가 참여한 매치를 반환
+  @override
   Match? findMatch(String rentalItemId, String userId) {
-    final item = _rentalItems[rentalItemId];
+    final item = rentalItems[rentalItemId];
     if (item == null) return null;
     final isRequester = item.requesterID == userId;
-    return _matches.values.where((m) {
+    return matches.values.where((m) {
       if (m.rentalItemID != rentalItemId) return false;
       return isRequester ? m.requesterID == userId : m.lenderID == userId;
     }).firstOrNull;
   }
 
+  @override
   String? getMatchedLenderIdForItem(String rentalItemId) {
-    final item = _rentalItems[rentalItemId];
+    final item = rentalItems[rentalItemId];
     if (item?.matchedID == null) return null;
-    return _matches[item!.matchedID]?.lenderID;
+    return matches[item!.matchedID]?.lenderID;
   }
 
+  @override
   RentalStatus getStatusForUserOnItem(String rentalItemId, String userId) {
-    final item = _rentalItems[rentalItemId];
+    final item = rentalItems[rentalItemId];
     if (item == null) return RentalStatus.pending;
 
     // 요청자는 아이템 실제 상태
@@ -412,7 +418,7 @@ class TestDataManager extends ChangeNotifier {
 
     // 매칭이 확정된 경우
     if (item.matchedID != null) {
-      final confirmedMatch = _matches[item.matchedID!];
+      final confirmedMatch = matches[item.matchedID!];
       if (confirmedMatch?.lenderID == userId) return item.rentalStatus;
       // 확정되지 않은 다른 대여자
       return RentalStatus.otherUserMatched;
@@ -425,11 +431,12 @@ class TestDataManager extends ChangeNotifier {
   // ── Match 생성 ─────────────────────────────────────────────────────────────
 
   // 대여자가 새 매치 + 채팅방을 생성
+  @override
   Match createMatchWithChatting(String rentalItemId, String lenderId) {
-    final item = _rentalItems[rentalItemId]!;
+    final item = rentalItems[rentalItemId]!;
     final matchId = 'match_${rentalItemId}_$lenderId';
     final chattingId = 'chat_$matchId';
-    _chattings[chattingId] = Chatting(id: chattingId);
+    chattings[chattingId] = Chatting(id: chattingId);
     final newMatch = Match(
       matchID: matchId,
       rentalItemID: rentalItemId,
@@ -437,8 +444,8 @@ class TestDataManager extends ChangeNotifier {
       lenderID: lenderId,
       chattingID: chattingId,
     );
-    _matches[matchId] = newMatch;
-    _rentalItems[rentalItemId] = item.copyWith(
+    matches[matchId] = newMatch;
+    rentalItems[rentalItemId] = item.copyWith(
       matchIDs: [...item.matchIDs, matchId],
     );
     changeData();
@@ -448,12 +455,13 @@ class TestDataManager extends ChangeNotifier {
   // ── Match 상태 변경 ────────────────────────────────────────────────────────
 
   // pending → matchConfirmed: 아이템 상태 및 isMatched/matchedID 업데이트
+  @override
   void confirmMatch(String matchId) {
-    final match = _matches[matchId];
+    final match = matches[matchId];
     if (match == null) return;
-    final item = _rentalItems[match.rentalItemID];
+    final item = rentalItems[match.rentalItemID];
     if (item != null) {
-      _rentalItems[match.rentalItemID] = item.copyWith(
+      rentalItems[match.rentalItemID] = item.copyWith(
         isMatched: true,
         matchedID: matchId,
         rentalStatus: RentalStatus.matchConfirmed,
@@ -463,10 +471,11 @@ class TestDataManager extends ChangeNotifier {
   }
 
   // 요청자가 취소: 아이템 상태를 cancelled로 변경
+  @override
   void cancelAllMatchesForItem(String rentalItemId) {
-    final item = _rentalItems[rentalItemId];
+    final item = rentalItems[rentalItemId];
     if (item != null) {
-      _rentalItems[rentalItemId] = item.copyWith(
+      rentalItems[rentalItemId] = item.copyWith(
         isMatched: false,
         clearMatchedID: true,
         rentalStatus: RentalStatus.cancelled,
@@ -476,12 +485,13 @@ class TestDataManager extends ChangeNotifier {
   }
 
   // 대여자가 취소: 아이템 상태를 pending으로 되돌리고 매칭 정보 초기화
+  @override
   void cancelLenderMatch(String matchId) {
-    final match = _matches[matchId];
+    final match = matches[matchId];
     if (match == null) return;
-    final item = _rentalItems[match.rentalItemID];
+    final item = rentalItems[match.rentalItemID];
     if (item != null) {
-      _rentalItems[match.rentalItemID] = item.copyWith(
+      rentalItems[match.rentalItemID] = item.copyWith(
         isMatched: false,
         clearMatchedID: true,
         rentalStatus: RentalStatus.pending,
@@ -490,24 +500,25 @@ class TestDataManager extends ChangeNotifier {
     changeData();
   }
 
+  @override
   void updateMatchStatus(String matchId, RentalStatus newStatus) {
-    final match = _matches[matchId];
+    final match = matches[matchId];
     if (match == null) return;
-    final item = _rentalItems[match.rentalItemID];
+    final item = rentalItems[match.rentalItemID];
     if (item != null) {
-      _rentalItems[match.rentalItemID] = item.copyWith(rentalStatus: newStatus);
+      rentalItems[match.rentalItemID] = item.copyWith(rentalStatus: newStatus);
     }
     if (newStatus == RentalStatus.returned) {
       final itemId = match.rentalItemID;
-      final lender = _users[match.lenderID];
+      final lender = users[match.lenderID];
       if (lender != null && !lender.rentalHistory.contains(itemId)) {
-        _users[match.lenderID] = lender.copyWith(
+        users[match.lenderID] = lender.copyWith(
           rentalHistory: [...lender.rentalHistory, itemId],
         );
       }
-      final requester = _users[match.requesterID];
+      final requester = users[match.requesterID];
       if (requester != null && !requester.rentalHistory.contains(itemId)) {
-        _users[match.requesterID] = requester.copyWith(
+        users[match.requesterID] = requester.copyWith(
           rentalHistory: [...requester.rentalHistory, itemId],
         );
       }
@@ -516,56 +527,58 @@ class TestDataManager extends ChangeNotifier {
   }
 
   // lenderReview = 대여자가 작성 → 요청자(borrower)에 대한 리뷰 → 요청자 score 재계산
+  @override
   void updateMatchLenderReview(String matchId, Review newReview) {
-    final match = _matches[matchId];
+    final match = matches[matchId];
     if (match == null) return;
-    _reviews[newReview.id] = newReview;
-    _matches[matchId] = match.copyWith(lenderReviewID: newReview.id);
-    final item = _rentalItems[match.rentalItemID];
+    reviews[newReview.id] = newReview;
+    matches[matchId] = match.copyWith(lenderReviewID: newReview.id);
+    final item = rentalItems[match.rentalItemID];
     if (item != null) {
-      _rentalItems[match.rentalItemID] = item.copyWith(
+      rentalItems[match.rentalItemID] = item.copyWith(
         rentalStatus: RentalStatus.reviewed,
       );
     }
     final newScore = _recalculateScore(match.requesterID);
-    final requester = _users[match.requesterID];
+    final requester = users[match.requesterID];
     if (requester != null) {
-      _users[match.requesterID] = requester.copyWith(score: newScore);
+      users[match.requesterID] = requester.copyWith(score: newScore);
     }
     changeData();
   }
 
   // requesterReview = 요청자가 작성 → 대여자(lender)에 대한 리뷰 → 대여자 score 재계산
+  @override
   void updateMatchRequesterReview(String matchId, Review newReview) {
-    final match = _matches[matchId];
+    final match = matches[matchId];
     if (match == null) return;
-    _reviews[newReview.id] = newReview;
-    _matches[matchId] = match.copyWith(requesterReviewID: newReview.id);
-    final item = _rentalItems[match.rentalItemID];
+    reviews[newReview.id] = newReview;
+    matches[matchId] = match.copyWith(requesterReviewID: newReview.id);
+    final item = rentalItems[match.rentalItemID];
     if (item != null) {
-      _rentalItems[match.rentalItemID] = item.copyWith(
+      rentalItems[match.rentalItemID] = item.copyWith(
         rentalStatus: RentalStatus.reviewed,
       );
     }
     final newScore = _recalculateScore(match.lenderID);
-    final lender = _users[match.lenderID];
+    final lender = users[match.lenderID];
     if (lender != null) {
-      _users[match.lenderID] = lender.copyWith(score: newScore);
+      users[match.lenderID] = lender.copyWith(score: newScore);
     }
     changeData();
   }
 
   double _recalculateScore(String userId) {
     final scores = <int>[];
-    for (final match in _matches.values) {
+    for (final match in matches.values) {
       // 이 유저가 requester일 때 → 대여자가 작성한 lenderReview가 이 유저에 대한 리뷰
       if (match.requesterID == userId && match.lenderReviewID != null) {
-        final review = _reviews[match.lenderReviewID!];
+        final review = reviews[match.lenderReviewID!];
         if (review != null) scores.add(review.score);
       }
       // 이 유저가 lender일 때 → 요청자가 작성한 requesterReview가 이 유저에 대한 리뷰
       if (match.lenderID == userId && match.requesterReviewID != null) {
-        final review = _reviews[match.requesterReviewID!];
+        final review = reviews[match.requesterReviewID!];
         if (review != null) scores.add(review.score);
       }
     }
@@ -575,8 +588,9 @@ class TestDataManager extends ChangeNotifier {
 
   // ── 채팅 ──────────────────────────────────────────────────────────────────
 
+  @override
   void addChat(String chattingId, Chat chat) {
-    final chatting = _chattings[chattingId];
+    final chatting = chattings[chattingId];
     if (chatting != null) {
       chatting.addChat(chat);
       changeData();
@@ -585,33 +599,33 @@ class TestDataManager extends ChangeNotifier {
 
   // ── 아이템 목록 ───────────────────────────────────────────────────────────
 
+  @override
   void addRentalItem(RentalItem item) {
-    _rentalItems[item.id] = item;
+    rentalItems[item.id] = item;
     changeData();
   }
 
+  @override
   List<RentalItem> requestRentalItems(User user) {
-    return _rentalItems.values
+    return rentalItems.values
         .where((item) => item.requesterID == user.id)
         .toList();
   }
 
   // 해당 유저가 확정 대여자로 참여한 아이템 목록
+  @override
   List<RentalItem> lentRentalItems(User user) {
-    return _rentalItems.values.where((item) {
+    return rentalItems.values.where((item) {
       if (!item.isMatched || item.matchedID == null) return false;
-      return _matches[item.matchedID]?.lenderID == user.id;
+      return matches[item.matchedID]?.lenderID == user.id;
     }).toList();
   }
 
   // 아직 매칭되지 않고, 현재 유저가 요청자가 아닌 아이템
+  @override
   List<RentalItem> notMatchedRentalItems(User user) {
-    return _rentalItems.values
+    return rentalItems.values
         .where((item) => !item.isMatched && item.requesterID != user.id)
         .toList();
-  }
-
-  void changeData() {
-    notifyListeners();
   }
 }

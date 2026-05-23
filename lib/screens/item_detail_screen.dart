@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:open_source_software/extensions/theme_extension.dart';
+import 'package:open_source_software/managers/data_manager.dart';
 import 'package:open_source_software/managers/login_manager.dart';
 import 'package:open_source_software/managers/test_data_manager.dart';
 import 'package:open_source_software/models/match.dart';
@@ -15,27 +16,24 @@ class ItemDetailScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    DataManager dataManager = TestDataManager();
     return Scaffold(
       appBar: AppBar(title: const Text('물건 상세정보')),
       body: ListenableBuilder(
-        listenable: TestDataManager(),
+        listenable: dataManager,
         builder: (context, child) {
-          final currentItem = TestDataManager().rentalItems[item.id] ?? item;
-          final requester = TestDataManager().getUserById(
-            currentItem.requesterID,
-          );
+          final currentItem = dataManager.rentalItems[item.id] ?? item;
+          final requester = dataManager.getUserById(currentItem.requesterID);
 
           // 확정된 매치에서 리뷰 조회
           final currentMatch = currentItem.matchedID != null
-              ? TestDataManager().matches[currentItem.matchedID!]
+              ? dataManager.matches[currentItem.matchedID!]
               : null;
           final requesterReview = currentMatch?.requesterReviewID != null
-              ? TestDataManager().getReviewById(
-                  currentMatch!.requesterReviewID!,
-                )
+              ? dataManager.getReviewById(currentMatch!.requesterReviewID!)
               : null;
           final lenderReview = currentMatch?.lenderReviewID != null
-              ? TestDataManager().getReviewById(currentMatch!.lenderReviewID!)
+              ? dataManager.getReviewById(currentMatch!.lenderReviewID!)
               : null;
 
           return SingleChildScrollView(
@@ -236,9 +234,9 @@ class ItemDetailScreen extends StatelessWidget {
         },
       ),
       bottomNavigationBar: ListenableBuilder(
-        listenable: TestDataManager(),
+        listenable: dataManager,
         builder: (context, _) {
-          final tdm = TestDataManager();
+          final tdm = dataManager;
           final currentUser = LoginManager().currentUserOrGuest;
           final currentItem = tdm.rentalItems[item.id] ?? item;
           final isRequester = currentItem.requesterID == currentUser.id;
@@ -264,7 +262,8 @@ class ItemDetailScreen extends StatelessWidget {
             // 이 대여자가 현재 확정된 대여자일 때만 취소 버튼 표시
             final isConfirmedLender =
                 match != null && currentItem.matchedID == match.matchID;
-            final isPreRental = isConfirmedLender &&
+            final isPreRental =
+                isConfirmedLender &&
                 (currentItem.rentalStatus == RentalStatus.pending ||
                     currentItem.rentalStatus == RentalStatus.matchConfirmed);
             return _buildBottomBar(
@@ -297,31 +296,35 @@ class ItemDetailScreen extends StatelessWidget {
           children: [
             if (showChat)
               SizedBox(
-              width: double.infinity,
-              child: ElevatedButton(
-                onPressed: () =>
-                    _onChatPressed(context, currentItem, match, isRequester),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: context.primaryColor,
-                  foregroundColor: context.onPrimaryColor,
-                  padding: const EdgeInsets.symmetric(vertical: 16),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(8),
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: () =>
+                      _onChatPressed(context, currentItem, match, isRequester),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: context.primaryColor,
+                    foregroundColor: context.onPrimaryColor,
+                    padding: const EdgeInsets.symmetric(vertical: 16),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                  ),
+                  child: const Text(
+                    '채팅하기',
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                 ),
-                child: const Text(
-                  '채팅하기',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
               ),
-            ),
             if (showCancel) ...[
               const SizedBox(height: 8),
               SizedBox(
                 width: double.infinity,
                 child: OutlinedButton(
                   onPressed: () => _onCancelPressed(
-                      context, currentItem, match, isRequester),
+                    context,
+                    currentItem,
+                    match,
+                    isRequester,
+                  ),
                   style: OutlinedButton.styleFrom(
                     foregroundColor: Colors.red,
                     side: const BorderSide(color: Colors.red),
@@ -332,8 +335,7 @@ class ItemDetailScreen extends StatelessWidget {
                   ),
                   child: const Text(
                     '취소하기',
-                    style:
-                        TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                 ),
               ),
@@ -350,6 +352,7 @@ class ItemDetailScreen extends StatelessWidget {
     Match? match,
     bool isRequester,
   ) {
+    DataManager dataManager = TestDataManager();
     if (isRequester) {
       Navigator.push(
         context,
@@ -359,8 +362,9 @@ class ItemDetailScreen extends StatelessWidget {
         ),
       );
     } else {
-      final effectiveMatch = match ??
-          TestDataManager().createMatchWithChatting(
+      final effectiveMatch =
+          match ??
+          dataManager.createMatchWithChatting(
             currentItem.id,
             LoginManager().currentUserOrGuest.id,
           );
@@ -380,6 +384,7 @@ class ItemDetailScreen extends StatelessWidget {
     Match? match,
     bool isRequester,
   ) {
+    DataManager dataManager = TestDataManager();
     showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -403,9 +408,9 @@ class ItemDetailScreen extends StatelessWidget {
     ).then((confirmed) {
       if (confirmed != true) return;
       if (isRequester) {
-        TestDataManager().cancelAllMatchesForItem(currentItem.id);
+        dataManager.cancelAllMatchesForItem(currentItem.id);
       } else if (match != null) {
-        TestDataManager().cancelLenderMatch(match.matchID);
+        dataManager.cancelLenderMatch(match.matchID);
       }
     });
   }

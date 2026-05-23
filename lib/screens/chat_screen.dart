@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:open_source_software/extensions/rental_status_extension.dart';
 import 'package:open_source_software/extensions/theme_extension.dart';
+import 'package:open_source_software/managers/data_manager.dart';
 import 'package:open_source_software/managers/login_manager.dart';
 import 'package:open_source_software/managers/test_data_manager.dart';
 import 'package:open_source_software/models/chat.dart';
@@ -15,11 +16,7 @@ class ChatScreen extends StatefulWidget {
   final RentalItem rentalItem;
   final Match match;
 
-  const ChatScreen({
-    super.key,
-    required this.rentalItem,
-    required this.match,
-  });
+  const ChatScreen({super.key, required this.rentalItem, required this.match});
 
   @override
   State<ChatScreen> createState() => _ChatScreenState();
@@ -31,7 +28,7 @@ class _ChatScreenState extends State<ChatScreen> {
   final List<Chat> _pendingMessages = [];
   final ScrollController _scrollController = ScrollController();
   final LoginManager loginManager = LoginManager();
-  final TestDataManager testDataManager = TestDataManager();
+  final DataManager dataManager = TestDataManager();
   bool _isReadingPastMessages = false;
   late RentalStatus _currentStatus;
   late User _otherUser;
@@ -41,7 +38,7 @@ class _ChatScreenState extends State<ChatScreen> {
   void initState() {
     super.initState();
 
-    _currentStatus = testDataManager.getStatusForUserOnItem(
+    _currentStatus = dataManager.getStatusForUserOnItem(
       widget.rentalItem.id,
       loginManager.currentUserOrGuest.id,
     );
@@ -50,7 +47,7 @@ class _ChatScreenState extends State<ChatScreen> {
     final otherUserId = widget.match.requesterID == currentUserId
         ? widget.match.lenderID
         : widget.match.requesterID;
-    _otherUser = testDataManager.getUserById(otherUserId);
+    _otherUser = dataManager.getUserById(otherUserId);
 
     _scrollController.addListener(() {
       bool isPast = _scrollController.offset > 100;
@@ -72,7 +69,7 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   void _loadMessages() {
-    final chatting = testDataManager.getChattingById(widget.match.chattingID);
+    final chatting = dataManager.getChattingById(widget.match.chattingID);
     if (chatting == null) return;
     _messages.addAll(chatting.chats);
     _syncedCount = chatting.chats.length;
@@ -80,14 +77,14 @@ class _ChatScreenState extends State<ChatScreen> {
 
   void _syncFromChatting() {
     if (!mounted) return;
-    final latestStatus = testDataManager.getStatusForUserOnItem(
+    final latestStatus = dataManager.getStatusForUserOnItem(
       widget.rentalItem.id,
       loginManager.currentUserOrGuest.id,
     );
     if (latestStatus != _currentStatus) {
       setState(() => _currentStatus = latestStatus);
     }
-    final chatting = testDataManager.getChattingById(widget.match.chattingID);
+    final chatting = dataManager.getChattingById(widget.match.chattingID);
     if (chatting == null) return;
     final chats = chatting.chats;
     if (chats.length <= _syncedCount) return;
@@ -135,7 +132,7 @@ class _ChatScreenState extends State<ChatScreen> {
   // 상대방 메시지 수신 시뮬레이션
   void _receiveMessage(Chat message) {
     _messageController.clear();
-    testDataManager.addChat(widget.match.chattingID, message);
+    dataManager.addChat(widget.match.chattingID, message);
   }
 
   void _sendMessage() {
@@ -150,7 +147,7 @@ class _ChatScreenState extends State<ChatScreen> {
       sendTime: DateTime.now(),
     );
     _messageController.clear();
-    testDataManager.addChat(widget.match.chattingID, chat);
+    dataManager.addChat(widget.match.chattingID, chat);
   }
 
   void _updateRentalStatus() {
@@ -159,15 +156,15 @@ class _ChatScreenState extends State<ChatScreen> {
     switch (_currentStatus) {
       case RentalStatus.pending:
         nextStatus = RentalStatus.matchConfirmed;
-        testDataManager.confirmMatch(widget.match.matchID);
+        dataManager.confirmMatch(widget.match.matchID);
         break;
       case RentalStatus.matchConfirmed:
         nextStatus = RentalStatus.inProgress;
-        testDataManager.updateMatchStatus(widget.match.matchID, nextStatus);
+        dataManager.updateMatchStatus(widget.match.matchID, nextStatus);
         break;
       case RentalStatus.inProgress:
         nextStatus = RentalStatus.returned;
-        testDataManager.updateMatchStatus(widget.match.matchID, nextStatus);
+        dataManager.updateMatchStatus(widget.match.matchID, nextStatus);
         break;
       case RentalStatus.returned:
         Navigator.push(
@@ -201,7 +198,9 @@ class _ChatScreenState extends State<ChatScreen> {
               '취소된 거래입니다',
               style: TextStyle(color: context.onSurfaceColor),
             ),
-            backgroundColor: RentalStatus.cancelled.color.withValues(alpha: 0.8),
+            backgroundColor: RentalStatus.cancelled.color.withValues(
+              alpha: 0.8,
+            ),
           ),
         );
         return;
@@ -213,7 +212,9 @@ class _ChatScreenState extends State<ChatScreen> {
               '다른 사용자와 매칭된 거래입니다',
               style: TextStyle(color: context.onSurfaceColor),
             ),
-            backgroundColor: RentalStatus.otherUserMatched.color.withValues(alpha: 0.8),
+            backgroundColor: RentalStatus.otherUserMatched.color.withValues(
+              alpha: 0.8,
+            ),
           ),
         );
         return;
@@ -266,13 +267,15 @@ class _ChatScreenState extends State<ChatScreen> {
         ],
       ),
       body: ListenableBuilder(
-        listenable: testDataManager,
+        listenable: dataManager,
         builder: (context, child) {
-          WidgetsBinding.instance.addPostFrameCallback((_) => _syncFromChatting());
+          WidgetsBinding.instance.addPostFrameCallback(
+            (_) => _syncFromChatting(),
+          );
 
           // 아이템이 다른 매치로 확정된 경우 버튼 비활성화
           final latestItem =
-              testDataManager.rentalItems[widget.rentalItem.id] ??
+              dataManager.rentalItems[widget.rentalItem.id] ??
               widget.rentalItem;
           final isActiveParticipant =
               !latestItem.isMatched ||

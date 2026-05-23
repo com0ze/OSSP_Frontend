@@ -114,3 +114,23 @@
                     - 취소 전 확인 다이얼로그 표시
                     - 취소 완료 후 취소하기 버튼 자동 소멸
                     - 요청자는 매칭 전(대기 중)에도 취소하기 버튼 표시
+
+        - ### DataManager 추상화 및 의존성 역전 적용
+            - #### author: Seo JeongHun
+            - #### date: 2026-05-23
+            - feature:
+                - DataManager 추상 클래스 도입 (managers/data_manager.dart 신규 생성)
+                    - ChangeNotifier를 상속하는 DataManager 추상 클래스 정의
+                    - 데이터 접근(users, reviews, chattings, matches, rentalItems)을 추상 getter로 선언
+                    - 모든 비즈니스 로직 메서드(getUserById, findMatch, confirmMatch 등)를 추상 인터페이스로 정의
+                    - changeData() 메서드를 추상 클래스로 이전하여 중복 제거
+
+                - TestDataManager 리팩토링
+                    - ChangeNotifier 직접 상속에서 DataManager 상속으로 변경
+                    - private 필드(_users, _reviews 등)를 DataManager 규약에 맞게 공개 필드로 변경
+                    - @override 어노테이션 추가로 인터페이스 구현 명시
+
+                - 화면 및 위젯에서 의존성 역전 적용
+                    - 모든 화면(chatting_list, lender_profile, other_user_profile, rental_list, rental_request, review, user_profile)에서 TestDataManager 타입 대신 DataManager 타입으로 변수 선언
+                    - rental_item_widget_factory도 동일하게 DataManager 타입 참조로 전환
+                    - 구체 구현(TestDataManager)이 아닌 추상 인터페이스(DataManager)에 의존하도록 구조 개선

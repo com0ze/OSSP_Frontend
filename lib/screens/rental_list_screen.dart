@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:open_source_software/managers/data_manager.dart';
 import 'package:open_source_software/managers/login_manager.dart';
 import 'package:open_source_software/managers/test_data_manager.dart';
 import 'package:open_source_software/screens/item_detail_screen.dart';
@@ -12,7 +13,7 @@ class RentalListScreen extends StatefulWidget {
 }
 
 class _RentalListScreenState extends State<RentalListScreen> {
-  final TestDataManager testDataManager = TestDataManager();
+  final DataManager dataManager = TestDataManager();
   final LoginManager loginManager = LoginManager();
 
   @override
@@ -21,7 +22,7 @@ class _RentalListScreenState extends State<RentalListScreen> {
       listenable: TestDataManager(),
       builder: (context, child) {
         final currentUser = loginManager.currentUserOrGuest;
-        final rentalItems = testDataManager.rentalItems.values
+        final rentalItems = dataManager.rentalItems.values
             .where(
               (item) => !item.isMatched && item.requesterID != currentUser.id,
             )

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:open_source_software/managers/data_manager.dart';
 import 'package:open_source_software/managers/login_manager.dart';
 import 'package:open_source_software/managers/test_data_manager.dart';
 import 'package:open_source_software/screens/chat_screen.dart';
@@ -12,16 +13,16 @@ class ChattingListScreen extends StatefulWidget {
 }
 
 class _ChattingListScreenState extends State<ChattingListScreen> {
-  final TestDataManager testDataManager = TestDataManager();
+  final DataManager dataManager = TestDataManager();
   final LoginManager loginManager = LoginManager();
 
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
-      listenable: testDataManager,
+      listenable: dataManager,
       builder: (context, child) {
         final currentUser = loginManager.currentUserOrGuest;
-        final matches = testDataManager.matches.values
+        final matches = dataManager.matches.values
             .where(
               (m) =>
                   m.requesterID == currentUser.id ||
@@ -50,7 +51,7 @@ class _ChattingListScreenState extends State<ChattingListScreen> {
                   itemBuilder: (context, index) {
                     final match = matches[index];
                     final rentalItem =
-                        testDataManager.rentalItems[match.rentalItemID];
+                        dataManager.rentalItems[match.rentalItemID];
                     return ChattingRoomWidgetFactory(
                       match: match,
                       onTap: () {

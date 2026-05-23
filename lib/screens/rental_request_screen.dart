@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:open_source_software/extensions/theme_extension.dart';
+import 'package:open_source_software/managers/data_manager.dart';
 import 'package:open_source_software/managers/login_manager.dart';
 import 'package:open_source_software/managers/test_data_manager.dart';
 import 'package:open_source_software/models/product.dart';
@@ -127,6 +128,7 @@ class _RentalRequestScreenState extends State<RentalRequestScreen> {
   // }
 
   void _submitRequest() {
+    DataManager dataManager = TestDataManager();
     if (_formKey.currentState!.validate()) {
       // 1. 현재 로그인한 사용자 정보 가져오기
       final currentUser = LoginManager().currentUser;
@@ -160,8 +162,8 @@ class _RentalRequestScreenState extends State<RentalRequestScreen> {
         createdAt: DateTime.now(),
       );
 
-      // 3. TestDataManager에 데이터 추가 및 상태 변경 알림
-      TestDataManager().addRentalItem(newItem);
+      // 3. DataManager에 데이터 추가 및 상태 변경 알림
+      dataManager.addRentalItem(newItem);
 
       // 4. 성공 메시지 띄우기
       ScaffoldMessenger.of(context).showSnackBar(

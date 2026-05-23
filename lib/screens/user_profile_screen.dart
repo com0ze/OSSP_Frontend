@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:open_source_software/extensions/rental_status_extension.dart';
 import 'package:open_source_software/extensions/theme_extension.dart';
+import 'package:open_source_software/managers/data_manager.dart';
 import 'package:open_source_software/managers/login_manager.dart';
 import 'package:open_source_software/managers/test_data_manager.dart';
 import 'package:open_source_software/models/rental_item.dart';
@@ -22,7 +23,7 @@ class _UserProfileScreenState extends State<UserProfileScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final LoginManager loginManager = LoginManager();
-  final TestDataManager testDataManager = TestDataManager();
+  final DataManager dataManager = TestDataManager();
   final User _currentUser = LoginManager().currentUserOrGuest;
 
   @override
@@ -43,10 +44,10 @@ class _UserProfileScreenState extends State<UserProfileScreen>
     final double responsivePadding = screenWidth * 0.01;
 
     return ListenableBuilder(
-      listenable: TestDataManager(),
+      listenable: dataManager,
       builder: (context, child) {
-        final borrowedItems = testDataManager.requestRentalItems(_currentUser);
-        final lentItems = testDataManager.lentRentalItems(_currentUser);
+        final borrowedItems = dataManager.requestRentalItems(_currentUser);
+        final lentItems = dataManager.lentRentalItems(_currentUser);
 
         return Scaffold(
           appBar: AppBar(
@@ -99,15 +100,15 @@ class _UserProfileScreenState extends State<UserProfileScreen>
   }
 
   Widget _buildReviews() {
-    List<Review> reviews = testDataManager.matches.values
+    List<Review> reviews = dataManager.matches.values
         .map((m) {
           // 이 유저가 요청자 → 대여자가 작성한 lenderReview가 이 유저에 대한 리뷰
           if (m.requesterID == _currentUser.id && m.lenderReviewID != null) {
-            return testDataManager.getReviewById(m.lenderReviewID!);
+            return dataManager.getReviewById(m.lenderReviewID!);
           }
           // 이 유저가 대여자 → 요청자가 작성한 requesterReview가 이 유저에 대한 리뷰
           if (m.lenderID == _currentUser.id && m.requesterReviewID != null) {
-            return testDataManager.getReviewById(m.requesterReviewID!);
+            return dataManager.getReviewById(m.requesterReviewID!);
           }
           return null;
         })
@@ -179,15 +180,15 @@ class _UserProfileScreenState extends State<UserProfileScreen>
         // 빌린 물건: 매칭 확정된 경우에만 상대방(대여자) 정보 표시
         final User? otherUser;
         if (isBorrowed) {
-          final lenderId = testDataManager.getMatchedLenderIdForItem(item.id);
+          final lenderId = dataManager.getMatchedLenderIdForItem(item.id);
           otherUser = lenderId != null
-              ? testDataManager.getUserById(lenderId)
+              ? dataManager.getUserById(lenderId)
               : null;
         } else {
-          otherUser = testDataManager.getUserById(item.requesterID);
+          otherUser = dataManager.getUserById(item.requesterID);
         }
 
-        final status = testDataManager.getStatusForUserOnItem(
+        final status = dataManager.getStatusForUserOnItem(
           item.id,
           _currentUser.id,
         );

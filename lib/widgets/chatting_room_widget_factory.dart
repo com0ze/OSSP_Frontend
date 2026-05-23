@@ -23,18 +23,19 @@ class ChattingRoomWidgetFactory extends WidgetFactory {
 
   @override
   Widget makeWidget(BuildContext context) {
-    final testDataManager = TestDataManager();
+    final dataManager = TestDataManager();
     final loginManager = LoginManager();
 
     final currentUserId = loginManager.currentUserOrGuest.id;
     final otherUserId = match.requesterID == currentUserId
         ? match.lenderID
         : match.requesterID;
-    final otherUser = testDataManager.getUserById(otherUserId);
-    final item = testDataManager.rentalItems[match.rentalItemID];
-    final Chat? lastChat =
-        testDataManager.getChattingById(match.chattingID)?.getLastChat();
-    final status = testDataManager.getStatusForUserOnItem(
+    final otherUser = dataManager.getUserById(otherUserId);
+    final item = dataManager.rentalItems[match.rentalItemID];
+    final Chat? lastChat = dataManager
+        .getChattingById(match.chattingID)
+        ?.getLastChat();
+    final status = dataManager.getStatusForUserOnItem(
       match.rentalItemID,
       currentUserId,
     );

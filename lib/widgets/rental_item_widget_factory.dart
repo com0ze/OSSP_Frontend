@@ -23,7 +23,8 @@ class RentalItemWidgetFactory extends WidgetFactory {
 
   @override
   Widget makeWidget(BuildContext context) {
-    final requester = TestDataManager().getUserById(item.requesterID);
+    final dataManager = TestDataManager();
+    final requester = dataManager.getUserById(item.requesterID);
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: InkWell(
@@ -111,10 +112,7 @@ class RentalItemWidgetFactory extends WidgetFactory {
                     ),
                   ),
                   const SizedBox(width: 6),
-                  Text(
-                    requester.name,
-                    style: const TextStyle(fontSize: 14),
-                  ),
+                  Text(requester.name, style: const TextStyle(fontSize: 14)),
                   const SizedBox(width: 8),
                   Icon(Icons.star, size: 14, color: context.starColor),
                   const SizedBox(width: 2),

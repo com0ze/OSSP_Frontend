@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:open_source_software/extensions/theme_extension.dart';
+import 'package:open_source_software/managers/data_manager.dart';
 import 'package:open_source_software/managers/test_data_manager.dart';
 import 'package:open_source_software/models/match.dart';
 import 'package:open_source_software/models/rental_item.dart';
@@ -73,7 +74,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
       ),
     );
 
-    final testDataManager = TestDataManager();
+    final DataManager dataManager = TestDataManager();
     final review = Review(
       id: widget.match.matchID,
       score: _rating,
@@ -83,9 +84,9 @@ class _ReviewScreenState extends State<ReviewScreen> {
     );
 
     if (widget.match.lenderID == widget.reviewee.id) {
-      testDataManager.updateMatchLenderReview(widget.match.matchID, review);
+      dataManager.updateMatchLenderReview(widget.match.matchID, review);
     } else {
-      testDataManager.updateMatchRequesterReview(widget.match.matchID, review);
+      dataManager.updateMatchRequesterReview(widget.match.matchID, review);
     }
 
     Navigator.of(context).popUntil((route) => route.isFirst);

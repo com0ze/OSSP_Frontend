@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:open_source_software/extensions/theme_extension.dart';
+import 'package:open_source_software/managers/data_manager.dart';
 import 'package:open_source_software/managers/test_data_manager.dart';
 import 'package:open_source_software/models/review.dart';
 import 'package:open_source_software/models/user.dart';
@@ -8,7 +9,7 @@ import 'package:open_source_software/widgets/review_widget_factory.dart';
 
 class OtherUserProfileScreen extends StatelessWidget {
   final User user;
-  final TestDataManager testDataManager = TestDataManager();
+  final DataManager dataManager = TestDataManager();
 
   OtherUserProfileScreen({super.key, required this.user});
 
@@ -83,15 +84,15 @@ class OtherUserProfileScreen extends StatelessWidget {
   }
 
   List<Review> _generateReviews() {
-    return testDataManager.matches.values
+    return dataManager.matches.values
         .map((m) {
           // 이 유저가 요청자 → 대여자가 작성한 lenderReview가 이 유저에 대한 리뷰
           if (m.requesterID == user.id && m.lenderReviewID != null) {
-            return testDataManager.getReviewById(m.lenderReviewID!);
+            return dataManager.getReviewById(m.lenderReviewID!);
           }
           // 이 유저가 대여자 → 요청자가 작성한 requesterReview가 이 유저에 대한 리뷰
           if (m.lenderID == user.id && m.requesterReviewID != null) {
-            return testDataManager.getReviewById(m.requesterReviewID!);
+            return dataManager.getReviewById(m.requesterReviewID!);
           }
           return null;
         })

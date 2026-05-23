@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:open_source_software/extensions/theme_extension.dart';
+import 'package:open_source_software/managers/data_manager.dart';
 import 'package:open_source_software/managers/test_data_manager.dart';
 import 'package:open_source_software/models/user.dart';
 
@@ -14,9 +15,10 @@ class UserInfoHeader extends StatelessWidget {
   Widget build(BuildContext context) {
     final double screenWidth = MediaQuery.of(context).size.width;
     final double responsivePadding = screenWidth * 0.20; // 20% 여백
+    final DataManager dataManager = TestDataManager();
 
     return ListenableBuilder(
-      listenable: TestDataManager(),
+      listenable: dataManager,
       builder: (context, child) {
         return Container(
           padding: const EdgeInsets.all(24),
