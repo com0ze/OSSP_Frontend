@@ -31,44 +31,54 @@ class _ChattingListScreenState extends State<ChattingListScreen> {
             .toList();
         return Scaffold(
           appBar: AppBar(title: const Text('내 채팅'), centerTitle: true),
-          body: matches.isEmpty
-              ? const Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.inbox, size: 64, color: Colors.grey),
-                      SizedBox(height: 16),
-                      Text(
-                        '채팅이 없습니다',
-                        style: TextStyle(fontSize: 16, color: Colors.grey),
-                      ),
-                    ],
-                  ),
-                )
-              : ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: matches.length,
-                  itemBuilder: (context, index) {
-                    final match = matches[index];
-                    final rentalItem =
-                        dataManager.rentalItems[match.rentalItemID];
-                    return ChattingRoomWidgetFactory(
-                      match: match,
-                      onTap: () {
-                        if (rentalItem == null) return;
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => ChatScreen(
-                              rentalItem: rentalItem,
-                              match: match,
+          body: RefreshIndicator(
+            onRefresh: () => dataManager.fetchMyData(currentUser.id),
+            child: matches.isEmpty
+                ? const SingleChildScrollView(
+                    physics: AlwaysScrollableScrollPhysics(),
+                    child: SizedBox(
+                      height: 400,
+                      child: Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.inbox, size: 64, color: Colors.grey),
+                            SizedBox(height: 16),
+                            Text(
+                              '채팅이 없습니다',
+                              style: TextStyle(fontSize: 16, color: Colors.grey),
                             ),
-                          ),
-                        );
-                      },
-                    ).makeWidget(context);
-                  },
-                ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  )
+                : ListView.builder(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.all(16),
+                    itemCount: matches.length,
+                    itemBuilder: (context, index) {
+                      final match = matches[index];
+                      final rentalItem =
+                          dataManager.rentalItems[match.rentalItemID];
+                      return ChattingRoomWidgetFactory(
+                        match: match,
+                        onTap: () {
+                          if (rentalItem == null) return;
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => ChatScreen(
+                                rentalItem: rentalItem,
+                                match: match,
+                              ),
+                            ),
+                          );
+                        },
+                      ).makeWidget(context);
+                    },
+                  ),
+          ),
         );
       },
     );

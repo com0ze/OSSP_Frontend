@@ -19,7 +19,7 @@ class _RentalListScreenState extends State<RentalListScreen> {
   @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
-      listenable: TestDataManager(),
+      listenable: dataManager,
       builder: (context, child) {
         final currentUser = loginManager.currentUserOrGuest;
         final rentalItems = dataManager.rentalItems.values
@@ -29,38 +29,48 @@ class _RentalListScreenState extends State<RentalListScreen> {
             .toList();
         return Scaffold(
           appBar: AppBar(title: const Text('대여 가능한 물건'), centerTitle: true),
-          body: rentalItems.isEmpty
-              ? const Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.inbox, size: 64, color: Colors.grey),
-                      SizedBox(height: 16),
-                      Text(
-                        '현재 대여 요청이 없습니다',
-                        style: TextStyle(fontSize: 16, color: Colors.grey),
+          body: RefreshIndicator(
+            onRefresh: () => dataManager.fetchAvailableRentalItems(currentUser.id),
+            child: rentalItems.isEmpty
+                ? const SingleChildScrollView(
+                    physics: AlwaysScrollableScrollPhysics(),
+                    child: SizedBox(
+                      height: 400,
+                      child: Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.inbox, size: 64, color: Colors.grey),
+                            SizedBox(height: 16),
+                            Text(
+                              '현재 대여 요청이 없습니다',
+                              style: TextStyle(fontSize: 16, color: Colors.grey),
+                            ),
+                          ],
+                        ),
                       ),
-                    ],
+                    ),
+                  )
+                : ListView.builder(
+                    physics: const AlwaysScrollableScrollPhysics(),
+                    padding: const EdgeInsets.all(16),
+                    itemCount: rentalItems.length,
+                    itemBuilder: (context, index) {
+                      final item = rentalItems[index];
+                      return RentalItemWidgetFactory(
+                        item: item,
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => ItemDetailScreen(item: item),
+                            ),
+                          );
+                        },
+                      ).makeWidget(context);
+                    },
                   ),
-                )
-              : ListView.builder(
-                  padding: const EdgeInsets.all(16),
-                  itemCount: rentalItems.length,
-                  itemBuilder: (context, index) {
-                    final item = rentalItems[index];
-                    return RentalItemWidgetFactory(
-                      item: item,
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => ItemDetailScreen(item: item),
-                          ),
-                        );
-                      },
-                    ).makeWidget(context);
-                  },
-                ),
+          ),
         );
       },
     );

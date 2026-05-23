@@ -19,7 +19,14 @@ class ItemDetailScreen extends StatelessWidget {
     DataManager dataManager = TestDataManager();
     return Scaffold(
       appBar: AppBar(title: const Text('물건 상세정보')),
-      body: ListenableBuilder(
+      body: RefreshIndicator(
+        onRefresh: () => Future.wait([
+          dataManager.fetchAvailableRentalItems(
+            LoginManager().currentUserOrGuest.id,
+          ),
+          dataManager.fetchUserProfile(item.requesterID),
+        ]),
+        child: ListenableBuilder(
         listenable: dataManager,
         builder: (context, child) {
           final currentItem = dataManager.rentalItems[item.id] ?? item;
@@ -37,6 +44,7 @@ class ItemDetailScreen extends StatelessWidget {
               : null;
 
           return SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -232,6 +240,7 @@ class ItemDetailScreen extends StatelessWidget {
             ),
           );
         },
+      ),
       ),
       bottomNavigationBar: ListenableBuilder(
         listenable: dataManager,

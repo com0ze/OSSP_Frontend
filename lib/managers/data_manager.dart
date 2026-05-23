@@ -6,6 +6,8 @@ import 'package:open_source_software/models/rental_item.dart';
 import 'package:open_source_software/models/review.dart';
 import 'package:open_source_software/models/user.dart';
 
+enum CacheType { users, reviews, chattings, matches, rentalItems }
+
 abstract class DataManager extends ChangeNotifier {
   Map<String, User> get users;
   Map<String, Review> get reviews;
@@ -61,6 +63,20 @@ abstract class DataManager extends ChangeNotifier {
   void addRentalItem(RentalItem item);
 
   List<RentalItem> requestRentalItems(User user);
+
+  // ── 서버 데이터 페치 ──────────────────────────────────────────────────────────
+
+  // 앱 시작 or 전체 새로고침: 내 rentalItems·matches·reviews·상대방 users
+  Future<void> fetchMyData(String userId);
+
+  // 홈 화면 대여 가능한 rentalItem 목록 갱신
+  Future<void> fetchAvailableRentalItems(String userId);
+
+  // 특정 유저 프로필 + 받은 리뷰 갱신 (화면 진입 시 항상 호출)
+  Future<void> fetchUserProfile(String userId);
+
+  // 특정 채팅방 메시지 갱신 (채팅방 진입 시 항상 호출)
+  Future<void> fetchChatMessages(String chattingId);
 
   // 해당 유저가 확정 대여자로 참여한 아이템 목록
   List<RentalItem> lentRentalItems(User user);
