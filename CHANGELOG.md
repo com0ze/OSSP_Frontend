@@ -134,3 +134,19 @@
                     - 모든 화면(chatting_list, lender_profile, other_user_profile, rental_list, rental_request, review, user_profile)에서 TestDataManager 타입 대신 DataManager 타입으로 변수 선언
                     - rental_item_widget_factory도 동일하게 DataManager 타입 참조로 전환
                     - 구체 구현(TestDataManager)이 아닌 추상 인터페이스(DataManager)에 의존하도록 구조 개선
+
+- # feature/login
+    - ## version: 1.1.0
+        - ### commit: ID, PW 검증 로직 추가
+            - #### author: Seo JeongHun
+            - #### date: 2026-05-02
+            - feature
+                - ID 검증 로직 추가
+                    1. 빈 값 검증
+                    2. 이메일 형식 확인
+                    3. 이메일 도메인 확인
+                - PW 검증 로직 추가
+                    1. 빈 값 확인
+                    2. 길이 확인
+                    3. 허용 불가 특수문자 확인
+                    4. 필수 포함 요소 검사

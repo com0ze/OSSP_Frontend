@@ -86,4 +86,69 @@ class LoginManager {
       return false;
     }
   }
+
+  String? validateEmail(String? email) {
+    // 0. 빈 값 확인
+    if (email == null || email.isEmpty) {
+      return '이메일을 입력해주세요.';
+    }
+
+    // 1. 이메일 형식 확인 (정규표현식)
+    // [영문/숫자/특수문자]@[영문/숫자].[영문] 형태인지 체크
+    final emailFormatRegex = RegExp(
+      r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$',
+    );
+    if (!emailFormatRegex.hasMatch(email)) {
+      return '올바른 이메일 형식이 아닙니다.';
+    }
+
+    // 2. 이메일 도메인 확인
+    final allowedDomains = ['dgu.ac.kr', 'dongguk.edu'];
+    final domain = email.split('@').last;
+
+    if (!allowedDomains.contains(domain)) {
+      return '허용되지 않은 이메일 도메인입니다.\n가능한 이메일 도메인: @dgu.ac.kr, @dongguk.edu';
+    }
+
+    // 모든 검사 통과 시 null 반환 (에러 없음)
+    return null;
+  }
+
+  String? validatePassword(String? password) {
+    // 0. 빈 값 확인
+    if (password == null || password.isEmpty) {
+      return '비밀번호를 입력해주세요.';
+    }
+
+    // 1. 길이 검사 (8~15자)
+    if (password.length < 8 || password.length > 15) {
+      return '비밀번호는 8~15자 사이여야 합니다.';
+    }
+
+    // 2. 허용되지 않는 특수문자 검사
+    // [a-zA-Z0-9!@#$%^&*] 이외의 문자가 하나라도 있으면 실패
+    final invalidCharRegex = RegExp(r'[^a-zA-Z\d!@#$%^&*]');
+    if (invalidCharRegex.hasMatch(password)) {
+      return '허용되지 않는 특수문자가 포함되어 있습니다.';
+    }
+
+    // 3. 필수 포함 요소 검사 (대문자, 소문자, 숫자, 특수문자)
+    List<String> errors = [];
+    if (!RegExp(r'(?=.*[a-z])').hasMatch(password)) {
+      errors.add('소문자를 하나 이상 포함해야 합니다.');
+    }
+    if (!RegExp(r'(?=.*[A-Z])').hasMatch(password)) {
+      errors.add('대문자를 하나 이상 포함해야 합니다.');
+    }
+    if (!RegExp(r'(?=.*\d)').hasMatch(password)) {
+      errors.add('숫자를 하나 이상 포함해야 합니다.');
+    }
+    if (!RegExp(r'(?=.*[!@#$%^&*])').hasMatch(password)) {
+      errors.add('특수문자(!@#\$%^&*)를 하나 이상 포함해야 합니다.');
+    }
+    if (errors.isNotEmpty) return errors.join('\n');
+
+    // 모든 검사 통과 시 null 반환 (에러 없음)
+    return null;
+  }
 }

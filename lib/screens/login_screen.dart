@@ -96,11 +96,11 @@ class _LoginScreenState extends State<LoginScreen> {
                       border: OutlineInputBorder(),
                     ),
                     validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return '이메일을 입력해주세요';
-                      }
-                      if (!value.contains('@')) {
-                        return '올바른 이메일 형식이 아닙니다';
+                      final String? errorMessage = loginManager.validateEmail(
+                        value,
+                      );
+                      if (errorMessage != null) {
+                        return errorMessage;
                       }
                       return null;
                     },
@@ -125,11 +125,10 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                     validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return '비밀번호를 입력해주세요';
-                      }
-                      if (value.length < 6) {
-                        return '비밀번호는 6자 이상이어야 합니다';
+                      final String? errorMessage = loginManager
+                          .validatePassword(value);
+                      if (errorMessage != null) {
+                        return errorMessage;
                       }
                       return null;
                     },
