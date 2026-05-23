@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:open_source_software/managers/login_manager.dart';
 import 'package:open_source_software/managers/theme_mode_manager.dart';
+import 'package:open_source_software/screens/home_navigation.dart';
 import 'package:open_source_software/screens/login_screen.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+  // 자동 로그인 구현
+  await LoginManager().initAutoLogin();
   runApp(const MyApp());
 }
 
@@ -51,7 +56,10 @@ class MyApp extends StatelessWidget {
               ),
         ),
 
-        home: const LoginScreen(),
+        // 자동 로그인 성공 시 바로 메인 화면 진입
+        home: LoginManager().isLoggedIn
+            ? const HomeNavigation()
+            : const LoginScreen(),
       ),
     );
   }

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:open_source_software/extensions/theme_extension.dart';
 import 'package:open_source_software/managers/login_manager.dart';
 import 'package:open_source_software/screens/home_navigation.dart';
+import 'package:open_source_software/screens/signin_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -154,7 +155,14 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 16),
                   TextButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const SigninScreen(),
+                        ),
+                      );
+                    },
                     style: TextButton.styleFrom(
                       foregroundColor: context.primaryColor,
                     ),

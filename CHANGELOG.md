@@ -150,3 +150,35 @@
                     2. 길이 확인
                     3. 허용 불가 특수문자 확인
                     4. 필수 포함 요소 검사
+        - ### JWT 기반 서버 통신 및 자동 로그인 구현
+            - #### author: Seo JeongHun
+            - #### date: 2026-05-23
+            - feature:
+                - 의존성 추가
+                    - dio: HTTP 클라이언트 라이브러리
+                    - flutter_secure_storage: 토큰 보안 저장소
+
+                - api/ 폴더 신설 및 서버 통신 구조 구축
+                    - ApiClient: Dio 싱글톤 생성 및 인터셉터 등록 관리
+                    - AuthInterceptor: 모든 요청에 액세스 토큰 자동 주입, 401 응답 시 리프레시 토큰으로 자동 갱신 후 원래 요청 재시도, 갱신 실패 시 자동 로그아웃
+                    - MockServerInterceptor: 실제 서버 없이 테스트 가능한 가짜 서버 구현 (login, register, refresh, logout, me 엔드포인트 지원, 실제 서버 연결 시 삭제 예정)
+                    - TokenStorageManager: FlutterSecureStorage 기반 액세스/리프레시/FCM 토큰 관리 싱글톤
+
+                - LoginManager 서버 통신 적용
+                    - login(): ApiClient를 통한 /login API 호출로 교체, 응답에서 토큰 추출 후 저장
+                    - register(): ApiClient를 통한 /register API 호출로 교체
+                    - initAutoLogin(): /me API로 저장된 토큰 유효성 검증 후 유저 정보 복원, 갱신도 실패하면 토큰 파기
+                    - logout(): 서버에 /logout 요청 후 로컬 토큰 파기 (서버 실패 시에도 로컬은 반드시 초기화)
+                    - 중복 토큰 관리 제거: LoginManager 내 FlutterSecureStorage 직접 사용을 TokenStorageManager 위임으로 통일
+
+                - 자동 로그인 구현
+                    - 앱 시작 시 initAutoLogin() 호출 후 runApp 실행
+                    - 로그인 상태에 따라 초기 화면 분기 (로그인 성공 → HomeNavigation, 미로그인 → LoginScreen)
+
+                - 회원가입 화면 추가 (signin_screen.dart 신규 생성)
+                    - 이름, 이메일, 비밀번호, 비밀번호 확인 입력 필드 구성
+                    - 이메일·비밀번호 검증은 LoginManager 기존 로직 재사용
+                    - 비밀번호 확인 불일치 시 에러 표시
+                    - 회원가입 성공 시 로그인 화면 스택 제거 후 HomeNavigation 진입
+                    - 로그인 화면 회원가입 버튼 → SigninScreen 연결
+ㅉ

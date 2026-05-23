@@ -1,3 +1,5 @@
+import 'package:open_source_software/api/api_client.dart';
+import 'package:open_source_software/managers/token_storage_manager.dart';
 import 'package:open_source_software/models/main_user.dart';
 import 'package:open_source_software/models/user.dart';
 
@@ -10,6 +12,8 @@ class LoginManager {
 
   LoginManager._internal();
 
+  final _tokenStorage = TokenStorageManager();
+
   MainUser? _currentUser;
   User notLoginStateUser = User(
     id: 'guest',
@@ -17,19 +21,63 @@ class LoginManager {
     email: '',
     score: 0,
   );
-  String? _authToken;
 
+  String? _accessToken;
   MainUser? get currentUser => _currentUser;
-  String? get authToken => _authToken;
-  bool get isLoggedIn => _currentUser != null && _authToken != null;
+  String? get accessToken => _accessToken;
+  bool get isLoggedIn => _currentUser != null && _accessToken != null;
+
+  User get currentUserOrGuest {
+    return _currentUser ?? notLoginStateUser;
+  }
+
+  void updateUser(MainUser user) {
+    _currentUser = user;
+  }
+
+  // ⭐️ 3. 앱 시작 시 자동 로그인을 위한 초기화 함수
+  Future<void> initAutoLogin() async {
+    // 기기에 저장된 액세스 토큰이 있는지 확인
+    final token = await _tokenStorage.getAccessToken();
+    if (token == null) return;
+
+    try {
+      // AuthInterceptor가 저장소에서 토큰을 자동으로 헤더에 추가함
+      final res = await ApiClient.dio.get('/me');
+
+      _accessToken = token;
+      // TODO: 실제 서버 응답 구조에 맞게 파싱 필요
+      _currentUser = MainUser(
+        id: res.data['id'] as String,
+        name: res.data['name'] as String,
+        email: res.data['email'] as String,
+        score: (res.data['score'] as num).toDouble(),
+        personalInformation:
+            res.data['personal_information'] as String? ?? '',
+      );
+    } catch (_) {
+      // 토큰 갱신도 실패한 경우 → 저장된 토큰 파기 후 로그인 화면으로
+      await _tokenStorage.clearSessionTokens();
+    }
+  }
 
   Future<bool> login(String email, String password) async {
     try {
-      await Future.delayed(const Duration(seconds: 1));
+      final res = await ApiClient.dio.post(
+        '/login',
+        data: {'email': email, 'password': password},
+      );
 
-      _authToken = 'sample_token_${DateTime.now().millisecondsSinceEpoch}';
+      final newAccessToken = res.data['access_token'] as String;
+      final newRefreshToken = res.data['refresh_token'] as String;
+
+      _accessToken = newAccessToken;
+
+      // ⭐️ 4. 응답받은 두 가지 토큰을 기기 내부 보안 저장소에 안전하게 저장 (자동 로그인의 핵심)
+      await _tokenStorage.saveTokens(newAccessToken, newRefreshToken);
+
+      // TODO: 실제 서버 응답에서 유저 정보를 받아 MainUser를 생성해야 합니다.
       _currentUser = MainUser(
-        // TODO: 실제 로그인 한 걸로 만들어야함
         id: '0',
         name: 'Kim sample',
         email: email,
@@ -43,20 +91,35 @@ class LoginManager {
     }
   }
 
-  User get currentUserOrGuest {
-    return _currentUser ?? notLoginStateUser;
-  }
-
   Future<void> logout() async {
+    try {
+      // 서버에 로그아웃 요청 (세션/리프레시 토큰 서버 측 무효화)
+      await ApiClient.dio.post('/logout');
+    } catch (_) {
+      // 서버 요청 실패해도 로컬 상태는 반드시 초기화
+    }
+
     _currentUser = null;
-    _authToken = null;
+    _accessToken = null;
+
+    // ⭐️ 5. 로그아웃 시 기기에 저장된 토큰을 깔끔하게 파기
+    await _tokenStorage.clearSessionTokens();
   }
 
   Future<bool> register(String name, String email, String password) async {
     try {
-      await Future.delayed(const Duration(seconds: 1));
+      final res = await ApiClient.dio.post(
+        '/register',
+        data: {'name': name, 'email': email, 'password': password},
+      );
 
-      _authToken = 'sample_token_${DateTime.now().millisecondsSinceEpoch}';
+      final newAccessToken = res.data['access_token'] as String;
+      final newRefreshToken = res.data['refresh_token'] as String;
+
+      _accessToken = newAccessToken;
+      await _tokenStorage.saveTokens(newAccessToken, newRefreshToken);
+
+      // TODO: 실제 서버 응답에서 유저 정보를 받아 MainUser를 생성해야 합니다.
       _currentUser = MainUser(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
         name: name,
@@ -65,22 +128,6 @@ class LoginManager {
         personalInformation: '',
       );
 
-      return true;
-    } catch (e) {
-      return false;
-    }
-  }
-
-  void updateUser(MainUser user) {
-    _currentUser = user;
-  }
-
-  Future<bool> refreshToken() async {
-    if (_authToken == null) return false;
-
-    try {
-      await Future.delayed(const Duration(milliseconds: 500));
-      _authToken = 'refreshed_token_${DateTime.now().millisecondsSinceEpoch}';
       return true;
     } catch (e) {
       return false;
