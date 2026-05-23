@@ -1,23 +1,37 @@
-import 'dart:io'; 
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'screens/login_screen.dart';
 import 'managers/theme_mode_manager.dart';
 import 'package:open_source_software/managers/notification_manager.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:open_source_software/app_keys.dart';
+import 'package:open_source_software/managers/login_manager.dart';
+import 'package:open_source_software/screens/home_navigation.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // 💡 스마트폰(Android) 환경으로 타겟을 바꿨기 때문에, 
+  // 💡 스마트폰(Android) 환경으로 타겟을 바꿨기 때문에,
   // 이제 아래 if문 안으로 들어가 파이어베이스 심장 충격기가 정상 기동됩니다!
   if (Platform.isAndroid || Platform.isIOS) {
-    await Firebase.initializeApp(); 
+    await Firebase.initializeApp();
 
     final notificationManager = NotificationManager();
     await notificationManager.initialize();
-  } else { 
-    
-  }
+  } else {}
+
+  await LoginManager().initAutoLogin();
+
+  LoginManager.setForceLogoutHandler((message) async {
+    navigatorKey.currentState?.pushAndRemoveUntil(
+      MaterialPageRoute(builder: (_) => const LoginScreen()),
+      (_) => false,
+    );
+    await Future.delayed(const Duration(milliseconds: 300));
+    scaffoldMessengerKey.currentState?.showSnackBar(
+      SnackBar(content: Text(message)),
+    );
+  });
 
   runApp(const MyApp());
 }
@@ -33,6 +47,8 @@ class MyApp extends StatelessWidget {
       builder: (context, child) => MaterialApp(
         debugShowCheckedModeBanner: false,
         title: '물건 대여',
+        navigatorKey: navigatorKey,
+        scaffoldMessengerKey: scaffoldMessengerKey,
         themeMode: themeModeManager.mode == ThemeMode.dark
             ? ThemeMode.dark
             : themeModeManager.mode == ThemeMode.light
@@ -67,7 +83,10 @@ class MyApp extends StatelessWidget {
               ),
         ),
 
-        home: const LoginScreen(),
+        // 자동 로그인 성공 시 바로 메인 화면 진입
+        home: LoginManager().isLoggedIn
+            ? const HomeNavigation()
+            : const LoginScreen(),
       ),
     );
   }

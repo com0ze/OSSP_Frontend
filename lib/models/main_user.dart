@@ -1,35 +1,25 @@
-class MainUser {
-  final String id;
-  final String name;
-  final int mannerScore;
+import 'package:open_source_software/models/user.dart';
+
+class MainUser extends User {
   final String personalInformation;
-  final List<String> dealHistory;
-  final String email;
-  final String? profileImage;
 
   MainUser({
-    required this.id,
-    required this.name,
-    required this.mannerScore,
+    required super.id,
+    required super.name,
+    required super.email,
+    super.profileImage,
+    super.score = 0,
+    List<String>? rentalHistory,
     required this.personalInformation,
-    List<String>? dealHistory,
-    required this.email,
-    this.profileImage,
-  }) : dealHistory = dealHistory ?? [];
-
-  void addDealHistory(String dealId) {
-    if (!dealHistory.contains(dealId)) {
-      dealHistory.add(dealId);
-    }
-  }
+  }) : super(rentalHistory: rentalHistory ?? []);
 
   factory MainUser.fromJson(Map<String, dynamic> json) {
     return MainUser(
       id: json['id'],
       name: json['name'],
-      mannerScore: json['mannerScore'] ?? 0,
+      score: json['score'] ?? 0,
       personalInformation: json['personalInformation'] ?? '',
-      dealHistory: (json['dealHistory'] as List<dynamic>?)
+      rentalHistory: (json['rentalHistory'] as List<dynamic>?)
           ?.map((e) => e as String)
           .toList(),
       email: json['email'],
@@ -37,32 +27,35 @@ class MainUser {
     );
   }
 
+  @override
   Map<String, dynamic> toJson() {
     return {
       'id': id,
       'name': name,
-      'mannerScore': mannerScore,
+      'score': score,
       'personalInformation': personalInformation,
-      'dealHistory': dealHistory,
+      'rentalHistory': rentalHistory,
       'email': email,
       'profileImage': profileImage,
     };
   }
 
+  @override
   MainUser copyWith({
+    String? id,
     String? name,
-    int? mannerScore,
+    double? score,
     String? personalInformation,
-    List<String>? dealHistory,
+    List<String>? rentalHistory,
     String? email,
     String? profileImage,
   }) {
     return MainUser(
-      id: id,
+      id: id ?? this.id,
       name: name ?? this.name,
-      mannerScore: mannerScore ?? this.mannerScore,
+      score: score ?? this.score,
       personalInformation: personalInformation ?? this.personalInformation,
-      dealHistory: dealHistory ?? List.from(this.dealHistory),
+      rentalHistory: rentalHistory ?? List.from(this.rentalHistory),
       email: email ?? this.email,
       profileImage: profileImage ?? this.profileImage,
     );

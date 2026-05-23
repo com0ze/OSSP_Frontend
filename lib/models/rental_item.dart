@@ -1,56 +1,59 @@
-import 'user.dart';
+import 'package:open_source_software/models/product.dart';
+import 'package:open_source_software/models/rental_status.dart';
 
-enum RentalStatus {
-  pending,
-  matchConfirmed,
-  inProgress,
-  returned,
-  reviewed,
-}
+export 'package:open_source_software/models/rental_status.dart';
 
 class RentalItem {
   final String id;
   final String title;
-  final String itemName;
+  final Product product;
   final String location;
   final int price;
   final String description;
   final String preferences;
-  final User requester;
+  final String requesterID;
   final DateTime createdAt;
-  final RentalStatus status;
-  final User? lender;
   final String? imageUrl;
+  final List<String> matchIDs;
+  final bool isMatched;
+  final String? matchedID;
+  final RentalStatus rentalStatus;
 
   RentalItem({
     required this.id,
     required this.title,
-    required this.itemName,
+    required this.product,
     required this.location,
     required this.price,
     required this.description,
     required this.preferences,
-    required this.requester,
+    required this.requesterID,
     required this.createdAt,
-    this.status = RentalStatus.pending,
-    this.lender,
     this.imageUrl,
+    this.matchIDs = const [],
+    this.isMatched = false,
+    this.matchedID,
+    this.rentalStatus = RentalStatus.pending,
   });
 
   factory RentalItem.fromJson(Map<String, dynamic> json) {
     return RentalItem(
       id: json['id'],
       title: json['title'],
-      itemName: json['itemName'],
+      product: Product.fromJson(json['product']),
       location: json['location'],
       price: json['price'],
       description: json['description'],
       preferences: json['preferences'],
-      requester: User.fromJson(json['requester']),
+      requesterID: json['requesterID'],
       createdAt: DateTime.parse(json['createdAt']),
-      status: RentalStatus.values[json['status'] ?? 0],
-      lender: json['lender'] != null ? User.fromJson(json['lender']) : null,
       imageUrl: json['imageUrl'],
+      matchIDs: (json['matchIDs'] as List<dynamic>?)?.cast<String>() ?? [],
+      isMatched: json['isMatched'] ?? false,
+      matchedID: json['matchedID'],
+      rentalStatus: json['rentalStatus'] != null
+          ? RentalStatus.values.byName(json['rentalStatus'])
+          : RentalStatus.pending,
     );
   }
 
@@ -58,36 +61,43 @@ class RentalItem {
     return {
       'id': id,
       'title': title,
-      'itemName': itemName,
+      'product': product.toJson(),
       'location': location,
       'price': price,
       'description': description,
       'preferences': preferences,
-      'requester': requester.toJson(),
+      'requesterID': requesterID,
       'createdAt': createdAt.toIso8601String(),
-      'status': status.index,
-      'lender': lender?.toJson(),
       'imageUrl': imageUrl,
+      'matchIDs': matchIDs,
+      'isMatched': isMatched,
+      'matchedID': matchedID,
+      'rentalStatus': rentalStatus.name,
     };
   }
 
   RentalItem copyWith({
-    RentalStatus? status,
-    User? lender,
+    List<String>? matchIDs,
+    bool? isMatched,
+    String? matchedID,
+    bool clearMatchedID = false,
+    RentalStatus? rentalStatus,
   }) {
     return RentalItem(
       id: id,
       title: title,
-      itemName: itemName,
+      product: product,
       location: location,
       price: price,
       description: description,
       preferences: preferences,
-      requester: requester,
+      requesterID: requesterID,
       createdAt: createdAt,
-      status: status ?? this.status,
-      lender: lender ?? this.lender,
       imageUrl: imageUrl,
+      matchIDs: matchIDs ?? this.matchIDs,
+      isMatched: isMatched ?? this.isMatched,
+      matchedID: clearMatchedID ? null : (matchedID ?? this.matchedID),
+      rentalStatus: rentalStatus ?? this.rentalStatus,
     );
   }
 }

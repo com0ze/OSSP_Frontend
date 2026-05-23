@@ -1,20 +1,22 @@
 import 'package:flutter/material.dart';
-import '../models/rental_item.dart';
-import '../models/user.dart';
-import '../models/chat.dart';
-import '../extensions/rental_status_extension.dart';
-import 'review_screen.dart';
+import 'package:open_source_software/extensions/rental_status_extension.dart';
 import 'package:open_source_software/extensions/theme_extension.dart';
+import 'package:open_source_software/managers/data_manager.dart';
+import 'package:open_source_software/managers/login_manager.dart';
+import 'package:open_source_software/managers/test_data_manager.dart';
+import 'package:open_source_software/models/chat.dart';
+import 'package:open_source_software/models/match.dart';
+import 'package:open_source_software/models/rental_item.dart';
+import 'package:open_source_software/models/user.dart';
+import 'package:open_source_software/screens/item_detail_screen.dart';
+import 'package:open_source_software/screens/review_screen.dart';
+import 'package:open_source_software/widgets/chat_widget_factory.dart';
 
 class ChatScreen extends StatefulWidget {
   final RentalItem rentalItem;
-  final User otherUser;
+  final Match match;
 
-  const ChatScreen({
-    super.key,
-    required this.rentalItem,
-    required this.otherUser,
-  });
+  const ChatScreen({super.key, required this.rentalItem, required this.match});
 
   @override
   State<ChatScreen> createState() => _ChatScreenState();
@@ -25,111 +27,149 @@ class _ChatScreenState extends State<ChatScreen> {
   final List<Chat> _messages = [];
   final List<Chat> _pendingMessages = [];
   final ScrollController _scrollController = ScrollController();
+  final LoginManager loginManager = LoginManager();
+  final DataManager dataManager = TestDataManager();
   bool _isReadingPastMessages = false;
   late RentalStatus _currentStatus;
+  late User _otherUser;
+  int _syncedCount = 0;
 
   @override
   void initState() {
     super.initState();
 
+    _currentStatus = dataManager.getStatusForUserOnItem(
+      widget.rentalItem.id,
+      loginManager.currentUserOrGuest.id,
+    );
+
+    final currentUserId = loginManager.currentUserOrGuest.id;
+    final otherUserId = widget.match.requesterID == currentUserId
+        ? widget.match.lenderID
+        : widget.match.requesterID;
+    _otherUser = dataManager.getUserById(otherUserId);
+
     _scrollController.addListener(() {
-      // 바닥에서 100픽셀 이상 올라가면 '과거를 읽고 있다'고 판단
       bool isPast = _scrollController.offset > 100;
       if (isPast != _isReadingPastMessages) {
-        setState(() {
-          _isReadingPastMessages = isPast;
-        });
+        setState(() => _isReadingPastMessages = isPast);
       }
-
-      // 만약 수동으로 다시 맨 아래로 스크롤을 내렸다면? 대기열의 메시지를 방출!
       if (_scrollController.offset <= 10 && _pendingMessages.isNotEmpty) {
         _releasePendingMessages();
       }
     });
 
-    _currentStatus = widget.rentalItem.status;
-    _loadSampleMessages();
-  }
-
-  void _releasePendingMessages() {
-    setState(() {
-      for (var msg in _pendingMessages) {
-        _messages.add(msg);
-      }
-      _pendingMessages.clear();
-    });
-  }
-
-  void _loadSampleMessages() {
-    // 현재 사용자를 위한 임시 User 객체
-    final currentUser = User(id: 'current', name: '나', email: '');
-
-    _messages.addAll([
-      Chat(
-        id: '1',
-        sendUser: widget.otherUser,
-        chatText: '안녕하세요! ${widget.rentalItem.itemName} 관련해서 문의드립니다.',
-        sendTime: DateTime.now().subtract(const Duration(hours: 2)),
-      ),
-      Chat(
-        id: '2',
-        sendUser: currentUser,
-        chatText: '네, 말씀하세요!',
-        sendTime: DateTime.now().subtract(
-          const Duration(hours: 1, minutes: 55),
-        ),
-      ),
-    ]);
+    _loadMessages();
+    dataManager.addListener(_onDataChanged);
+    // 화면 진입 시 최신 메시지 서버에서 갱신 (_syncFromChatting이 새 메시지를 자동 반영)
+    dataManager.fetchChatMessages(widget.match.chattingID);
   }
 
   @override
   void dispose() {
+    dataManager.removeListener(_onDataChanged);
+    _scrollController.dispose();
     _messageController.dispose();
     super.dispose();
   }
 
-  // TODO: 실제 메시지 수신 로직이 구현되면 이 부분을 새로운 메시지를 처리하도록 합니다.
-  void _receiveMessage(Chat message) {
+  void _onDataChanged() {
+    if (mounted) _syncFromChatting();
+  }
+
+  void _loadMessages() {
+    final chatting = dataManager.getChattingById(widget.match.chattingID);
+    if (chatting == null) return;
+    _messages.addAll(chatting.chats);
+    _syncedCount = chatting.chats.length;
+  }
+
+  Future<void> _refreshMessages() async {
+    await dataManager.fetchChatMessages(widget.match.chattingID);
+    if (!mounted) return;
+    final chatting = dataManager.getChattingById(widget.match.chattingID);
+    if (chatting == null) return;
+    setState(() {
+      _messages.clear();
+      _pendingMessages.clear();
+      _messages.addAll(chatting.chats);
+      _syncedCount = chatting.chats.length;
+    });
+  }
+
+  void _syncFromChatting() {
+    if (!mounted) return;
+    final latestStatus = dataManager.getStatusForUserOnItem(
+      widget.rentalItem.id,
+      loginManager.currentUserOrGuest.id,
+    );
+    if (latestStatus != _currentStatus) {
+      setState(() => _currentStatus = latestStatus);
+    }
+    final chatting = dataManager.getChattingById(widget.match.chattingID);
+    if (chatting == null) return;
+    final chats = chatting.chats;
+    if (chats.length <= _syncedCount) return;
+
+    final newChats = chats.sublist(_syncedCount);
+    _syncedCount = chats.length;
+
     setState(() {
       if (_isReadingPastMessages) {
-        // 과거 메시지를 읽는 중이라면 대기열에 추가
-        _pendingMessages.add(message);
+        _pendingMessages.addAll(newChats);
       } else {
-        // 그렇지 않다면 바로 메시지 목록에 추가
-        _messages.add(message);
+        _messages.addAll(newChats);
       }
     });
+
+    if (!_isReadingPastMessages) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted && _scrollController.hasClients) {
+          _scrollController.animateTo(
+            0.0,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeOut,
+          );
+        }
+      });
+    }
+  }
+
+  void _releasePendingMessages() {
+    setState(() {
+      _messages.addAll(_pendingMessages);
+      _pendingMessages.clear();
+    });
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && _scrollController.hasClients) {
+        _scrollController.animateTo(
+          0.0,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
+    });
+  }
+
+  // 상대방 메시지 수신 시뮬레이션
+  void _receiveMessage(Chat message) {
     _messageController.clear();
+    dataManager.addChat(widget.match.chattingID, message);
   }
 
   void _sendMessage() {
     if (_messageController.text.trim().isEmpty) return;
 
-    final currentUser = User(id: 'current', name: '나', email: '');
+    if (_pendingMessages.isNotEmpty) _releasePendingMessages();
 
-    setState(() {
-      _releasePendingMessages(); // 새 메시지를 보내기 전에 대기열에 있는 메시지를 먼저 방출
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        // 스크롤 뷰가 정상적으로 연결되어 있는지 한 번 더 안전하게 확인
-        if (_scrollController.hasClients) {
-          _scrollController.animateTo(
-            0.0,
-            duration: const Duration(milliseconds: 500),
-            curve: Curves.easeOut,
-          );
-        }
-      });
-      _messages.add(
-        Chat(
-          id: DateTime.now().millisecondsSinceEpoch.toString(),
-          sendUser: currentUser,
-          chatText: _messageController.text,
-          sendTime: DateTime.now(),
-        ),
-      );
-    });
-
+    final chat = Chat(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      sendUser: loginManager.currentUserOrGuest,
+      chatText: _messageController.text,
+      sendTime: DateTime.now(),
+    );
     _messageController.clear();
+    dataManager.addChat(widget.match.chattingID, chat);
   }
 
   void _updateRentalStatus() {
@@ -138,12 +178,15 @@ class _ChatScreenState extends State<ChatScreen> {
     switch (_currentStatus) {
       case RentalStatus.pending:
         nextStatus = RentalStatus.matchConfirmed;
+        dataManager.confirmMatch(widget.match.matchID);
         break;
       case RentalStatus.matchConfirmed:
         nextStatus = RentalStatus.inProgress;
+        dataManager.updateMatchStatus(widget.match.matchID, nextStatus);
         break;
       case RentalStatus.inProgress:
         nextStatus = RentalStatus.returned;
+        dataManager.updateMatchStatus(widget.match.matchID, nextStatus);
         break;
       case RentalStatus.returned:
         Navigator.push(
@@ -151,7 +194,8 @@ class _ChatScreenState extends State<ChatScreen> {
           MaterialPageRoute(
             builder: (context) => ReviewScreen(
               rentalItem: widget.rentalItem,
-              reviewee: widget.otherUser,
+              match: widget.match,
+              reviewee: loginManager.currentUserOrGuest,
             ),
           ),
         );
@@ -165,6 +209,34 @@ class _ChatScreenState extends State<ChatScreen> {
               style: TextStyle(color: context.onSurfaceColor),
             ),
             backgroundColor: context.warningColor.withValues(alpha: 0.8),
+          ),
+        );
+        return;
+      case RentalStatus.cancelled:
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            duration: const Duration(milliseconds: 500),
+            content: Text(
+              '취소된 거래입니다',
+              style: TextStyle(color: context.onSurfaceColor),
+            ),
+            backgroundColor: RentalStatus.cancelled.color.withValues(
+              alpha: 0.8,
+            ),
+          ),
+        );
+        return;
+      case RentalStatus.otherUserMatched:
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            duration: const Duration(milliseconds: 500),
+            content: Text(
+              '다른 사용자와 매칭된 거래입니다',
+              style: TextStyle(color: context.onSurfaceColor),
+            ),
+            backgroundColor: RentalStatus.otherUserMatched.color.withValues(
+              alpha: 0.8,
+            ),
           ),
         );
         return;
@@ -193,167 +265,244 @@ class _ChatScreenState extends State<ChatScreen> {
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(widget.otherUser.name),
+            Text(_otherUser.name),
             Text(
-              widget.rentalItem.itemName,
+              widget.rentalItem.product.name,
               style: const TextStyle(fontSize: 12),
             ),
           ],
         ),
-      ),
-      body: Column(
-        children: [
-          Container(
-            padding: const EdgeInsets.all(12),
-            color: _currentStatus.color.withValues(alpha: 0.1),
-            child: Row(
-              children: [
-                Icon(_getStatusIcon(), color: _currentStatus.color),
-                const SizedBox(width: 8),
-                Text(
-                  '현재 상태: ${_currentStatus.text}',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    color: _currentStatus.color,
-                  ),
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.info_outline),
+            tooltip: '물건 상세정보',
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) =>
+                      ItemDetailScreen(item: widget.rentalItem),
                 ),
-              ],
-            ),
-          ),
-          Expanded(
-            child: Stack(
-              children: [
-                Align(
-                  alignment: Alignment.topCenter,
-                  child: ListView.builder(
-                    controller: _scrollController,
-                    shrinkWrap: true,
-                    reverse: true,
-                    padding: const EdgeInsets.all(16),
-                    itemCount: _messages.length,
-                    itemBuilder: (context, index) {
-                      final message = _messages[_messages.length - 1 - index];
-                      final isMe = message.sendUser.id == 'current';
-
-                      return _buildChatBubble(message, isMe);
-                    },
-                  ),
-                ),
-                if (_pendingMessages.isNotEmpty)
-                  Padding(
-                    padding: const EdgeInsets.all(8.0),
-                    child: Align(
-                      alignment: Alignment.bottomCenter,
-                      child: FloatingActionButton.extended(
-                        onPressed: () {
-                          _releasePendingMessages(); // 메시지 방출
-                          // 덤으로 맨 아래로 스르륵 내려가게 해줍니다.
-                          WidgetsBinding.instance.addPostFrameCallback((_) {
-                            // 3. 스크롤 뷰가 정상적으로 연결되어 있는지 한 번 더 안전하게 확인
-                            if (_scrollController.hasClients) {
-                              _scrollController.animateTo(
-                                0.0,
-                                duration: const Duration(milliseconds: 500),
-                                curve: Curves.easeOut,
-                              );
-                            }
-                          });
-                        },
-                        label: Text('${_pendingMessages.length}개의 새 메시지'),
-                        icon: const Icon(Icons.arrow_downward),
-                      ),
-                    ),
-                  ),
-              ],
-            ),
-          ),
-
-          SafeArea(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: context.surfaceColor,
-                    boxShadow: [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.1),
-                        blurRadius: 4,
-                        offset: const Offset(0, -2),
-                      ),
-                    ],
-                  ),
-                  child: SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      onPressed: _updateRentalStatus,
-                      icon: Icon(_getNextStatusIcon()),
-                      label: Text(_currentStatus.nextButtonText),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: _currentStatus == RentalStatus.pending
-                            ? RentalStatus.matchConfirmed.color
-                            : _currentStatus == RentalStatus.matchConfirmed
-                            ? RentalStatus.inProgress.color
-                            : _currentStatus == RentalStatus.inProgress
-                            ? RentalStatus.returned.color
-                            : _currentStatus == RentalStatus.returned
-                            ? RentalStatus.reviewed.color
-                            : Colors.grey,
-                        foregroundColor: context.onSurfaceColor,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                      ),
-                    ),
-                  ),
-                ),
-                Container(
-                  padding: const EdgeInsets.all(12),
-                  child: Row(
-                    children: [
-                      Expanded(
-                        child: TextField(
-                          controller: _messageController,
-                          decoration: const InputDecoration(
-                            hintText: '메시지를 입력하세요',
-                            border: OutlineInputBorder(),
-                            contentPadding: EdgeInsets.symmetric(
-                              horizontal: 16,
-                              vertical: 12,
-                            ),
-                          ),
-                          // 테스트용으로 상대방 메시지 수신을 시뮬레이션하는 구문
-                          // 엔터를 치면 상대방이 메시지를 보내는 것으로 간주합니다.
-                          // 실제 구현에서는 다음 줄로 넘어가게 구현해야하니
-                          // 이 부분은 나중에 삭제해주세요!
-                          //----------------------------------------------------
-                          onSubmitted: (_) => _receiveMessage(
-                            Chat(
-                              id: DateTime.now().millisecondsSinceEpoch
-                                  .toString(),
-                              sendUser: widget.otherUser,
-                              chatText: _messageController.text,
-                              sendTime: DateTime.now(),
-                            ),
-                          ),
-                          //----------------------------------------------------
-                        ),
-                      ),
-                      const SizedBox(width: 8),
-                      IconButton(
-                        onPressed: _sendMessage,
-                        icon: const Icon(Icons.send),
-                        color: context.primaryColor,
-                        iconSize: 28,
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
+              );
+            },
           ),
         ],
       ),
+      body: ListenableBuilder(
+        listenable: dataManager,
+        builder: (context, child) {
+          // 아이템이 다른 매치로 확정된 경우 버튼 비활성화
+          final latestItem =
+              dataManager.rentalItems[widget.rentalItem.id] ??
+              widget.rentalItem;
+          final isActiveParticipant =
+              !latestItem.isMatched ||
+              latestItem.matchedID == widget.match.matchID;
+
+          return Column(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(12),
+                color: _currentStatus.color.withValues(alpha: 0.1),
+                child: Row(
+                  children: [
+                    Icon(_getStatusIcon(), color: _currentStatus.color),
+                    const SizedBox(width: 8),
+                    Text(
+                      '현재 상태: ${_currentStatus.text}',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: _currentStatus.color,
+                      ),
+                    ),
+                    if (!isActiveParticipant) ...[
+                      const Spacer(),
+                      Text(
+                        '다른 대여자와 매칭됨',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: context.onSurfaceVariantColor,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              ),
+              Expanded(
+                child: Stack(
+                  children: [
+                    LayoutBuilder(
+                      builder: (context, constraints) => RefreshIndicator(
+                        onRefresh: _refreshMessages,
+                        child: _messages.isEmpty
+                            ? SingleChildScrollView(
+                                physics: const AlwaysScrollableScrollPhysics(),
+                                child: SizedBox(
+                                  height: constraints.maxHeight,
+                                  child: Center(
+                                    child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.chat_bubble_outline,
+                                          size: 64,
+                                          color: Colors.grey,
+                                        ),
+                                        const SizedBox(height: 16),
+                                        const Text(
+                                          '아직 메시지가 없습니다',
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            color: Colors.grey,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              )
+                            : ListView.builder(
+                                controller: _scrollController,
+                                shrinkWrap: true,
+                                reverse: true,
+                                physics: const AlwaysScrollableScrollPhysics(),
+                                padding: const EdgeInsets.all(16),
+                                itemCount: _messages.length,
+                                itemBuilder: (context, index) {
+                                  final message =
+                                      _messages[_messages.length - 1 - index];
+                                  return ChatWidgetFactory(
+                                    message: message,
+                                    currentUserId: loginManager.currentUserOrGuest.id,
+                                  ).makeWidget(context);
+                                },
+                              ),
+                      ),
+                    ),
+                    if (_pendingMessages.isNotEmpty)
+                      Padding(
+                        padding: const EdgeInsets.all(8.0),
+                        child: Align(
+                          alignment: Alignment.bottomCenter,
+                          child: FloatingActionButton.extended(
+                            onPressed: () {
+                              _releasePendingMessages();
+                              WidgetsBinding.instance.addPostFrameCallback((_) {
+                                if (_scrollController.hasClients) {
+                                  _scrollController.animateTo(
+                                    0.0,
+                                    duration: const Duration(milliseconds: 500),
+                                    curve: Curves.easeOut,
+                                  );
+                                }
+                              });
+                            },
+                            label: Text('${_pendingMessages.length}개의 새 메시지'),
+                            icon: const Icon(Icons.arrow_downward),
+                          ),
+                        ),
+                      ),
+                  ],
+                ),
+              ),
+              SafeArea(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: context.surfaceColor,
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.1),
+                            blurRadius: 4,
+                            offset: const Offset(0, -2),
+                          ),
+                        ],
+                      ),
+                      child: SizedBox(
+                        width: double.infinity,
+                        child: ElevatedButton.icon(
+                          onPressed: isActiveParticipant
+                              ? _updateRentalStatus
+                              : null,
+                          icon: Icon(_getNextStatusIcon()),
+                          label: Text(_currentStatus.nextButtonText),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: isActiveParticipant
+                                ? _getNextStatusColor()
+                                : Colors.grey,
+                            foregroundColor: context.onSurfaceColor,
+                            padding: const EdgeInsets.symmetric(vertical: 12),
+                          ),
+                        ),
+                      ),
+                    ),
+                    Container(
+                      padding: const EdgeInsets.all(12),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: TextField(
+                              controller: _messageController,
+                              decoration: const InputDecoration(
+                                hintText: '메시지를 입력하세요',
+                                border: OutlineInputBorder(),
+                                contentPadding: EdgeInsets.symmetric(
+                                  horizontal: 16,
+                                  vertical: 12,
+                                ),
+                              ),
+                              // 테스트용: 엔터를 치면 상대방이 메시지를 보내는 것으로 시뮬레이션
+                              // 실제 구현 시 삭제
+                              onSubmitted: (_) => _receiveMessage(
+                                Chat(
+                                  id: DateTime.now().millisecondsSinceEpoch
+                                      .toString(),
+                                  sendUser: _otherUser,
+                                  chatText: _messageController.text,
+                                  sendTime: DateTime.now(),
+                                ),
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          IconButton(
+                            onPressed: _sendMessage,
+                            icon: const Icon(Icons.send),
+                            color: context.primaryColor,
+                            iconSize: 28,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          );
+        },
+      ),
     );
+  }
+
+  Color _getNextStatusColor() {
+    switch (_currentStatus) {
+      case RentalStatus.pending:
+        return RentalStatus.matchConfirmed.color;
+      case RentalStatus.matchConfirmed:
+        return RentalStatus.inProgress.color;
+      case RentalStatus.inProgress:
+        return RentalStatus.returned.color;
+      case RentalStatus.returned:
+        return RentalStatus.reviewed.color;
+      case RentalStatus.reviewed:
+      case RentalStatus.cancelled:
+      case RentalStatus.otherUserMatched:
+        return Colors.grey;
+    }
   }
 
   IconData _getStatusIcon() {
@@ -368,6 +517,10 @@ class _ChatScreenState extends State<ChatScreen> {
         return Icons.assignment_turned_in;
       case RentalStatus.reviewed:
         return Icons.star;
+      case RentalStatus.cancelled:
+        return Icons.cancel;
+      case RentalStatus.otherUserMatched:
+        return Icons.person_off;
     }
   }
 
@@ -383,48 +536,10 @@ class _ChatScreenState extends State<ChatScreen> {
         return Icons.rate_review;
       case RentalStatus.reviewed:
         return Icons.done_all;
+      case RentalStatus.cancelled:
+        return Icons.cancel;
+      case RentalStatus.otherUserMatched:
+        return Icons.person_off;
     }
-  }
-
-  String _formatTime(DateTime time) {
-    return '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
-  }
-
-  Align _buildChatBubble(Chat message, bool isMe) {
-    return Align(
-      alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        constraints: BoxConstraints(
-          maxWidth: MediaQuery.of(context).size.width * 0.6,
-        ),
-        decoration: BoxDecoration(
-          color: isMe ? context.primaryColor : context.tertiaryColor,
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              message.chatText,
-              style: TextStyle(
-                color: isMe ? context.onPrimaryColor : context.onTertiaryColor,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              _formatTime(message.sendTime),
-              style: TextStyle(
-                fontSize: 10,
-                color: isMe
-                    ? context.onPrimaryColor.withValues(alpha: 0.5)
-                    : context.onTertiaryColor.withValues(alpha: 0.5),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
   }
 }

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../models/rental_item.dart';
+import 'package:open_source_software/models/rental_status.dart';
 
 extension RentalStatusExtension on RentalStatus {
   Color get color {
@@ -14,6 +14,10 @@ extension RentalStatusExtension on RentalStatus {
         return Colors.green;
       case RentalStatus.reviewed:
         return Colors.amber;
+      case RentalStatus.cancelled:
+        return Colors.red;
+      case RentalStatus.otherUserMatched:
+        return Colors.grey;
     }
   }
 
@@ -29,6 +33,10 @@ extension RentalStatusExtension on RentalStatus {
         return '반납 완료';
       case RentalStatus.reviewed:
         return '리뷰 완료';
+      case RentalStatus.cancelled:
+        return '취소됨';
+      case RentalStatus.otherUserMatched:
+        return '다른 사용자 매칭';
     }
   }
 
@@ -44,6 +52,10 @@ extension RentalStatusExtension on RentalStatus {
         return '리뷰 작성';
       case RentalStatus.reviewed:
         return '완료됨';
+      case RentalStatus.cancelled:
+        return '취소됨';
+      case RentalStatus.otherUserMatched:
+        return '다른 사용자 매칭';
     }
   }
 }

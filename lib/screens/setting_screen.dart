@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:open_source_software/extensions/theme_extension.dart';
-import '../managers/theme_mode_manager.dart';
+import 'package:open_source_software/managers/login_manager.dart';
+import 'package:open_source_software/managers/theme_mode_manager.dart';
 
 class SettingScreen extends StatelessWidget {
   const SettingScreen({super.key});
@@ -11,6 +12,13 @@ class SettingScreen extends StatelessWidget {
       appBar: AppBar(title: const Text('설정')),
       body: ListView(
         children: [
+          ListTile(
+            leading: const Icon(Icons.logout, color: Colors.red),
+            title: const Text('로그아웃', style: TextStyle(color: Colors.red)),
+            subtitle: const Text('계정에서 로그아웃합니다.'),
+            onTap: () => LoginManager().forceLogout('로그아웃되었습니다.'),
+          ),
+          const Divider(),
           ListTile(
             leading: Icon(Icons.brightness_6, color: context.primaryColor),
             title: const Text('테마 설정'),

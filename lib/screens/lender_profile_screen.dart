@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import '../models/user.dart';
 import 'package:open_source_software/extensions/theme_extension.dart';
+import 'package:open_source_software/models/user.dart';
 
 /// 사용자 정보 헤더 위젯 (프로필 화면 공통 사용)
 class UserInfoHeader extends StatelessWidget {
@@ -25,7 +25,10 @@ class UserInfoHeader extends StatelessWidget {
           const SizedBox(height: 10),
           Text(
             user.name,
-            style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
+            style: const TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+            ),
           ),
           if (showEmail) ...[
             const SizedBox(height: 4),
@@ -50,7 +53,7 @@ class UserInfoHeader extends StatelessWidget {
                       color: context.primaryColor,
                     ),
                     label: '총 거래',
-                    value: user.dealHistory.length.toString(),
+                    value: user.rentalHistory.length.toString(),
                   ),
                 ),
               ),
@@ -67,7 +70,10 @@ class UserInfoHeader extends StatelessWidget {
                 child: Padding(
                   padding: EdgeInsets.only(right: responsivePadding),
                   child: _StatItem(
-                    icon: Icon(Icons.star_outlined, color: context.starColor),
+                    icon: Icon(
+                      Icons.star_outlined,
+                      color: context.starColor,
+                    ),
                     label: '매너 점수',
                     value: user.score.toString(),
                   ),
@@ -75,19 +81,6 @@ class UserInfoHeader extends StatelessWidget {
               ),
             ],
           ),
-          // UserStatCard(
-          //   label: '총 거래',
-          //   value: user.dealHistory.length.toString(),
-          //   icon: Icon(
-          //     Icons.shopping_bag_outlined,
-          //     color: context.primaryColor,
-          //   ),
-          // ),
-          // UserStatCard(
-          //   label: '매너 점수',
-          //   value: user.score.toString(),
-          //   icon: Icon(Icons.star_outlined, color: context.starColor),
-          // ),
         ],
       ),
     );

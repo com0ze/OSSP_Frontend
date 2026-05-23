@@ -1,6 +1,6 @@
 name: open_source_software
 description: "open_source_software"
-version: 1.0.1
+version: 1.1.0
 
 environment:
   sdk: ^3.11.4
@@ -18,9 +18,9 @@ dependencies:
   firebase_core: ^2.24.2
   firebase_messaging: ^14.7.9
   flutter_local_notifications: ^17.1.2
-  dio: ^5.4.0                  # HTTP 통신 (JWT 처리용)
-  flutter_secure_storage: ^9.0.0 # 기기 내 토큰 안전 보관용
   stomp_dart_client: ^3.0.1     # 실시간 채팅(웹소켓) 연결용
+  flutter_secure_storage: ^10.3.0
+  dio: ^5.9.2
 
 dev_dependencies:
   flutter_test:

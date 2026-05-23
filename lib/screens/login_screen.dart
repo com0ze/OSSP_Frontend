@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
-import 'home_navigation.dart';
 import 'package:open_source_software/extensions/theme_extension.dart';
 import 'package:open_source_software/managers/notification_manager.dart';
-
+import 'package:open_source_software/managers/login_manager.dart';
+import 'package:open_source_software/screens/home_navigation.dart';
+import 'package:open_source_software/screens/signin_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -17,6 +18,7 @@ class _LoginScreenState extends State<LoginScreen> {
   final _passwordController = TextEditingController();
   bool _isLoading = false;
   bool _obscurePassword = true;
+  final loginManager = LoginManager();
 
   @override
   void dispose() {
@@ -29,12 +31,26 @@ class _LoginScreenState extends State<LoginScreen> {
     if (_formKey.currentState!.validate()) {
       setState(() => _isLoading = true);
 
-      await Future.delayed(const Duration(seconds: 1));
+      // 3. LoginManager를 통해 실제 로그인 시도
+      bool success = await loginManager.login(
+        _emailController.text,
+        _passwordController.text,
+      );
 
       if (mounted) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (context) => const HomeNavigation()),
-        );
+        setState(() => _isLoading = false);
+
+        if (success) {
+          // 로그인 성공 시 화면 전환
+          Navigator.of(context).pushReplacement(
+            MaterialPageRoute(builder: (context) => const HomeNavigation()),
+          );
+        } else {
+          // 로그인 실패 시 에러 알림
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('로그인에 실패했습니다. 이메일과 비밀번호를 확인해주세요.')),
+          );
+        }
       }
     }
   }
@@ -82,11 +98,11 @@ class _LoginScreenState extends State<LoginScreen> {
                       border: OutlineInputBorder(),
                     ),
                     validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return '이메일을 입력해주세요';
-                      }
-                      if (!value.contains('@')) {
-                        return '올바른 이메일 형식이 아닙니다';
+                      final String? errorMessage = loginManager.validateEmail(
+                        value,
+                      );
+                      if (errorMessage != null) {
+                        return errorMessage;
                       }
                       return null;
                     },
@@ -111,11 +127,10 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                     ),
                     validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return '비밀번호를 입력해주세요';
-                      }
-                      if (value.length < 6) {
-                        return '비밀번호는 6자 이상이어야 합니다';
+                      final String? errorMessage = loginManager
+                          .validatePassword(value);
+                      if (errorMessage != null) {
+                        return errorMessage;
                       }
                       return null;
                     },
@@ -141,7 +156,14 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 16),
                   TextButton(
-                    onPressed: () {},
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => const SigninScreen(),
+                        ),
+                      );
+                    },
                     style: TextButton.styleFrom(
                       foregroundColor: context.primaryColor,
                     ),
@@ -149,16 +171,22 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   const SizedBox(height: 32),
                   ElevatedButton(
-                    style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.blue,
+                    ),
                     onPressed: () async {
                       await NotificationManager().showNotification(
-                        id: 1, 
+                        id: 1,
                         title: '🚨 긴급 대여 요청',
                         body: '근처에서 보조배터리 대여 요청이 들어왔습니다. 핀을 확인해주세요!',
-                        payload: '{"type": "RENTAL_REQUEST", "requestId": "123"}',
+                        payload:
+                            '{"type": "RENTAL_REQUEST", "requestId": "123"}',
                       );
                     },
-                    child: const Text('진짜 폰 상단 알림 띄우기', style: TextStyle(color: Colors.white)),
+                    child: const Text(
+                      '진짜 폰 상단 알림 띄우기',
+                      style: TextStyle(color: Colors.white),
+                    ),
                   ),
                 ],
               ),
@@ -169,4 +197,3 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 }
-

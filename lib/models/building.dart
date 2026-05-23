@@ -1,4 +1,4 @@
-import 'place.dart';
+import 'package:open_source_software/models/place.dart';
 
 class Building extends Place {
   final String _name;
