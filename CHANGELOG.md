@@ -93,3 +93,24 @@
                 - 홈 네비게이션 개선
                     - 채팅 탭 추가
                     - BottomNavigationBarType.fixed 적용으로 4개 탭 색상 유지
+
+        - ### 취소 기능 및 상태 관리 구조 개선
+            - #### author: Seo JeongHun
+            - #### date: 2026-05-23
+            - feature:
+                - 상태 관리 구조 변경 (Match → RentalItem)
+                    - Match.rentalStatus 제거, RentalItem.rentalStatus로 이전
+                    - 아이템 단위로 대여 상태를 일원 관리하여 일관성 향상
+                    - getStatusForUserOnItem 로직 재구현
+                        - 요청자: 아이템 실제 상태 표시
+                        - 확정된 대여자: 아이템 실제 상태 표시
+                        - 미확정 대여자: otherUserMatched 또는 pending으로 계산
+                        - 취소된 아이템: 모든 참여자에게 cancelled 표시
+
+                - 취소 기능 구현
+                    - 물건 상세정보 페이지에 역할별 취소하기 버튼 추가
+                    - 요청자 취소: 아이템 자체를 cancelled 상태로 변경
+                    - 대여자 취소(확정 후): 아이템을 pending으로 되돌려 다른 대여자가 매칭 가능하게 복원
+                    - 취소 전 확인 다이얼로그 표시
+                    - 취소 완료 후 취소하기 버튼 자동 소멸
+                    - 요청자는 매칭 전(대기 중)에도 취소하기 버튼 표시

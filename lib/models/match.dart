@@ -1,12 +1,9 @@
-import 'package:open_source_software/models/rental_status.dart';
-
 class Match {
   final String matchID;
   final String rentalItemID;
   final String requesterID;
   final String lenderID;
   final String chattingID;
-  final RentalStatus rentalStatus;
   final String? requesterReviewID;
   final String? lenderReviewID;
 
@@ -16,7 +13,6 @@ class Match {
     required this.requesterID,
     required this.lenderID,
     required this.chattingID,
-    this.rentalStatus = RentalStatus.pending,
     this.requesterReviewID,
     this.lenderReviewID,
   });
@@ -27,7 +23,6 @@ class Match {
     String? requesterID,
     String? lenderID,
     String? chattingID,
-    RentalStatus? rentalStatus,
     String? requesterReviewID,
     String? lenderReviewID,
   }) {
@@ -37,7 +32,6 @@ class Match {
       requesterID: requesterID ?? this.requesterID,
       lenderID: lenderID ?? this.lenderID,
       chattingID: chattingID ?? this.chattingID,
-      rentalStatus: rentalStatus ?? this.rentalStatus,
       requesterReviewID: requesterReviewID ?? this.requesterReviewID,
       lenderReviewID: lenderReviewID ?? this.lenderReviewID,
     );

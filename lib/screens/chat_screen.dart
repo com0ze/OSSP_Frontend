@@ -41,7 +41,10 @@ class _ChatScreenState extends State<ChatScreen> {
   void initState() {
     super.initState();
 
-    _currentStatus = widget.match.rentalStatus;
+    _currentStatus = testDataManager.getStatusForUserOnItem(
+      widget.rentalItem.id,
+      loginManager.currentUserOrGuest.id,
+    );
 
     final currentUserId = loginManager.currentUserOrGuest.id;
     final otherUserId = widget.match.requesterID == currentUserId
@@ -77,9 +80,12 @@ class _ChatScreenState extends State<ChatScreen> {
 
   void _syncFromChatting() {
     if (!mounted) return;
-    final latestMatch = testDataManager.matches[widget.match.matchID];
-    if (latestMatch != null && latestMatch.rentalStatus != _currentStatus) {
-      setState(() => _currentStatus = latestMatch.rentalStatus);
+    final latestStatus = testDataManager.getStatusForUserOnItem(
+      widget.rentalItem.id,
+      loginManager.currentUserOrGuest.id,
+    );
+    if (latestStatus != _currentStatus) {
+      setState(() => _currentStatus = latestStatus);
     }
     final chatting = testDataManager.getChattingById(widget.match.chattingID);
     if (chatting == null) return;

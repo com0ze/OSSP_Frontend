@@ -247,26 +247,31 @@ class ItemDetailScreen extends StatelessWidget {
             final confirmedMatch = currentItem.matchedID != null
                 ? tdm.matches[currentItem.matchedID!]
                 : null;
-            if (confirmedMatch == null) return const SizedBox.shrink();
-
+            // 아이템이 실제로 대여 전 상태일 때만 취소 버튼 표시
             final isPreRental =
-                confirmedMatch.rentalStatus == RentalStatus.matchConfirmed;
+                currentItem.rentalStatus == RentalStatus.pending ||
+                currentItem.rentalStatus == RentalStatus.matchConfirmed;
             return _buildBottomBar(
               context,
               currentItem: currentItem,
               match: confirmedMatch,
+              showChat: confirmedMatch != null,
               showCancel: isPreRental,
               isRequester: true,
             );
           } else {
             final match = tdm.findMatch(item.id, currentUser.id);
-            final isPreRental = match != null &&
-                (match.rentalStatus == RentalStatus.pending ||
-                    match.rentalStatus == RentalStatus.matchConfirmed);
+            // 이 대여자가 현재 확정된 대여자일 때만 취소 버튼 표시
+            final isConfirmedLender =
+                match != null && currentItem.matchedID == match.matchID;
+            final isPreRental = isConfirmedLender &&
+                (currentItem.rentalStatus == RentalStatus.pending ||
+                    currentItem.rentalStatus == RentalStatus.matchConfirmed);
             return _buildBottomBar(
               context,
               currentItem: currentItem,
               match: match,
+              showChat: true,
               showCancel: isPreRental,
               isRequester: false,
             );
@@ -280,6 +285,7 @@ class ItemDetailScreen extends StatelessWidget {
     BuildContext context, {
     required RentalItem currentItem,
     required Match? match,
+    required bool showChat,
     required bool showCancel,
     required bool isRequester,
   }) {
@@ -289,7 +295,8 @@ class ItemDetailScreen extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            SizedBox(
+            if (showChat)
+              SizedBox(
               width: double.infinity,
               child: ElevatedButton(
                 onPressed: () =>

@@ -136,7 +136,6 @@ class TestDataManager extends ChangeNotifier {
       requesterID: '0',
       lenderID: '1',
       chattingID: 'chat_m_b1',
-      rentalStatus: RentalStatus.reviewed,
       requesterReviewID: 'b1',
     ),
     'm_b2': const Match(
@@ -145,7 +144,6 @@ class TestDataManager extends ChangeNotifier {
       requesterID: '0',
       lenderID: 'l1',
       chattingID: 'chat_m_b2',
-      rentalStatus: RentalStatus.inProgress,
     ),
     'm_b3': const Match(
       matchID: 'm_b3',
@@ -153,7 +151,6 @@ class TestDataManager extends ChangeNotifier {
       requesterID: '0',
       lenderID: 'l2',
       chattingID: 'chat_m_b3',
-      rentalStatus: RentalStatus.returned,
     ),
     'm_l1': const Match(
       matchID: 'm_l1',
@@ -161,7 +158,6 @@ class TestDataManager extends ChangeNotifier {
       requesterID: 'r1',
       lenderID: '0',
       chattingID: 'chat_m_l1',
-      rentalStatus: RentalStatus.matchConfirmed,
     ),
     'm_ri1': const Match(
       matchID: 'm_ri1',
@@ -169,7 +165,6 @@ class TestDataManager extends ChangeNotifier {
       requesterID: '1',
       lenderID: 'reviewer1',
       chattingID: 'chat_m_ri1',
-      rentalStatus: RentalStatus.reviewed,
       lenderReviewID: '1',
     ),
     'm_ri2': const Match(
@@ -178,7 +173,6 @@ class TestDataManager extends ChangeNotifier {
       requesterID: '1',
       lenderID: 'reviewer2',
       chattingID: 'chat_m_ri2',
-      rentalStatus: RentalStatus.reviewed,
       lenderReviewID: '2',
     ),
     'm_ri3': const Match(
@@ -187,7 +181,6 @@ class TestDataManager extends ChangeNotifier {
       requesterID: '1',
       lenderID: 'reviewer3',
       chattingID: 'chat_m_ri3',
-      rentalStatus: RentalStatus.reviewed,
       lenderReviewID: '3',
     ),
     "m_test": const Match(
@@ -196,7 +189,6 @@ class TestDataManager extends ChangeNotifier {
       requesterID: "1",
       lenderID: '0',
       chattingID: "c_test",
-      rentalStatus: RentalStatus.otherUserMatched,
     ),
     "m_test2": const Match(
       matchID: "m_test2",
@@ -204,7 +196,6 @@ class TestDataManager extends ChangeNotifier {
       requesterID: "1",
       lenderID: '2',
       chattingID: "c_test2",
-      rentalStatus: RentalStatus.matchConfirmed,
     ),
   };
 
@@ -266,6 +257,7 @@ class TestDataManager extends ChangeNotifier {
       matchIDs: ['m_b1'],
       isMatched: true,
       matchedID: 'm_b1',
+      rentalStatus: RentalStatus.reviewed,
     ),
     'b2': RentalItem(
       id: 'b2',
@@ -280,6 +272,7 @@ class TestDataManager extends ChangeNotifier {
       matchIDs: ['m_b2'],
       isMatched: true,
       matchedID: 'm_b2',
+      rentalStatus: RentalStatus.inProgress,
     ),
     'b3': RentalItem(
       id: 'b3',
@@ -294,6 +287,7 @@ class TestDataManager extends ChangeNotifier {
       matchIDs: ['m_b3'],
       isMatched: true,
       matchedID: 'm_b3',
+      rentalStatus: RentalStatus.returned,
     ),
     'l1': RentalItem(
       id: 'l1',
@@ -308,6 +302,7 @@ class TestDataManager extends ChangeNotifier {
       matchIDs: ['m_l1'],
       isMatched: true,
       matchedID: 'm_l1',
+      rentalStatus: RentalStatus.matchConfirmed,
     ),
     'ri1': RentalItem(
       id: 'ri1',
@@ -322,6 +317,7 @@ class TestDataManager extends ChangeNotifier {
       matchIDs: ['m_ri1'],
       isMatched: true,
       matchedID: 'm_ri1',
+      rentalStatus: RentalStatus.reviewed,
     ),
     'ri2': RentalItem(
       id: 'ri2',
@@ -336,6 +332,7 @@ class TestDataManager extends ChangeNotifier {
       matchIDs: ['m_ri2'],
       isMatched: true,
       matchedID: 'm_ri2',
+      rentalStatus: RentalStatus.reviewed,
     ),
     'ri3': RentalItem(
       id: 'ri3',
@@ -350,6 +347,7 @@ class TestDataManager extends ChangeNotifier {
       matchIDs: ['m_ri3'],
       isMatched: true,
       matchedID: 'm_ri3',
+      rentalStatus: RentalStatus.reviewed,
     ),
     'ri_test': RentalItem(
       id: "ri_test",
@@ -364,6 +362,7 @@ class TestDataManager extends ChangeNotifier {
       matchIDs: ["m_test", "m_test2"],
       isMatched: true,
       matchedID: "m_test2",
+      rentalStatus: RentalStatus.matchConfirmed,
     ),
   };
 
@@ -400,8 +399,27 @@ class TestDataManager extends ChangeNotifier {
   }
 
   RentalStatus getStatusForUserOnItem(String rentalItemId, String userId) {
-    return findMatch(rentalItemId, userId)?.rentalStatus ??
-        RentalStatus.pending;
+    final item = _rentalItems[rentalItemId];
+    if (item == null) return RentalStatus.pending;
+
+    // 요청자는 아이템 실제 상태
+    if (item.requesterID == userId) return item.rentalStatus;
+
+    // 취소된 경우 모든 참여자에게 취소 표시
+    if (item.rentalStatus == RentalStatus.cancelled) {
+      return RentalStatus.cancelled;
+    }
+
+    // 매칭이 확정된 경우
+    if (item.matchedID != null) {
+      final confirmedMatch = _matches[item.matchedID!];
+      if (confirmedMatch?.lenderID == userId) return item.rentalStatus;
+      // 확정되지 않은 다른 대여자
+      return RentalStatus.otherUserMatched;
+    }
+
+    // 매칭 미확정: 대기 중
+    return RentalStatus.pending;
   }
 
   // ── Match 생성 ─────────────────────────────────────────────────────────────
@@ -429,58 +447,45 @@ class TestDataManager extends ChangeNotifier {
 
   // ── Match 상태 변경 ────────────────────────────────────────────────────────
 
-  // pending → matchConfirmed: 아이템의 isMatched/matchedID도 업데이트, 나머지 매치는 otherUserMatched로 변경
+  // pending → matchConfirmed: 아이템 상태 및 isMatched/matchedID 업데이트
   void confirmMatch(String matchId) {
     final match = _matches[matchId];
     if (match == null) return;
-    _matches[matchId] = match.copyWith(
-      rentalStatus: RentalStatus.matchConfirmed,
-    );
     final item = _rentalItems[match.rentalItemID];
     if (item != null) {
       _rentalItems[match.rentalItemID] = item.copyWith(
         isMatched: true,
         matchedID: matchId,
+        rentalStatus: RentalStatus.matchConfirmed,
       );
     }
-    for (final entry in _matches.entries) {
-      if (entry.key != matchId &&
-          entry.value.rentalItemID == match.rentalItemID) {
-        _matches[entry.key] = entry.value.copyWith(
-          rentalStatus: RentalStatus.otherUserMatched,
-        );
-      }
-    }
     changeData();
   }
 
-  // 요청자가 취소: 해당 아이템의 모든 매치를 cancelled로, 아이템 상태 초기화
+  // 요청자가 취소: 아이템 상태를 cancelled로 변경
   void cancelAllMatchesForItem(String rentalItemId) {
-    for (final entry in _matches.entries) {
-      if (entry.value.rentalItemID == rentalItemId) {
-        _matches[entry.key] = entry.value.copyWith(rentalStatus: RentalStatus.cancelled);
-      }
-    }
     final item = _rentalItems[rentalItemId];
     if (item != null) {
-      _rentalItems[rentalItemId] = item.copyWith(isMatched: false, clearMatchedID: true);
+      _rentalItems[rentalItemId] = item.copyWith(
+        isMatched: false,
+        clearMatchedID: true,
+        rentalStatus: RentalStatus.cancelled,
+      );
     }
     changeData();
   }
 
-  // 대여자가 취소: 본인 매치 cancelled, 나머지 매치 pending으로 복원, 아이템 상태 초기화
+  // 대여자가 취소: 아이템 상태를 pending으로 되돌리고 매칭 정보 초기화
   void cancelLenderMatch(String matchId) {
     final match = _matches[matchId];
     if (match == null) return;
-    _matches[matchId] = match.copyWith(rentalStatus: RentalStatus.cancelled);
-    for (final entry in _matches.entries) {
-      if (entry.key != matchId && entry.value.rentalItemID == match.rentalItemID) {
-        _matches[entry.key] = entry.value.copyWith(rentalStatus: RentalStatus.pending);
-      }
-    }
     final item = _rentalItems[match.rentalItemID];
     if (item != null) {
-      _rentalItems[match.rentalItemID] = item.copyWith(isMatched: false, clearMatchedID: true);
+      _rentalItems[match.rentalItemID] = item.copyWith(
+        isMatched: false,
+        clearMatchedID: true,
+        rentalStatus: RentalStatus.pending,
+      );
     }
     changeData();
   }
@@ -488,7 +493,10 @@ class TestDataManager extends ChangeNotifier {
   void updateMatchStatus(String matchId, RentalStatus newStatus) {
     final match = _matches[matchId];
     if (match == null) return;
-    _matches[matchId] = match.copyWith(rentalStatus: newStatus);
+    final item = _rentalItems[match.rentalItemID];
+    if (item != null) {
+      _rentalItems[match.rentalItemID] = item.copyWith(rentalStatus: newStatus);
+    }
     if (newStatus == RentalStatus.returned) {
       final itemId = match.rentalItemID;
       final lender = _users[match.lenderID];
@@ -512,10 +520,13 @@ class TestDataManager extends ChangeNotifier {
     final match = _matches[matchId];
     if (match == null) return;
     _reviews[newReview.id] = newReview;
-    _matches[matchId] = match.copyWith(
-      lenderReviewID: newReview.id,
-      rentalStatus: RentalStatus.reviewed,
-    );
+    _matches[matchId] = match.copyWith(lenderReviewID: newReview.id);
+    final item = _rentalItems[match.rentalItemID];
+    if (item != null) {
+      _rentalItems[match.rentalItemID] = item.copyWith(
+        rentalStatus: RentalStatus.reviewed,
+      );
+    }
     final newScore = _recalculateScore(match.requesterID);
     final requester = _users[match.requesterID];
     if (requester != null) {
@@ -529,10 +540,13 @@ class TestDataManager extends ChangeNotifier {
     final match = _matches[matchId];
     if (match == null) return;
     _reviews[newReview.id] = newReview;
-    _matches[matchId] = match.copyWith(
-      requesterReviewID: newReview.id,
-      rentalStatus: RentalStatus.reviewed,
-    );
+    _matches[matchId] = match.copyWith(requesterReviewID: newReview.id);
+    final item = _rentalItems[match.rentalItemID];
+    if (item != null) {
+      _rentalItems[match.rentalItemID] = item.copyWith(
+        rentalStatus: RentalStatus.reviewed,
+      );
+    }
     final newScore = _recalculateScore(match.lenderID);
     final lender = _users[match.lenderID];
     if (lender != null) {

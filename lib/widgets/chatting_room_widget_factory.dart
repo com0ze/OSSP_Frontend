@@ -34,6 +34,10 @@ class ChattingRoomWidgetFactory extends WidgetFactory {
     final item = testDataManager.rentalItems[match.rentalItemID];
     final Chat? lastChat =
         testDataManager.getChattingById(match.chattingID)?.getLastChat();
+    final status = testDataManager.getStatusForUserOnItem(
+      match.rentalItemID,
+      currentUserId,
+    );
 
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
@@ -109,14 +113,14 @@ class ChattingRoomWidgetFactory extends WidgetFactory {
                       vertical: 4,
                     ),
                     decoration: BoxDecoration(
-                      color: match.rentalStatus.color.withValues(alpha: 0.2),
+                      color: status.color.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(12),
                     ),
                     child: Text(
-                      match.rentalStatus.text,
+                      status.text,
                       style: TextStyle(
                         fontSize: 11,
-                        color: match.rentalStatus.color,
+                        color: status.color,
                         fontWeight: FontWeight.bold,
                       ),
                     ),

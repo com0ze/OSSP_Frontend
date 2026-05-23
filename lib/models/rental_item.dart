@@ -1,4 +1,5 @@
 import 'package:open_source_software/models/product.dart';
+import 'package:open_source_software/models/rental_status.dart';
 
 export 'package:open_source_software/models/rental_status.dart';
 
@@ -16,6 +17,7 @@ class RentalItem {
   final List<String> matchIDs;
   final bool isMatched;
   final String? matchedID;
+  final RentalStatus rentalStatus;
 
   RentalItem({
     required this.id,
@@ -31,6 +33,7 @@ class RentalItem {
     this.matchIDs = const [],
     this.isMatched = false,
     this.matchedID,
+    this.rentalStatus = RentalStatus.pending,
   });
 
   factory RentalItem.fromJson(Map<String, dynamic> json) {
@@ -74,6 +77,7 @@ class RentalItem {
     bool? isMatched,
     String? matchedID,
     bool clearMatchedID = false,
+    RentalStatus? rentalStatus,
   }) {
     return RentalItem(
       id: id,
@@ -89,6 +93,7 @@ class RentalItem {
       matchIDs: matchIDs ?? this.matchIDs,
       isMatched: isMatched ?? this.isMatched,
       matchedID: clearMatchedID ? null : (matchedID ?? this.matchedID),
+      rentalStatus: rentalStatus ?? this.rentalStatus,
     );
   }
 }
