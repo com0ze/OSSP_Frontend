@@ -13,9 +13,9 @@ class User {
     this.profileImage,
     this.score = 0,
     List<String>? rentalHistory,
-  }) : rentalHistory = rentalHistory ?? [];
+  }) : rentalHistory = List<String>.from(rentalHistory ?? []);
 
-  void addrentalHistory(String dealId) {
+  void addRentalHistory(String dealId) {
     if (!rentalHistory.contains(dealId)) {
       rentalHistory.add(dealId);
     }

@@ -1,20 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:open_source_software/extensions/theme_extension.dart';
-import 'package:open_source_software/managers/login_manager.dart';
 import 'package:open_source_software/models/chat.dart';
 import 'package:open_source_software/widgets/widget_factory.dart';
 
 class ChatWidgetFactory extends WidgetFactory {
   final Chat message;
   final String currentUserId;
-  final loginManager = LoginManager();
 
   ChatWidgetFactory({required this.message, required this.currentUserId});
 
   @override
   Widget makeWidget(BuildContext context) {
-    final mainUser = loginManager.currentUser;
-    final isMe = message.sendUser.id == (mainUser?.id ?? "guest");
+    final isMe = message.sendUser.id == currentUserId;
 
     return Align(
       alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,

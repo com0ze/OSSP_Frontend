@@ -361,7 +361,6 @@ class ItemDetailScreen extends StatelessWidget {
     Match? match,
     bool isRequester,
   ) {
-    DataManager dataManager = TestDataManager();
     if (isRequester) {
       Navigator.push(
         context,
@@ -373,7 +372,7 @@ class ItemDetailScreen extends StatelessWidget {
     } else {
       final effectiveMatch =
           match ??
-          dataManager.createMatchWithChatting(
+          TestDataManager().createMatchWithChatting(
             currentItem.id,
             LoginManager().currentUserOrGuest.id,
           );
@@ -393,7 +392,6 @@ class ItemDetailScreen extends StatelessWidget {
     Match? match,
     bool isRequester,
   ) {
-    DataManager dataManager = TestDataManager();
     showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -417,9 +415,9 @@ class ItemDetailScreen extends StatelessWidget {
     ).then((confirmed) {
       if (confirmed != true) return;
       if (isRequester) {
-        dataManager.cancelAllMatchesForItem(currentItem.id);
+        TestDataManager().cancelAllMatchesForItem(currentItem.id);
       } else if (match != null) {
-        dataManager.cancelLenderMatch(match.matchID);
+        TestDataManager().cancelLenderMatch(match.matchID);
       }
     });
   }

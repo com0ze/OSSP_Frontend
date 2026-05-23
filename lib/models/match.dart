@@ -17,6 +17,30 @@ class Match {
     this.lenderReviewID,
   });
 
+  factory Match.fromJson(Map<String, dynamic> json) {
+    return Match(
+      matchID: json['matchID'],
+      rentalItemID: json['rentalItemID'],
+      requesterID: json['requesterID'],
+      lenderID: json['lenderID'],
+      chattingID: json['chattingID'],
+      requesterReviewID: json['requesterReviewID'],
+      lenderReviewID: json['lenderReviewID'],
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'matchID': matchID,
+      'rentalItemID': rentalItemID,
+      'requesterID': requesterID,
+      'lenderID': lenderID,
+      'chattingID': chattingID,
+      'requesterReviewID': requesterReviewID,
+      'lenderReviewID': lenderReviewID,
+    };
+  }
+
   Match copyWith({
     String? matchID,
     String? rentalItemID,

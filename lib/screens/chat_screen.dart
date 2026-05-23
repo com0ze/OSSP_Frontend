@@ -60,12 +60,21 @@ class _ChatScreenState extends State<ChatScreen> {
     });
 
     _loadMessages();
+    dataManager.addListener(_onDataChanged);
+    // 화면 진입 시 최신 메시지 서버에서 갱신 (_syncFromChatting이 새 메시지를 자동 반영)
+    dataManager.fetchChatMessages(widget.match.chattingID);
   }
 
   @override
   void dispose() {
+    dataManager.removeListener(_onDataChanged);
+    _scrollController.dispose();
     _messageController.dispose();
     super.dispose();
+  }
+
+  void _onDataChanged() {
+    if (mounted) _syncFromChatting();
   }
 
   void _loadMessages() {
@@ -73,6 +82,19 @@ class _ChatScreenState extends State<ChatScreen> {
     if (chatting == null) return;
     _messages.addAll(chatting.chats);
     _syncedCount = chatting.chats.length;
+  }
+
+  Future<void> _refreshMessages() async {
+    await dataManager.fetchChatMessages(widget.match.chattingID);
+    if (!mounted) return;
+    final chatting = dataManager.getChattingById(widget.match.chattingID);
+    if (chatting == null) return;
+    setState(() {
+      _messages.clear();
+      _pendingMessages.clear();
+      _messages.addAll(chatting.chats);
+      _syncedCount = chatting.chats.length;
+    });
   }
 
   void _syncFromChatting() {
@@ -269,10 +291,6 @@ class _ChatScreenState extends State<ChatScreen> {
       body: ListenableBuilder(
         listenable: dataManager,
         builder: (context, child) {
-          WidgetsBinding.instance.addPostFrameCallback(
-            (_) => _syncFromChatting(),
-          );
-
           // 아이템이 다른 매치로 확정된 경우 버튼 비활성화
           final latestItem =
               dataManager.rentalItems[widget.rentalItem.id] ??
@@ -313,22 +331,53 @@ class _ChatScreenState extends State<ChatScreen> {
               Expanded(
                 child: Stack(
                   children: [
-                    Align(
-                      alignment: Alignment.topCenter,
-                      child: ListView.builder(
-                        controller: _scrollController,
-                        shrinkWrap: true,
-                        reverse: true,
-                        padding: const EdgeInsets.all(16),
-                        itemCount: _messages.length,
-                        itemBuilder: (context, index) {
-                          final message =
-                              _messages[_messages.length - 1 - index];
-                          return ChatWidgetFactory(
-                            message: message,
-                            currentUserId: message.sendUser.id,
-                          ).makeWidget(context);
-                        },
+                    LayoutBuilder(
+                      builder: (context, constraints) => RefreshIndicator(
+                        onRefresh: _refreshMessages,
+                        child: _messages.isEmpty
+                            ? SingleChildScrollView(
+                                physics: const AlwaysScrollableScrollPhysics(),
+                                child: SizedBox(
+                                  height: constraints.maxHeight,
+                                  child: Center(
+                                    child: Column(
+                                      mainAxisAlignment:
+                                          MainAxisAlignment.center,
+                                      children: [
+                                        Icon(
+                                          Icons.chat_bubble_outline,
+                                          size: 64,
+                                          color: Colors.grey,
+                                        ),
+                                        const SizedBox(height: 16),
+                                        const Text(
+                                          '아직 메시지가 없습니다',
+                                          style: TextStyle(
+                                            fontSize: 16,
+                                            color: Colors.grey,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              )
+                            : ListView.builder(
+                                controller: _scrollController,
+                                shrinkWrap: true,
+                                reverse: true,
+                                physics: const AlwaysScrollableScrollPhysics(),
+                                padding: const EdgeInsets.all(16),
+                                itemCount: _messages.length,
+                                itemBuilder: (context, index) {
+                                  final message =
+                                      _messages[_messages.length - 1 - index];
+                                  return ChatWidgetFactory(
+                                    message: message,
+                                    currentUserId: loginManager.currentUserOrGuest.id,
+                                  ).makeWidget(context);
+                                },
+                              ),
                       ),
                     ),
                     if (_pendingMessages.isNotEmpty)

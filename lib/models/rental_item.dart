@@ -51,6 +51,9 @@ class RentalItem {
       matchIDs: (json['matchIDs'] as List<dynamic>?)?.cast<String>() ?? [],
       isMatched: json['isMatched'] ?? false,
       matchedID: json['matchedID'],
+      rentalStatus: json['rentalStatus'] != null
+          ? RentalStatus.values.byName(json['rentalStatus'])
+          : RentalStatus.pending,
     );
   }
 
@@ -69,6 +72,7 @@ class RentalItem {
       'matchIDs': matchIDs,
       'isMatched': isMatched,
       'matchedID': matchedID,
+      'rentalStatus': rentalStatus.name,
     };
   }
 

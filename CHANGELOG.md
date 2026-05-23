@@ -182,7 +182,94 @@
                     - 비밀번호 확인 불일치 시 에러 표시
                     - 회원가입 성공 시 로그인 화면 스택 제거 후 HomeNavigation 진입
                     - 로그인 화면 회원가입 버튼 → SigninScreen 연결
+                    
         - ### commit: import 경로 절대 경로로 수정
             - #### author: Seo JeongHun
             - #### date: 2026-05-23
             - feature: import 경로 절대 경로로 수정
+
+- # feature/api
+    - ## version: 1.1.0
+        - ### commit: 서버 통신 및 캐시 구조 개선
+            - #### author: Seo JeongHun
+            - #### date: 2026-05-23
+            - feature:
+                - TestDataManager 전면 개편
+                    - TTL(Time-To-Live) 기반 캐시 만료 관리 도입 (users 10분, reviews 5분, chattings 30초, matches·rentalItems 1분)
+                    - 공개 getter에서 TTL 만료 감지 시 자동 캐시 갱신 트리거
+                    - `_scheduleChangeData()` 디바운싱 추가: 같은 프레임 내 여러 getter가 동시에 만료되어도 `changeData()`는 프레임당 한 번만 실행
+                    - 캐시 미스(`getUserById`, `getReviewById`, `getChattingById`) 시 서버에서 즉시 재조회 후 다음 프레임에 UI 갱신
+                    - `confirmMatch`, `cancelAllMatchesForItem`, `cancelLenderMatch`, `updateMatchStatus` 상태 변경 시 `matches` 캐시도 함께 갱신하여 화면 간 데이터 일관성 보장
+                    - `requestRentalItems`, `lentRentalItems`, `notMatchedRentalItems`, `findMatch` 등 계산 메서드에서 private 필드 대신 TTL이 적용된 public getter 사용
+
+                - DataManager 추상 인터페이스에 fetch 메서드 추가
+                    - `fetchMyData`, `fetchAvailableRentalItems`, `fetchUserProfile`, `fetchChatMessages` 추상 메서드 선언
+
+                - 물건 상세정보 페이지 새로고침 로직 수정
+                    - `onRefresh` 시 `fetchAvailableRentalItems`와 `fetchUserProfile`을 `Future.wait`로 병렬 실행
+
+        - ### commit: 인증 및 로그인 개선
+            - #### author: Seo JeongHun
+            - #### date: 2026-05-23
+            - feature:
+                - `LoginManager.forceLogout` 메서드 추가
+                    - 동시에 여러 곳에서 호출되어도 한 번만 실행되도록 `_isLoggingOut` 플래그로 보호
+                    - 로그아웃 후 등록된 핸들러(`_forceLogoutHandler`)를 호출하여 화면 전환 처리
+
+                - 설정 화면에 로그아웃 버튼 추가
+                    - `setting_screen.dart` 상단에 로그아웃 ListTile 추가
+                    - 탭 시 `LoginManager().forceLogout('로그아웃되었습니다.')` 호출
+
+                - 전역 키 기반 네비게이션 구현 (`app_keys.dart` 신규 생성)
+                    - `navigatorKey`, `scaffoldMessengerKey` GlobalKey 선언
+                    - `MaterialApp`에 등록하여 BuildContext 없이 화면 전환 및 스낵바 표시 가능
+
+                - `main.dart`에 로그아웃 핸들러 등록
+                    - 로그아웃 또는 토큰 만료 시 LoginScreen으로 이동하고 스낵바로 메시지 표시
+
+                - `AuthInterceptor` 동시 401 경쟁 조건 수정
+                    - `static Future<String>? _refreshFuture` 도입으로 동시 다발 401 응답 시 토큰 갱신 요청이 한 번만 전송되도록 보장
+                    - `_doRefresh()` 헬퍼 메서드 분리
+                    - `finally` 블록에서 Future 초기화하여 다음 401에서 새로 시도 가능
+
+        - ### commit: 사용자 프로필 화면 개선
+            - #### author: Seo JeongHun
+            - #### date: 2026-05-23
+            - feature:
+                - 사용자 정보 영역에서만 새로고침 기능 제공
+                    - `Column` 레이아웃으로 사용자 정보 헤더·탭 바를 상단에 고정
+                    - `RefreshIndicator`를 사용자 정보 헤더 영역에만 적용 (탭·콘텐츠에는 새로고침 없음)
+                    - 새로고침 시 `fetchMyData` 호출하여 사용자 정보 및 3개 탭의 데이터 일괄 갱신
+
+        - ### commit: 버그 수정
+            - #### author: Seo JeongHun
+            - #### date: 2026-05-23
+            - feature:
+                - `chat_screen.dart` 리소스 누수 및 리스너 관리 수정
+                    - `_scrollController.dispose()` 누락 수정
+                    - `ListenableBuilder.builder` 내부에서 `addPostFrameCallback(() => _syncFromChatting())`을 매 리빌드마다 등록하던 버그 제거 (콜백 누적 문제)
+                    - `initState`에서 `dataManager.addListener(_onDataChanged)` 등록, `dispose`에서 제거하여 올바른 리스너 수명 주기 관리
+
+                - 모델 직렬화 보완
+                    - `rental_item.dart`: `fromJson`/`toJson`에 `rentalStatus` 필드 추가 (누락 시 서버 왕복 후 상태 초기화되는 버그)
+                    - `match.dart`: `fromJson`, `toJson` 메서드 신규 추가
+                    - `main_user.dart`: `copyWith`에서 `id: this.id`로 하드코딩되어 `id` 파라미터가 무시되던 버그 수정 → `id: id ?? this.id`
+                    - `user.dart`: `addRentalHistory` 메서드명 오타 수정(`addrentalHistory` → `addRentalHistory`), 생성자에서 `List<String>.from(...)` 사용으로 항상 가변 리스트 생성 보장
+
+                - 리뷰 ID 충돌로 인한 데이터 소실 수정 (`review_screen.dart`)
+                    - 리뷰 ID를 `matchID`로 고정하면 대여자·요청자 리뷰가 동일한 키에 저장되어 먼저 제출한 리뷰가 덮어써지는 버그 수정
+                    - `'${matchID}_${reviewee.id}'` 형태로 변경하여 리뷰 ID 충돌 방지
+
+                - `ChatWidgetFactory` 파라미터 버그 수정
+                    - 내부에서 `currentUserId` 파라미터를 무시하고 `LoginManager().currentUser`를 직접 조회하던 문제 수정 → 전달받은 `currentUserId` 사용
+                    - `chat_screen.dart` 호출부에서 `message.sendUser.id` (발신자 ID)를 잘못 전달하던 문제 수정 → `loginManager.currentUserOrGuest.id` 전달
+
+                - `UserInfoHeader`의 불필요한 `ListenableBuilder` 제거 (`lender_profile_screen.dart`)
+                    - 헤더가 `user` 파라미터만 표시하면서도 모든 캐시 변경 시마다 리빌드되던 문제 수정
+                    - 부모 화면의 `ListenableBuilder`에서 이미 최신 `User`를 받아 넘기므로 중복 구독 불필요
+
+                - `other_user_profile_screen.dart` `initState` 에러 처리 추가
+                    - `fetchUserProfile` 호출 결과에 `.ignore()` 추가하여 미처리 Future 경고 제거
+
+                - `item_detail_screen.dart` 중복 `DataManager` 지역 변수 제거
+                    - `_onChatPressed`, `_onCancelPressed` 내부의 `DataManager dataManager = TestDataManager()` 중복 선언 제거

@@ -51,7 +51,7 @@ class MainUser extends User {
     String? profileImage,
   }) {
     return MainUser(
-      id: this.id,
+      id: id ?? this.id,
       name: name ?? this.name,
       score: score ?? this.score,
       personalInformation: personalInformation ?? this.personalInformation,

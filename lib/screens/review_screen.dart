@@ -76,7 +76,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
 
     final DataManager dataManager = TestDataManager();
     final review = Review(
-      id: widget.match.matchID,
+      id: '${widget.match.matchID}_${widget.reviewee.id}',
       score: _rating,
       reviewText: reviewText,
       writer: widget.reviewee,
