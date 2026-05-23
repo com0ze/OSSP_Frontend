@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'screens/login_screen.dart';
 import 'managers/theme_mode_manager.dart';
@@ -13,7 +14,7 @@ void main() async {
 
   // 💡 스마트폰(Android) 환경으로 타겟을 바꿨기 때문에,
   // 이제 아래 if문 안으로 들어가 파이어베이스 심장 충격기가 정상 기동됩니다!
-  if (Platform.isAndroid || Platform.isIOS) {
+  if (!kIsWeb && (Platform.isAndroid || Platform.isIOS)) {
     await Firebase.initializeApp();
 
     final notificationManager = NotificationManager();

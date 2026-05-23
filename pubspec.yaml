@@ -15,8 +15,8 @@ dependencies:
   dart_geohash: ^2.1.0
 
 # --- 아래 6개 패키지 추가 ---
-  firebase_core: ^2.24.2
-  firebase_messaging: ^14.7.9
+  firebase_core: ^4.0.0
+  firebase_messaging: ^16.0.0
   flutter_local_notifications: ^17.1.2
   stomp_dart_client: ^3.0.1     # 실시간 채팅(웹소켓) 연결용
   flutter_secure_storage: ^10.3.0

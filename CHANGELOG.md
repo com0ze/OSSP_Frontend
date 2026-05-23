@@ -43,6 +43,13 @@
                 - changelog.md의 계층 구조 변경
                 - days -> date로 변경
                 
+    - ## version: 1.1.0
+        - ### commit: 브랜치 통합
+            - #### author: Seo JeongHun, Lee JaeWon
+            - #### date: 2026-05-24
+            - feature: 
+                - 브랜치 통합
+                
 - # feature/notification
     - ## version: 1.0.1
         - ### commit: notification manager 생성
