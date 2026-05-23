@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
-import '../managers/token_storage_manager.dart';
-import '../managers/login_manager.dart';
+import 'package:open_source_software/managers/token_storage_manager.dart';
+import 'package:open_source_software/managers/login_manager.dart';
 // ================================================================
 // [MOCK - 삭제 대상] 실제 서버 연결 시 아래 import를 삭제하세요.
 import 'mock_server_interceptor.dart';

@@ -45,7 +45,7 @@
 
 - # feature/data_widget_refactoring
     - ## version: 1.1.0
-        - ### UI개선 및 구조 리팩토링
+        - ### comiit: UI개선 및 구조 리팩토링
             - #### author: Seo JeongHun
             - #### date: 2026-05-23
             - feature:
@@ -94,7 +94,7 @@
                     - 채팅 탭 추가
                     - BottomNavigationBarType.fixed 적용으로 4개 탭 색상 유지
 
-        - ### 취소 기능 및 상태 관리 구조 개선
+        - ### commit: 취소 기능 및 상태 관리 구조 개선
             - #### author: Seo JeongHun
             - #### date: 2026-05-23
             - feature:
@@ -115,7 +115,7 @@
                     - 취소 완료 후 취소하기 버튼 자동 소멸
                     - 요청자는 매칭 전(대기 중)에도 취소하기 버튼 표시
 
-        - ### DataManager 추상화 및 의존성 역전 적용
+        - ### commit: DataManager 추상화 및 의존성 역전 적용
             - #### author: Seo JeongHun
             - #### date: 2026-05-23
             - feature:
@@ -150,7 +150,8 @@
                     2. 길이 확인
                     3. 허용 불가 특수문자 확인
                     4. 필수 포함 요소 검사
-        - ### JWT 기반 서버 통신 및 자동 로그인 구현
+
+        - ### commit: JWT 기반 서버 통신 및 자동 로그인 구현
             - #### author: Seo JeongHun
             - #### date: 2026-05-23
             - feature:
@@ -181,4 +182,7 @@
                     - 비밀번호 확인 불일치 시 에러 표시
                     - 회원가입 성공 시 로그인 화면 스택 제거 후 HomeNavigation 진입
                     - 로그인 화면 회원가입 버튼 → SigninScreen 연결
-ㅉ
+        - ### commit: import 경로 절대 경로로 수정
+            - #### author: Seo JeongHun
+            - #### date: 2026-05-23
+            - feature: import 경로 절대 경로로 수정
