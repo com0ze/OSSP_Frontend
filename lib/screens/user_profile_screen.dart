@@ -24,7 +24,7 @@ class _UserProfileScreenState extends State<UserProfileScreen>
   late TabController _tabController;
   final LoginManager loginManager = LoginManager();
   final DataManager dataManager = TestDataManager();
-  final User _currentUser = LoginManager().currentUserOrGuest;
+  final String _currentUserId = LoginManager().currentUserOrGuest.id;
 
   @override
   void initState() {
@@ -38,6 +38,8 @@ class _UserProfileScreenState extends State<UserProfileScreen>
     super.dispose();
   }
 
+  Future<void> _refreshMyData() => dataManager.fetchMyData(_currentUserId);
+
   @override
   Widget build(BuildContext context) {
     final double screenWidth = MediaQuery.of(context).size.width;
@@ -46,8 +48,9 @@ class _UserProfileScreenState extends State<UserProfileScreen>
     return ListenableBuilder(
       listenable: dataManager,
       builder: (context, child) {
-        final borrowedItems = dataManager.requestRentalItems(_currentUser);
-        final lentItems = dataManager.lentRentalItems(_currentUser);
+        final freshUser = dataManager.getUserById(_currentUserId);
+        final borrowedItems = dataManager.requestRentalItems(freshUser);
+        final lentItems = dataManager.lentRentalItems(freshUser);
 
         return Scaffold(
           appBar: AppBar(
@@ -72,7 +75,14 @@ class _UserProfileScreenState extends State<UserProfileScreen>
           ),
           body: Column(
             children: [
-              UserInfoHeader(user: _currentUser, showEmail: true),
+              // 사용자 정보 영역에서만 당겨서 새로고침 가능
+              RefreshIndicator(
+                onRefresh: _refreshMyData,
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  child: UserInfoHeader(user: freshUser, showEmail: true),
+                ),
+              ),
               const Divider(height: 1),
               TabBar(
                 controller: _tabController,
@@ -86,9 +96,9 @@ class _UserProfileScreenState extends State<UserProfileScreen>
                 child: TabBarView(
                   controller: _tabController,
                   children: [
-                    _buildItemList(borrowedItems, isBorrowed: true),
-                    _buildItemList(lentItems, isBorrowed: false),
-                    _buildReviews(),
+                    _buildItemList(borrowedItems, freshUser, isBorrowed: true),
+                    _buildItemList(lentItems, freshUser, isBorrowed: false),
+                    _buildReviews(freshUser),
                   ],
                 ),
               ),
@@ -99,15 +109,13 @@ class _UserProfileScreenState extends State<UserProfileScreen>
     );
   }
 
-  Widget _buildReviews() {
-    List<Review> reviews = dataManager.matches.values
+  Widget _buildReviews(User currentUser) {
+    final List<Review> reviews = dataManager.matches.values
         .map((m) {
-          // 이 유저가 요청자 → 대여자가 작성한 lenderReview가 이 유저에 대한 리뷰
-          if (m.requesterID == _currentUser.id && m.lenderReviewID != null) {
+          if (m.requesterID == currentUser.id && m.lenderReviewID != null) {
             return dataManager.getReviewById(m.lenderReviewID!);
           }
-          // 이 유저가 대여자 → 요청자가 작성한 requesterReview가 이 유저에 대한 리뷰
-          if (m.lenderID == _currentUser.id && m.requesterReviewID != null) {
+          if (m.lenderID == currentUser.id && m.requesterReviewID != null) {
             return dataManager.getReviewById(m.requesterReviewID!);
           }
           return null;
@@ -120,23 +128,17 @@ class _UserProfileScreenState extends State<UserProfileScreen>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(
-              Icons.rate_review,
-              size: 64,
-              color: context.onSurfaceVariantColor,
-            ),
+            Icon(Icons.rate_review, size: 64, color: context.onSurfaceVariantColor),
             const SizedBox(height: 16),
             Text(
               '아직 리뷰가 없습니다',
-              style: TextStyle(
-                fontSize: 16,
-                color: context.onSurfaceVariantColor,
-              ),
+              style: TextStyle(fontSize: 16, color: context.onSurfaceVariantColor),
             ),
           ],
         ),
       );
     }
+
     return ListView.builder(
       padding: const EdgeInsets.all(16),
       itemCount: reviews.length,
@@ -147,7 +149,11 @@ class _UserProfileScreenState extends State<UserProfileScreen>
     );
   }
 
-  Widget _buildItemList(List<RentalItem> items, {required bool isBorrowed}) {
+  Widget _buildItemList(
+    List<RentalItem> items,
+    User currentUser, {
+    required bool isBorrowed,
+  }) {
     if (items.isEmpty) {
       return Center(
         child: Column(
@@ -161,10 +167,7 @@ class _UserProfileScreenState extends State<UserProfileScreen>
             const SizedBox(height: 16),
             Text(
               isBorrowed ? '빌린 물건이 없습니다' : '빌려준 물건이 없습니다',
-              style: TextStyle(
-                fontSize: 16,
-                color: context.onSurfaceVariantColor,
-              ),
+              style: TextStyle(fontSize: 16, color: context.onSurfaceVariantColor),
             ),
           ],
         ),
@@ -177,20 +180,18 @@ class _UserProfileScreenState extends State<UserProfileScreen>
       itemBuilder: (context, index) {
         final item = items[index];
 
-        // 빌린 물건: 매칭 확정된 경우에만 상대방(대여자) 정보 표시
         final User? otherUser;
         if (isBorrowed) {
           final lenderId = dataManager.getMatchedLenderIdForItem(item.id);
-          otherUser = lenderId != null
-              ? dataManager.getUserById(lenderId)
-              : null;
+          otherUser =
+              lenderId != null ? dataManager.getUserById(lenderId) : null;
         } else {
           otherUser = dataManager.getUserById(item.requesterID);
         }
 
         final status = dataManager.getStatusForUserOnItem(
           item.id,
-          _currentUser.id,
+          currentUser.id,
         );
 
         return _buildItemCard(item, otherUser, status);
