@@ -1,3 +1,8 @@
+plugins {
+    // 💡 최상위 파일에는 버전을 명시하고 apply false를 꼭 붙여야 합니다.
+    id("com.google.gms.google-services") version "4.4.1" apply false
+}
+
 allprojects {
     repositories {
         google()

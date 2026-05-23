@@ -48,4 +48,11 @@
             - #### date: 2026-05-02
             - feature: 
                 - notification_manager.dart 생성
+
+    - ## version: 1.1.0
+        - ### commit: 알림 기능 구현
+            - #### author: Lee JaeWon
+            - #### date: 2026-05-23
+            - feature: 
+                         
                               

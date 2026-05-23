@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'home_navigation.dart';
 import 'package:open_source_software/extensions/theme_extension.dart';
+import 'package:open_source_software/managers/notification_manager.dart';
+
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -145,6 +147,19 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     child: const Text('회원가입'),
                   ),
+                  const SizedBox(height: 32),
+                  ElevatedButton(
+                    style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
+                    onPressed: () async {
+                      await NotificationManager().showNotification(
+                        id: 1, 
+                        title: '🚨 긴급 대여 요청',
+                        body: '근처에서 보조배터리 대여 요청이 들어왔습니다. 핀을 확인해주세요!',
+                        payload: '{"type": "RENTAL_REQUEST", "requestId": "123"}',
+                      );
+                    },
+                    child: const Text('진짜 폰 상단 알림 띄우기', style: TextStyle(color: Colors.white)),
+                  ),
                 ],
               ),
             ),
@@ -154,3 +169,4 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 }
+

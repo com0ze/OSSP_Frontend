@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "476247239945",
+    "project_id": "villit-b00bc",
+    "storage_bucket": "villit-b00bc.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:476247239945:android:a64f6271413c877588f7d8",
+        "android_client_info": {
+          "package_name": "com.example.open_source_software"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyCXyosdcKHQiWti5wV-yEYX38giXzYY5y0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

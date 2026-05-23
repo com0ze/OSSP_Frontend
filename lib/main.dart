@@ -1,8 +1,24 @@
+import 'dart:io'; 
 import 'package:flutter/material.dart';
 import 'screens/login_screen.dart';
 import 'managers/theme_mode_manager.dart';
+import 'package:open_source_software/managers/notification_manager.dart';
+import 'package:firebase_core/firebase_core.dart';
 
-void main() {
+void main() async {
+  WidgetsFlutterBinding.ensureInitialized();
+
+  // 💡 스마트폰(Android) 환경으로 타겟을 바꿨기 때문에, 
+  // 이제 아래 if문 안으로 들어가 파이어베이스 심장 충격기가 정상 기동됩니다!
+  if (Platform.isAndroid || Platform.isIOS) {
+    await Firebase.initializeApp(); 
+
+    final notificationManager = NotificationManager();
+    await notificationManager.initialize();
+  } else { 
+    
+  }
+
   runApp(const MyApp());
 }
 

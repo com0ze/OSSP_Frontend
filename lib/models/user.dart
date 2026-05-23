@@ -6,6 +6,10 @@ class User {
   final double score;
   final List<String> dealHistory;
 
+  // 💡 백엔드 DB 스키마 업데이트 반영
+  final String? fcmToken;
+  final bool isOnDuty;
+
   User({
     required this.id,
     required this.name,
@@ -13,24 +17,20 @@ class User {
     this.profileImage,
     this.score = 0,
     List<String>? dealHistory,
+    this.fcmToken,
+    this.isOnDuty = true,
   }) : dealHistory = dealHistory ?? [];
-
-  void addDealHistory(String dealId) {
-    if (!dealHistory.contains(dealId)) {
-      dealHistory.add(dealId);
-    }
-  }
 
   factory User.fromJson(Map<String, dynamic> json) {
     return User(
-      id: json['id'],
-      name: json['name'],
-      email: json['email'],
+      id: json['id'].toString(), // 백엔드 Long타입 대응
+      name: json['name'] ?? '',
+      email: json['email'] ?? '',
       profileImage: json['profileImage'],
-      score: json['score'] ?? 0,
-      dealHistory: (json['dealHistory'] as List<dynamic>?)
-          ?.map((e) => e as String)
-          .toList(),
+      score: (json['score'] as num?)?.toDouble() ?? 0.0,
+      dealHistory: (json['dealHistory'] as List<dynamic>?)?.map((e) => e as String).toList(),
+      fcmToken: json['fcmToken'],
+      isOnDuty: json['isOnDuty'] ?? true,
     );
   }
 
@@ -42,23 +42,8 @@ class User {
       'profileImage': profileImage,
       'score': score,
       'dealHistory': dealHistory,
+      'fcmToken': fcmToken,
+      'isOnDuty': isOnDuty,
     };
-  }
-
-  User copyWith({
-    String? name,
-    String? email,
-    String? profileImage,
-    double? score,
-    List<String>? dealHistory,
-  }) {
-    return User(
-      id: id,
-      name: name ?? this.name,
-      email: email ?? this.email,
-      profileImage: profileImage ?? this.profileImage,
-      score: score ?? this.score,
-      dealHistory: dealHistory ?? List.from(this.dealHistory),
-    );
   }
 }
