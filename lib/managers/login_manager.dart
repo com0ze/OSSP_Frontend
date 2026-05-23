@@ -12,6 +12,23 @@ class LoginManager {
 
   LoginManager._internal();
 
+  static void Function(String message)? _forceLogoutHandler;
+
+  static void setForceLogoutHandler(void Function(String message) handler) {
+    _forceLogoutHandler = handler;
+  }
+
+  bool _isLoggingOut = false;
+
+  Future<void> forceLogout(String message) async {
+    // 동시에 여러 곳에서 forceLogout이 호출되어도 한 번만 실행
+    if (_isLoggingOut || !isLoggedIn) return;
+    _isLoggingOut = true;
+    await logout();
+    _isLoggingOut = false;
+    _forceLogoutHandler?.call(message);
+  }
+
   final _tokenStorage = TokenStorageManager();
 
   MainUser? _currentUser;
