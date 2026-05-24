@@ -374,16 +374,16 @@ class DataManager extends ChangeNotifier {
   final Map<String, DateTime> _rentalItemsCachedTime = {};
 
   // ── 게터 (컬렉션에 만료 항목이 있으면 lazy async bulk refresh) ────────────────
-  Map<String, User> get users => _users;
+  // Map<String, User> get users => _users;
 
-  Map<String, Review> get reviews => _reviews;
+  // Map<String, Review> get reviews => _reviews;
 
-  Map<String, Chatting> get chattings {
-    if (_isCollectionStale(_chattingsCachedTime, _ttlChattings)) {
-      refreshCache(CacheType.chattings).then((_) => changeData());
-    }
-    return _chattings;
-  }
+  // Map<String, Chatting> get chattings {
+  //   if (_isCollectionStale(_chattingsCachedTime, _ttlChattings)) {
+  //     refreshCache(CacheType.chattings).then((_) => changeData());
+  //   }
+  //   return _chattings;
+  // }
 
   Map<String, Match> get matches {
     if (_isCollectionStale(_rentalItemsCachedTime, _ttlRentalItems)) {
@@ -637,23 +637,22 @@ class DataManager extends ChangeNotifier {
     changeData();
   }
 
-  // TODO: 이름 변경 필요
-  Future<void> cancelAllMatchesForItem(String rentalItemId) async {
+  Future<void> cancelMatch(String rentalItemId) async {
     await ApiClient().dio.patch('/api/v1/requests/$rentalItemId/cancel');
     _invalidateElement(_rentalItemsCachedTime, rentalItemId);
     await refreshCache(CacheType.rentalItems);
     changeData();
   }
 
-  // TODO: 백에서는 요청 취소가 대여자와 요청자가 구분되지 않음
-  Future<void> cancelLenderMatch(String matchId) async {
-    final rentalItemId = _matches[matchId]?.rentalItemID;
-    if (rentalItemId == null) return;
-    await ApiClient().dio.patch('/api/v1/requests/$rentalItemId/cancel');
-    _invalidateElement(_rentalItemsCachedTime, rentalItemId);
-    await refreshCache(CacheType.rentalItems);
-    changeData();
-  }
+  // // 백에서는 요청 취소가 대여자와 요청자가 구분되지 않음
+  // Future<void> cancelLenderMatch(String matchId) async {
+  //   final rentalItemId = _matches[matchId]?.rentalItemID;
+  //   if (rentalItemId == null) return;
+  //   await ApiClient().dio.patch('/api/v1/requests/$rentalItemId/cancel');
+  //   _invalidateElement(_rentalItemsCachedTime, rentalItemId);
+  //   await refreshCache(CacheType.rentalItems);
+  //   changeData();
+  // }
 
   Future<void> updateMatchStatus(String matchId, RentalStatus newStatus) async {
     final rentalItemId = _matches[matchId]?.rentalItemID;
@@ -742,12 +741,14 @@ class DataManager extends ChangeNotifier {
     changeData();
   }
 
+  // user가 요청했던 아이템 목록
   List<RentalItem> requestRentalItems(User user) {
     return rentalItems.values
         .where((item) => item.requesterID == user.id)
         .toList();
   }
 
+  // user가 대여했던 아이템 목록
   List<RentalItem> lentRentalItems(User user) {
     return rentalItems.values.where((item) {
       if (!item.isMatched || item.matchedID == null) return false;
@@ -755,6 +756,7 @@ class DataManager extends ChangeNotifier {
     }).toList();
   }
 
+  // 대여가능한 물품 리스트 목록
   List<RentalItem> notMatchedRentalItems(User user) {
     return rentalItems.values
         .where((item) => !item.isMatched && item.requesterID != user.id)

@@ -1,11 +1,11 @@
 ﻿import 'package:flutter/material.dart';
-import 'package:open_source_software/extensions/rental_status_extension.dart';
-import 'package:open_source_software/extensions/theme_extension.dart';
-import 'package:open_source_software/managers/login_manager.dart';
-import 'package:open_source_software/managers/data_manager.dart';
-import 'package:open_source_software/models/chat.dart';
-import 'package:open_source_software/models/match.dart';
-import 'package:open_source_software/widgets/widget_factory.dart';
+import '/extensions/rental_status_extension.dart';
+import '/extensions/theme_extension.dart';
+import '/managers/login_manager.dart';
+import '/managers/data_manager.dart';
+import '/models/chat.dart';
+import '/models/match.dart';
+import '/widgets/widget_factory.dart';
 
 class ChattingRoomWidgetFactory extends WidgetFactory {
   final Match match;

@@ -421,11 +421,7 @@ class ItemDetailScreen extends StatelessWidget {
       ),
     ).then((confirmed) {
       if (confirmed != true) return;
-      if (isRequester) {
-        DataManager().cancelAllMatchesForItem(currentItem.id);
-      } else if (match != null) {
-        DataManager().cancelLenderMatch(match.matchID);
-      }
+      DataManager().cancelMatch(currentItem.id);
     });
   }
 

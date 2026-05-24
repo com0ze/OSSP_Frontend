@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:open_source_software/extensions/theme_extension.dart';
-import 'package:open_source_software/models/review.dart';
-import 'package:open_source_software/widgets/widget_factory.dart';
+import '/extensions/theme_extension.dart';
+import '/models/review.dart';
+import '/widgets/widget_factory.dart';
 
 class ReviewWidgetFactory extends WidgetFactory {
   final Review review;
