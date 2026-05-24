@@ -1,6 +1,6 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:open_source_software/extensions/theme_extension.dart';
-import 'package:open_source_software/managers/test_data_manager.dart';
+import 'package:open_source_software/managers/data_manager.dart';
 import 'package:open_source_software/models/rental_item.dart';
 import 'package:open_source_software/widgets/widget_factory.dart';
 
@@ -23,7 +23,7 @@ class RentalItemWidgetFactory extends WidgetFactory {
 
   @override
   Widget makeWidget(BuildContext context) {
-    final dataManager = TestDataManager();
+    final dataManager = DataManager();
     final requester = dataManager.getUserById(item.requesterID);
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
@@ -82,7 +82,7 @@ class RentalItemWidgetFactory extends WidgetFactory {
                     color: context.primaryColor,
                   ),
                   const SizedBox(width: 4),
-                  Text(TestDataManager.placeById(item.placeID)?.name ?? item.placeID),
+                  Text(DataManager.placeById(item.placeID)?.name ?? item.placeID),
                   const Spacer(),
                   Text(
                     '${item.price.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}원',

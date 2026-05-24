@@ -1,8 +1,7 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:open_source_software/extensions/theme_extension.dart';
 import 'package:open_source_software/managers/data_manager.dart';
 import 'package:open_source_software/managers/login_manager.dart';
-import 'package:open_source_software/managers/test_data_manager.dart';
 import 'package:open_source_software/screens/item_detail_screen.dart';
 import 'package:open_source_software/widgets/rental_item_widget_factory.dart';
 
@@ -14,7 +13,7 @@ class RentalListScreen extends StatefulWidget {
 }
 
 class _RentalListScreenState extends State<RentalListScreen> {
-  final DataManager dataManager = TestDataManager();
+  final DataManager dataManager = DataManager();
   final LoginManager loginManager = LoginManager();
 
   @override

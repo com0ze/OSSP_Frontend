@@ -1,9 +1,8 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:open_source_software/extensions/rental_status_extension.dart';
 import 'package:open_source_software/extensions/theme_extension.dart';
 import 'package:open_source_software/managers/data_manager.dart';
 import 'package:open_source_software/managers/login_manager.dart';
-import 'package:open_source_software/managers/test_data_manager.dart';
 import 'package:open_source_software/models/rental_item.dart';
 import 'package:open_source_software/models/review.dart';
 import 'package:open_source_software/models/user.dart';
@@ -23,7 +22,7 @@ class _UserProfileScreenState extends State<UserProfileScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   final LoginManager loginManager = LoginManager();
-  final DataManager dataManager = TestDataManager();
+  final DataManager dataManager = DataManager();
   final String _currentUserId = LoginManager().currentUserOrGuest.id;
 
   @override

@@ -1,8 +1,7 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:open_source_software/extensions/theme_extension.dart';
 import 'package:open_source_software/managers/data_manager.dart';
 import 'package:open_source_software/managers/login_manager.dart';
-import 'package:open_source_software/managers/test_data_manager.dart';
 import 'package:open_source_software/models/product.dart';
 import 'package:open_source_software/models/rental_item.dart';
 
@@ -37,7 +36,7 @@ class _RentalRequestScreenState extends State<RentalRequestScreen> {
   }
 
   void _submitRequest() {
-    DataManager dataManager = TestDataManager();
+    DataManager dataManager = DataManager();
     setState(
       () => _placeError = _selectedPlaceId == null ? '위치를 선택해주세요' : null,
     );
@@ -165,7 +164,7 @@ class _RentalRequestScreenState extends State<RentalRequestScreen> {
                   EdgeInsets.symmetric(vertical: 4),
                 ),
               ),
-              dropdownMenuEntries: TestDataManager.places.map((place) {
+              dropdownMenuEntries: DataManager.places.map((place) {
                 final isSelected = _selectedPlaceId == place.id;
                 return DropdownMenuEntry(
                   value: place.id,

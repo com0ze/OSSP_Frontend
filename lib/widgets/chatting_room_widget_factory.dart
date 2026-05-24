@@ -1,8 +1,8 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:open_source_software/extensions/rental_status_extension.dart';
 import 'package:open_source_software/extensions/theme_extension.dart';
 import 'package:open_source_software/managers/login_manager.dart';
-import 'package:open_source_software/managers/test_data_manager.dart';
+import 'package:open_source_software/managers/data_manager.dart';
 import 'package:open_source_software/models/chat.dart';
 import 'package:open_source_software/models/match.dart';
 import 'package:open_source_software/widgets/widget_factory.dart';
@@ -23,7 +23,7 @@ class ChattingRoomWidgetFactory extends WidgetFactory {
 
   @override
   Widget makeWidget(BuildContext context) {
-    final dataManager = TestDataManager();
+    final dataManager = DataManager();
     final loginManager = LoginManager();
 
     final currentUserId = loginManager.currentUserOrGuest.id;

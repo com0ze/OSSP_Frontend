@@ -320,3 +320,11 @@
             - feature:
                 - main.dart 스낵바 속도 조절
                 - 상단바에 색 넣음
+
+- # feature/data_structure
+    - ## version: 1.1.0
+        - ### commit: 데이터 매니저 통합
+            - #### author: Seo JeongHun
+            - #### date: 2026-05-24
+            - feature:
+                - test_data_manager 삭제
