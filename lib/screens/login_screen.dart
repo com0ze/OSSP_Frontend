@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:open_source_software/extensions/theme_extension.dart';
-import 'package:open_source_software/managers/notification_manager.dart';
+import 'package:open_source_software/managers/active_notification_manager.dart';
 import 'package:open_source_software/managers/login_manager.dart';
 import 'package:open_source_software/screens/home_navigation.dart';
 import 'package:open_source_software/screens/signin_screen.dart';
@@ -175,7 +175,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       backgroundColor: Colors.blue,
                     ),
                     onPressed: () async {
-                      await NotificationManager().showNotification(
+                      await activeNotificationManager.showNotification(
                         id: 1,
                         title: '🚨 긴급 대여 요청',
                         body: '근처에서 보조배터리 대여 요청이 들어왔습니다. 핀을 확인해주세요!',

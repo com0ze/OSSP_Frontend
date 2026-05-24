@@ -63,6 +63,20 @@
             - #### author: Lee JaeWon
             - #### date: 2026-05-23
             - feature: 
+                - 안드로이드 알림 기능 구현
+                    - 포어그라운드 기반
+                    - 채팅 기능 구현 시 사용할 예정
+                    - 현재 화면이 채팅방이 아닌 경우 알림 발생,  채팅방이어도 다른 채팅방이면 알림 발생
+    
+    - ## version: 1.1.0
+        - ### commit: 웹 디버그용 mock제작
+            - #### author: Seo JeongHun
+            - #### date: 2026-05-24
+            - feature: 
+                - 아이폰 알림 코드 수정
+                    - 아이폰은 앱 켜져있을 시 알림 X -> 소리와 앱 아이콘 만 표시
+                - 웹 또는 윈도우에서 테스트 가능하도록 notification_manager 종류를 여러개로 나눔
+                    - 웹 또는 윈도우인 경우 알림 대신 로그 출력
                          
 - # feature/data_widget_refactoring
     - ## version: 1.1.0
