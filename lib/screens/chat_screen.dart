@@ -262,6 +262,8 @@ class _ChatScreenState extends State<ChatScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
+        backgroundColor: context.primaryColor,
+        foregroundColor: context.onPrimaryColor,
         title: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -374,7 +376,8 @@ class _ChatScreenState extends State<ChatScreen> {
                                       _messages[_messages.length - 1 - index];
                                   return ChatWidgetFactory(
                                     message: message,
-                                    currentUserId: loginManager.currentUserOrGuest.id,
+                                    currentUserId:
+                                        loginManager.currentUserOrGuest.id,
                                   ).makeWidget(context);
                                 },
                               ),

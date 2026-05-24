@@ -97,7 +97,11 @@ class _ReviewScreenState extends State<ReviewScreen> {
     final double screenWidth = MediaQuery.of(context).size.width;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('리뷰 작성')),
+      appBar: AppBar(
+        title: const Text('리뷰 작성'),
+        backgroundColor: context.primaryColor,
+        foregroundColor: context.onPrimaryColor,
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24.0),
         child: Column(

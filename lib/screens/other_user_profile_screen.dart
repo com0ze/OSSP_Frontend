@@ -51,7 +51,11 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen> {
         final reviews = _generateReviews();
 
         return Scaffold(
-          appBar: AppBar(title: const Text('사용자 정보')),
+          appBar: AppBar(
+            title: const Text('사용자 정보'),
+            backgroundColor: context.primaryColor,
+            foregroundColor: context.onPrimaryColor,
+          ),
           body: RefreshIndicator(
             onRefresh: () => dataManager.fetchUserProfile(widget.user.id),
             child: ListView(

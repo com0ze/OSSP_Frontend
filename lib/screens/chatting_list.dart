@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:open_source_software/extensions/theme_extension.dart';
 import 'package:open_source_software/managers/data_manager.dart';
 import 'package:open_source_software/managers/login_manager.dart';
 import 'package:open_source_software/managers/test_data_manager.dart';
@@ -30,7 +31,12 @@ class _ChattingListScreenState extends State<ChattingListScreen> {
             )
             .toList();
         return Scaffold(
-          appBar: AppBar(title: const Text('내 채팅'), centerTitle: true),
+          appBar: AppBar(
+            title: const Text('내 채팅'),
+            centerTitle: true,
+            backgroundColor: context.primaryColor,
+            foregroundColor: context.onPrimaryColor,
+          ),
           body: RefreshIndicator(
             onRefresh: () => dataManager.fetchMyData(currentUser.id),
             child: matches.isEmpty
@@ -46,7 +52,10 @@ class _ChattingListScreenState extends State<ChattingListScreen> {
                             SizedBox(height: 16),
                             Text(
                               '채팅이 없습니다',
-                              style: TextStyle(fontSize: 16, color: Colors.grey),
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.grey,
+                              ),
                             ),
                           ],
                         ),

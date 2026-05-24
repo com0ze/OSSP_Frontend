@@ -311,3 +311,12 @@
                 - rental_request_screen.dart 수정
                     - 장소를 드롭다운 형식으로 선택할 수 있게함
                 - test_data_manager에 건물 이름과 테두리 좌표 추가
+
+- # feature/design
+    - ## version: 1.1.0
+        - ### commit: 디자인 요소 변경
+            - #### author: Seo JeongHun
+            - #### date: 2026-05-24
+            - feature:
+                - main.dart 스낵바 속도 조절
+                - 상단바에 색 넣음

@@ -30,7 +30,10 @@ void main() async {
     );
     await Future.delayed(const Duration(milliseconds: 300));
     scaffoldMessengerKey.currentState?.showSnackBar(
-      SnackBar(content: Text(message)),
+      SnackBar(
+        content: Text(message),
+        duration: const Duration(milliseconds: 1000),
+      ),
     );
   });
 
@@ -81,6 +84,7 @@ class MyApp extends StatelessWidget {
                     .dark, // 전체 팔레트(Primary, Surface, OnPrimary 등)를 자동으로 생성
               ).copyWith(
                 onSurfaceVariant: Colors.grey[400], // 다크 모드에서 SurfaceVariant 색상
+                surface: Colors.grey[900],
               ),
         ),
 

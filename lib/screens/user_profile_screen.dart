@@ -54,6 +54,8 @@ class _UserProfileScreenState extends State<UserProfileScreen>
 
         return Scaffold(
           appBar: AppBar(
+            backgroundColor: context.primaryColor,
+            foregroundColor: context.onPrimaryColor,
             title: const Text('내 정보'),
             centerTitle: true,
             actions: [
@@ -128,11 +130,18 @@ class _UserProfileScreenState extends State<UserProfileScreen>
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(Icons.rate_review, size: 64, color: context.onSurfaceVariantColor),
+            Icon(
+              Icons.rate_review,
+              size: 64,
+              color: context.onSurfaceVariantColor,
+            ),
             const SizedBox(height: 16),
             Text(
               '아직 리뷰가 없습니다',
-              style: TextStyle(fontSize: 16, color: context.onSurfaceVariantColor),
+              style: TextStyle(
+                fontSize: 16,
+                color: context.onSurfaceVariantColor,
+              ),
             ),
           ],
         ),
@@ -167,7 +176,10 @@ class _UserProfileScreenState extends State<UserProfileScreen>
             const SizedBox(height: 16),
             Text(
               isBorrowed ? '빌린 물건이 없습니다' : '빌려준 물건이 없습니다',
-              style: TextStyle(fontSize: 16, color: context.onSurfaceVariantColor),
+              style: TextStyle(
+                fontSize: 16,
+                color: context.onSurfaceVariantColor,
+              ),
             ),
           ],
         ),
@@ -183,8 +195,9 @@ class _UserProfileScreenState extends State<UserProfileScreen>
         final User? otherUser;
         if (isBorrowed) {
           final lenderId = dataManager.getMatchedLenderIdForItem(item.id);
-          otherUser =
-              lenderId != null ? dataManager.getUserById(lenderId) : null;
+          otherUser = lenderId != null
+              ? dataManager.getUserById(lenderId)
+              : null;
         } else {
           otherUser = dataManager.getUserById(item.requesterID);
         }
