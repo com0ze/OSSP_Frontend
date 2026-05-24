@@ -309,6 +309,12 @@
                 - `item_detail_screen.dart` 중복 `DataManager` 지역 변수 제거
                     - `_onChatPressed`, `_onCancelPressed` 내부의 `DataManager dataManager = TestDataManager()` 중복 선언 제거
 
+        - ### commit: api 관리자 통합
+            - #### author: Seo JeongHun
+            - #### date: 2026-05-24
+            - feature:
+                - 브랜치 통합으로 인한 api관리자 중복 제거
+
 - # feature/buildng
     - ## version: 1.1.0
         - ### commit: rental_item이 place사용하도록 구조 변경

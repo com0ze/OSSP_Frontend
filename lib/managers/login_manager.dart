@@ -43,6 +43,7 @@ class LoginManager {
   MainUser? get currentUser => _currentUser;
   String? get accessToken => _accessToken;
   bool get isLoggedIn => _currentUser != null && _accessToken != null;
+  ApiClient apiClient = ApiClient();
 
   User get currentUserOrGuest {
     return _currentUser ?? notLoginStateUser;
@@ -60,7 +61,7 @@ class LoginManager {
 
     try {
       // AuthInterceptor가 저장소에서 토큰을 자동으로 헤더에 추가함
-      final res = await ApiClient.dio.get('/me');
+      final res = await apiClient.dio.get('/me');
 
       _accessToken = token;
       // TODO: 실제 서버 응답 구조에 맞게 파싱 필요
@@ -69,8 +70,7 @@ class LoginManager {
         name: res.data['name'] as String,
         email: res.data['email'] as String,
         score: (res.data['score'] as num).toDouble(),
-        personalInformation:
-            res.data['personal_information'] as String? ?? '',
+        personalInformation: res.data['personal_information'] as String? ?? '',
       );
     } catch (_) {
       // 토큰 갱신도 실패한 경우 → 저장된 토큰 파기 후 로그인 화면으로
@@ -80,7 +80,7 @@ class LoginManager {
 
   Future<bool> login(String email, String password) async {
     try {
-      final res = await ApiClient.dio.post(
+      final res = await apiClient.dio.post(
         '/login',
         data: {'email': email, 'password': password},
       );
@@ -111,7 +111,7 @@ class LoginManager {
   Future<void> logout() async {
     try {
       // 서버에 로그아웃 요청 (세션/리프레시 토큰 서버 측 무효화)
-      await ApiClient.dio.post('/logout');
+      await apiClient.dio.post('/logout');
     } catch (_) {
       // 서버 요청 실패해도 로컬 상태는 반드시 초기화
     }
@@ -125,7 +125,7 @@ class LoginManager {
 
   Future<bool> register(String name, String email, String password) async {
     try {
-      final res = await ApiClient.dio.post(
+      final res = await apiClient.dio.post(
         '/register',
         data: {'name': name, 'email': email, 'password': password},
       );

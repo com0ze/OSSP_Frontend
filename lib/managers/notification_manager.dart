@@ -6,7 +6,7 @@ import 'package:flutter/foundation.dart'
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:open_source_software/managers/abstract_notification_manager.dart';
 import 'package:open_source_software/managers/mock_notification_manager.dart';
-import 'api_manager.dart';
+import 'package:open_source_software/api/api_client.dart';
 
 AbstractNotificationManager createManager() {
   if (defaultTargetPlatform == TargetPlatform.windows) {
@@ -23,7 +23,7 @@ class NotificationManager extends AbstractNotificationManager {
   final FirebaseMessaging _messaging = FirebaseMessaging.instance;
   final FlutterLocalNotificationsPlugin _localNotifications =
       FlutterLocalNotificationsPlugin();
-  final ApiManager _apiManager = ApiManager();
+  final ApiClient _apiClient = ApiClient();
 
   @override
   Future<void> initialize() async {
@@ -55,7 +55,7 @@ class NotificationManager extends AbstractNotificationManager {
 
   Future<void> _syncTokenToServer(String token) async {
     try {
-      await _apiManager.dio.patch(
+      await _apiClient.dio.patch(
         '/api/v1/users/me/device-token',
         data: {'fcmToken': token},
       );
