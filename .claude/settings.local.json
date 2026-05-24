@@ -1,8 +1,9 @@
 {
-  "model": "claude-sonnet-4-6",
   "permissions": {
     "allow": [
-      "Bash(flutter analyze *)"
+      "Bash(flutter analyze *)",
+      "WebFetch(domain:pub.dev)"
     ]
-  }
+  },
+  "model": "claude-sonnet-4-6"
 }

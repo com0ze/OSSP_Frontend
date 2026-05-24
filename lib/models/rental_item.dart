@@ -7,7 +7,7 @@ class RentalItem {
   final String id;
   final String title;
   final Product product;
-  final String location;
+  final String placeID;
   final int price;
   final String description;
   final String preferences;
@@ -23,7 +23,7 @@ class RentalItem {
     required this.id,
     required this.title,
     required this.product,
-    required this.location,
+    required this.placeID,
     required this.price,
     required this.description,
     required this.preferences,
@@ -41,7 +41,7 @@ class RentalItem {
       id: json['id'],
       title: json['title'],
       product: Product.fromJson(json['product']),
-      location: json['location'],
+      placeID: json['placeID'],
       price: json['price'],
       description: json['description'],
       preferences: json['preferences'],
@@ -62,7 +62,7 @@ class RentalItem {
       'id': id,
       'title': title,
       'product': product.toJson(),
-      'location': location,
+      'placeID': placeID,
       'price': price,
       'description': description,
       'preferences': preferences,
@@ -87,7 +87,7 @@ class RentalItem {
       id: id,
       title: title,
       product: product,
-      location: location,
+      placeID: placeID,
       price: price,
       description: description,
       preferences: preferences,

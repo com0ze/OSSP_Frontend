@@ -81,7 +81,7 @@ class ItemDetailScreen extends StatelessWidget {
                       _InfoRow(
                         icon: Icons.location_on,
                         label: '위치',
-                        value: currentItem.location,
+                        value: TestDataManager.placeById(currentItem.placeID)?.name ?? currentItem.placeID,
                       ),
                       const SizedBox(height: 12),
                       _InfoRow(

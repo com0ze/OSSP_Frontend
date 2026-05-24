@@ -82,7 +82,7 @@ class RentalItemWidgetFactory extends WidgetFactory {
                     color: context.primaryColor,
                   ),
                   const SizedBox(width: 4),
-                  Text(item.location),
+                  Text(TestDataManager.placeById(item.placeID)?.name ?? item.placeID),
                   const Spacer(),
                   Text(
                     '${item.price.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}원',

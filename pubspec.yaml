@@ -13,6 +13,7 @@ dependencies:
   geolocator: ^14.0.2
   maps_toolkit: ^3.1.0
   dart_geohash: ^2.1.0
+  geofencing_api: ^2.0.0
 
 # --- 아래 6개 패키지 추가 ---
   firebase_core: ^4.0.0
