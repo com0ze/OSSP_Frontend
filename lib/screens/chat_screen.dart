@@ -1,15 +1,15 @@
 ﻿import 'package:flutter/material.dart';
-import 'package:open_source_software/extensions/rental_status_extension.dart';
-import 'package:open_source_software/extensions/theme_extension.dart';
-import 'package:open_source_software/managers/data_manager.dart';
-import 'package:open_source_software/managers/login_manager.dart';
-import 'package:open_source_software/models/chat.dart';
-import 'package:open_source_software/models/match.dart';
-import 'package:open_source_software/models/rental_item.dart';
-import 'package:open_source_software/models/user.dart';
-import 'package:open_source_software/screens/item_detail_screen.dart';
-import 'package:open_source_software/screens/review_screen.dart';
-import 'package:open_source_software/widgets/chat_widget_factory.dart';
+import '/extensions/rental_status_extension.dart';
+import '/extensions/theme_extension.dart';
+import '/managers/data_manager.dart';
+import '/managers/login_manager.dart';
+import '/models/chat.dart';
+import '/models/match.dart';
+import '/models/rental_item.dart';
+import '/models/user.dart';
+import '/screens/item_detail_screen.dart';
+import '/screens/review_screen.dart';
+import '/widgets/chat_widget_factory.dart';
 
 class ChatScreen extends StatefulWidget {
   final RentalItem rentalItem;

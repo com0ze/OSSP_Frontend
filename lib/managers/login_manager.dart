@@ -1,7 +1,7 @@
-import 'package:open_source_software/api/api_client.dart';
-import 'package:open_source_software/managers/token_storage_manager.dart';
-import 'package:open_source_software/models/main_user.dart';
-import 'package:open_source_software/models/user.dart';
+import '/api/api_client.dart';
+import '/managers/token_storage_manager.dart';
+import '/models/main_user.dart';
+import '/models/user.dart';
 
 class LoginManager {
   static final LoginManager _instance = LoginManager._internal();
@@ -55,25 +55,20 @@ class LoginManager {
 
   // ⭐️ 3. 앱 시작 시 자동 로그인을 위한 초기화 함수
   Future<void> initAutoLogin() async {
-    // 기기에 저장된 액세스 토큰이 있는지 확인
     final token = await _tokenStorage.getAccessToken();
     if (token == null) return;
 
     try {
-      // AuthInterceptor가 저장소에서 토큰을 자동으로 헤더에 추가함
-      final res = await apiClient.dio.get('/me');
-
+      final res = await apiClient.dio.get('/api/v1/auth/me');
       _accessToken = token;
-      // TODO: 실제 서버 응답 구조에 맞게 파싱 필요
       _currentUser = MainUser(
-        id: res.data['id'] as String,
+        id: res.data['id'].toString(),
         name: res.data['name'] as String,
         email: res.data['email'] as String,
         score: (res.data['score'] as num).toDouble(),
-        personalInformation: res.data['personal_information'] as String? ?? '',
+        personalInformation: res.data['personalInformation'] as String? ?? '',
       );
     } catch (_) {
-      // 토큰 갱신도 실패한 경우 → 저장된 토큰 파기 후 로그인 화면으로
       await _tokenStorage.clearSessionTokens();
     }
   }
@@ -81,19 +76,17 @@ class LoginManager {
   Future<bool> login(String email, String password) async {
     try {
       final res = await apiClient.dio.post(
-        '/login',
+        '/api/v1/auth/login',
         data: {'email': email, 'password': password},
       );
 
-      final newAccessToken = res.data['access_token'] as String;
-      final newRefreshToken = res.data['refresh_token'] as String;
+      final newAccessToken = res.data['accessToken'] as String;
+      final newRefreshToken = res.data['refreshToken'] as String;
 
       _accessToken = newAccessToken;
-
-      // ⭐️ 4. 응답받은 두 가지 토큰을 기기 내부 보안 저장소에 안전하게 저장 (자동 로그인의 핵심)
       await _tokenStorage.saveTokens(newAccessToken, newRefreshToken);
 
-      // TODO: 실제 서버 응답에서 유저 정보를 받아 MainUser를 생성해야 합니다.
+      // TODO: 로그인 응답에 유저 정보가 포함되면 파싱 필요
       _currentUser = MainUser(
         id: '0',
         name: 'Kim sample',
@@ -110,33 +103,29 @@ class LoginManager {
 
   Future<void> logout() async {
     try {
-      // 서버에 로그아웃 요청 (세션/리프레시 토큰 서버 측 무효화)
-      await apiClient.dio.post('/logout');
+      await apiClient.dio.post('/api/v1/auth/logout');
     } catch (_) {
       // 서버 요청 실패해도 로컬 상태는 반드시 초기화
     }
 
     _currentUser = null;
     _accessToken = null;
-
-    // ⭐️ 5. 로그아웃 시 기기에 저장된 토큰을 깔끔하게 파기
     await _tokenStorage.clearSessionTokens();
   }
 
   Future<bool> register(String name, String email, String password) async {
     try {
       final res = await apiClient.dio.post(
-        '/register',
-        data: {'name': name, 'email': email, 'password': password},
+        '/api/v1/auth/signup',
+        data: {'nickname': name, 'email': email, 'password': password},
       );
 
-      final newAccessToken = res.data['access_token'] as String;
-      final newRefreshToken = res.data['refresh_token'] as String;
+      final newAccessToken = res.data['accessToken'] as String;
+      final newRefreshToken = res.data['refreshToken'] as String;
 
       _accessToken = newAccessToken;
       await _tokenStorage.saveTokens(newAccessToken, newRefreshToken);
 
-      // TODO: 실제 서버 응답에서 유저 정보를 받아 MainUser를 생성해야 합니다.
       _currentUser = MainUser(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
         name: name,

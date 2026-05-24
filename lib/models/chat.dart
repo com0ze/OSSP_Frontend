@@ -1,4 +1,4 @@
-import 'package:open_source_software/models/user.dart';
+import '/models/user.dart';
 
 class Chat {
   final String id;
@@ -35,9 +35,7 @@ class Chat {
     };
   }
 
-  Chat copyWith({
-    bool? isRead,
-  }) {
+  Chat copyWith({bool? isRead}) {
     return Chat(
       id: id,
       sendUser: sendUser,

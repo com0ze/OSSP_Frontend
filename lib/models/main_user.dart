@@ -1,4 +1,4 @@
-import 'package:open_source_software/models/user.dart';
+import '/models/user.dart';
 
 class MainUser extends User {
   final String personalInformation;

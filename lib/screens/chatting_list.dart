@@ -1,9 +1,9 @@
 ﻿import 'package:flutter/material.dart';
-import 'package:open_source_software/extensions/theme_extension.dart';
-import 'package:open_source_software/managers/data_manager.dart';
-import 'package:open_source_software/managers/login_manager.dart';
-import 'package:open_source_software/screens/chat_screen.dart';
-import 'package:open_source_software/widgets/chatting_room_widget_factory.dart';
+import '/extensions/theme_extension.dart';
+import '/managers/data_manager.dart';
+import '/managers/login_manager.dart';
+import '/screens/chat_screen.dart';
+import '/widgets/chatting_room_widget_factory.dart';
 
 class ChattingListScreen extends StatefulWidget {
   const ChattingListScreen({super.key});

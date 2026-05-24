@@ -315,6 +315,15 @@
             - feature:
                 - 브랜치 통합으로 인한 api관리자 중복 제거
 
+        - ### commit: api 통신 방식 변경
+            - #### author: Seo JeongHun
+            - #### date: 2026-05-24
+            - feature:
+                - import 주소 단순화
+                - 각 클래스 별 TTL 도입
+                - mock서버에서 클론뜨는 게 아니라 실제로 통신하는 것 처럼 구현
+
+
 - # feature/buildng
     - ## version: 1.1.0
         - ### commit: rental_item이 place사용하도록 구조 변경

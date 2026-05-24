@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:open_source_software/extensions/theme_extension.dart';
-import 'package:open_source_software/managers/login_manager.dart';
-import 'package:open_source_software/managers/theme_mode_manager.dart';
+import '/extensions/theme_extension.dart';
+import '/managers/login_manager.dart';
+import '/managers/theme_mode_manager.dart';
 
 class SettingScreen extends StatefulWidget {
   const SettingScreen({super.key});
@@ -49,12 +49,16 @@ class _SettingScreenState extends State<SettingScreen> {
           ),
           const Divider(),
           ListTile(
-            leading: Icon(Icons.notifications_outlined, color: context.primaryColor),
+            leading: Icon(
+              Icons.notifications_outlined,
+              color: context.primaryColor,
+            ),
             title: const Text('알림 설정'),
             subtitle: const Text('앱 알림을 켜거나 끕니다.'),
             trailing: Switch(
               value: _notificationsEnabled,
-              onChanged: (value) => setState(() => _notificationsEnabled = value),
+              onChanged: (value) =>
+                  setState(() => _notificationsEnabled = value),
             ),
           ),
         ],

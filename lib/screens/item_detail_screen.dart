@@ -1,12 +1,12 @@
 ﻿import 'package:flutter/material.dart';
-import 'package:open_source_software/extensions/theme_extension.dart';
-import 'package:open_source_software/managers/data_manager.dart';
-import 'package:open_source_software/managers/login_manager.dart';
-import 'package:open_source_software/models/match.dart';
-import 'package:open_source_software/models/rental_item.dart';
-import 'package:open_source_software/screens/chat_screen.dart';
-import 'package:open_source_software/screens/other_user_profile_screen.dart';
-import 'package:open_source_software/widgets/review_widget_factory.dart';
+import '/extensions/theme_extension.dart';
+import '/managers/data_manager.dart';
+import '/managers/login_manager.dart';
+import '/models/match.dart';
+import '/models/rental_item.dart';
+import '/screens/chat_screen.dart';
+import '/screens/other_user_profile_screen.dart';
+import '/widgets/review_widget_factory.dart';
 
 class ItemDetailScreen extends StatelessWidget {
   final RentalItem item;
@@ -361,12 +361,12 @@ class ItemDetailScreen extends StatelessWidget {
     );
   }
 
-  void _onChatPressed(
+  Future<void> _onChatPressed(
     BuildContext context,
     RentalItem currentItem,
     Match? match,
     bool isRequester,
-  ) {
+  ) async {
     if (isRequester) {
       Navigator.push(
         context,
@@ -378,10 +378,11 @@ class ItemDetailScreen extends StatelessWidget {
     } else {
       final effectiveMatch =
           match ??
-          DataManager().createMatchWithChatting(
+          await DataManager().createMatchWithChatting(
             currentItem.id,
             LoginManager().currentUserOrGuest.id,
           );
+      if (!context.mounted) return;
       Navigator.push(
         context,
         MaterialPageRoute(

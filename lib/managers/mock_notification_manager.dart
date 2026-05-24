@@ -1,5 +1,5 @@
 import 'dart:developer';
-import 'package:open_source_software/managers/abstract_notification_manager.dart';
+import '/managers/abstract_notification_manager.dart';
 
 AbstractNotificationManager createManager() => MockNotificationManager();
 

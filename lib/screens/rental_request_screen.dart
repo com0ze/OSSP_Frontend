@@ -1,9 +1,9 @@
 ﻿import 'package:flutter/material.dart';
-import 'package:open_source_software/extensions/theme_extension.dart';
-import 'package:open_source_software/managers/data_manager.dart';
-import 'package:open_source_software/managers/login_manager.dart';
-import 'package:open_source_software/models/product.dart';
-import 'package:open_source_software/models/rental_item.dart';
+import '/extensions/theme_extension.dart';
+import '/managers/data_manager.dart';
+import '/managers/login_manager.dart';
+import '/models/product.dart';
+import '/models/rental_item.dart';
 
 class RentalRequestScreen extends StatefulWidget {
   const RentalRequestScreen({super.key});

@@ -1,10 +1,10 @@
 ﻿import 'package:flutter/material.dart';
-import 'package:open_source_software/extensions/theme_extension.dart';
-import 'package:open_source_software/managers/data_manager.dart';
-import 'package:open_source_software/models/review.dart';
-import 'package:open_source_software/models/user.dart';
-import 'package:open_source_software/screens/lender_profile_screen.dart';
-import 'package:open_source_software/widgets/review_widget_factory.dart';
+import '/extensions/theme_extension.dart';
+import '/managers/data_manager.dart';
+import '/models/review.dart';
+import '/models/user.dart';
+import '/screens/lender_profile_screen.dart';
+import '/widgets/review_widget_factory.dart';
 
 class OtherUserProfileScreen extends StatefulWidget {
   final User user;

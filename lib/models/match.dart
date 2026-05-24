@@ -17,15 +17,19 @@ class Match {
     this.lenderReviewID,
   });
 
+  // 서버 응답(matchId/requestId/requesterId/providerId/roomId) 또는
+  // 레거시 형식(matchID/rentalItemID/requesterID/lenderID/chattingID) 모두 지원
   factory Match.fromJson(Map<String, dynamic> json) {
     return Match(
-      matchID: json['matchID'],
-      rentalItemID: json['rentalItemID'],
-      requesterID: json['requesterID'],
-      lenderID: json['lenderID'],
-      chattingID: json['chattingID'],
-      requesterReviewID: json['requesterReviewID'],
-      lenderReviewID: json['lenderReviewID'],
+      matchID: (json['matchId'] ?? json['matchID'] ?? '').toString(),
+      rentalItemID:
+          (json['requestId'] ?? json['rentalItemID'] ?? '').toString(),
+      requesterID:
+          (json['requesterId'] ?? json['requesterID'] ?? '').toString(),
+      lenderID: (json['providerId'] ?? json['lenderID'] ?? '').toString(),
+      chattingID: (json['roomId'] ?? json['chattingID'] ?? '').toString(),
+      requesterReviewID: json['requesterReviewID'] as String?,
+      lenderReviewID: json['lenderReviewID'] as String?,
     );
   }
 

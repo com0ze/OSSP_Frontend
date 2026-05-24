@@ -1,4 +1,4 @@
-import 'package:open_source_software/models/user.dart';
+import '/models/user.dart';
 
 class Review {
   final String id;
@@ -35,10 +35,7 @@ class Review {
     };
   }
 
-  Review copyWith({
-    int? score,
-    String? reviewText,
-  }) {
+  Review copyWith({int? score, String? reviewText}) {
     return Review(
       id: id,
       score: score ?? this.score,

@@ -1,15 +1,15 @@
 ﻿import 'package:flutter/material.dart';
-import 'package:open_source_software/extensions/rental_status_extension.dart';
-import 'package:open_source_software/extensions/theme_extension.dart';
-import 'package:open_source_software/managers/data_manager.dart';
-import 'package:open_source_software/managers/login_manager.dart';
-import 'package:open_source_software/models/rental_item.dart';
-import 'package:open_source_software/models/review.dart';
-import 'package:open_source_software/models/user.dart';
-import 'package:open_source_software/screens/item_detail_screen.dart';
-import 'package:open_source_software/screens/lender_profile_screen.dart';
-import 'package:open_source_software/screens/setting_screen.dart';
-import 'package:open_source_software/widgets/review_widget_factory.dart';
+import '/extensions/rental_status_extension.dart';
+import '/extensions/theme_extension.dart';
+import '/managers/data_manager.dart';
+import '/managers/login_manager.dart';
+import '/models/rental_item.dart';
+import '/models/review.dart';
+import '/models/user.dart';
+import '/screens/item_detail_screen.dart';
+import '/screens/lender_profile_screen.dart';
+import '/screens/setting_screen.dart';
+import '/widgets/review_widget_factory.dart';
 
 class UserProfileScreen extends StatefulWidget {
   const UserProfileScreen({super.key});

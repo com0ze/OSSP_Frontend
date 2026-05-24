@@ -1,13 +1,14 @@
 import 'package:flutter/material.dart';
-import 'package:open_source_software/api/mock_server_interceptor.dart';
-import 'package:open_source_software/models/building.dart';
-import 'package:open_source_software/models/chat.dart';
-import 'package:open_source_software/models/chatting.dart';
-import 'package:open_source_software/models/match.dart';
-import 'package:open_source_software/models/place.dart';
-import 'package:open_source_software/models/rental_item.dart';
-import 'package:open_source_software/models/review.dart';
-import 'package:open_source_software/models/user.dart';
+import '/api/api_client.dart';
+import '/managers/login_manager.dart';
+import '/models/building.dart';
+import '/models/chat.dart';
+import '/models/chatting.dart';
+import '/models/match.dart';
+import '/models/place.dart';
+import '/models/rental_item.dart';
+import '/models/review.dart';
+import '/models/user.dart';
 
 enum CacheType { users, reviews, chattings, matches, rentalItems }
 
@@ -16,7 +17,7 @@ class DataManager extends ChangeNotifier {
   factory DataManager() => _instance;
 
   DataManager._internal() {
-    _refreshAllSync();
+    _initAsync();
   }
 
   // ── 건물 목록 (고정값) ────────────────────────────────────────────────────────
@@ -354,9 +355,7 @@ class DataManager extends ChangeNotifier {
 
   // ── 캐시 TTL 상수 ──────────────────────────────────────────────────────────
   static const _ttlUsers = Duration(minutes: 10);
-  static const _ttlReviews = Duration(minutes: 5);
   static const _ttlChattings = Duration(seconds: 30);
-  static const _ttlMatches = Duration(minutes: 1);
   static const _ttlRentalItems = Duration(minutes: 1);
 
   // ── 캐시 데이터 ──────────────────────────────────────────────────────────────
@@ -366,165 +365,189 @@ class DataManager extends ChangeNotifier {
   Map<String, Match> _matches = {};
   Map<String, RentalItem> _rentalItems = {};
 
-  // ── 캐시 타임스탬프 ──────────────────────────────────────────────────────────
-  DateTime? _usersLastFetchedAt;
-  DateTime? _reviewsLastFetchedAt;
-  DateTime? _chattingsLastFetchedAt;
-  DateTime? _matchesLastFetchedAt;
-  DateTime? _rentalItemsLastFetchedAt;
+  // ── 원소별 캐시 타임스탬프 ────────────────────────────────────────────────────
+  // 각 ID에 마지막으로 서버에서 받아온 시각을 기록해 개별 TTL을 관리한다.
+  // matches는 rentalItems 조회 시 함께 파싱되므로 타임스탬프를 공유한다.
+  final Map<String, DateTime> _usersCachedTime = {};
+  final Map<String, DateTime> _reviewsCachedTime = {};
+  final Map<String, DateTime> _chattingsCachedTime = {};
+  final Map<String, DateTime> _rentalItemsCachedTime = {};
 
-  // ── 게터 (TTL 만료 시 lazy refresh) ──────────────────────────────────────────
-  Map<String, User> get users {
-    if (_isCacheStale(_usersLastFetchedAt, _ttlUsers)) {
-      refreshCache(CacheType.users);
-      _scheduleChangeData();
-    }
-    return _users;
-  }
+  // ── 게터 (컬렉션에 만료 항목이 있으면 lazy async bulk refresh) ────────────────
+  Map<String, User> get users => _users;
 
-  Map<String, Review> get reviews {
-    if (_isCacheStale(_reviewsLastFetchedAt, _ttlReviews)) {
-      refreshCache(CacheType.reviews);
-      _scheduleChangeData();
-    }
-    return _reviews;
-  }
+  Map<String, Review> get reviews => _reviews;
 
   Map<String, Chatting> get chattings {
-    if (_isCacheStale(_chattingsLastFetchedAt, _ttlChattings)) {
-      refreshCache(CacheType.chattings);
-      _scheduleChangeData();
+    if (_isCollectionStale(_chattingsCachedTime, _ttlChattings)) {
+      refreshCache(CacheType.chattings).then((_) => changeData());
     }
     return _chattings;
   }
 
   Map<String, Match> get matches {
-    if (_isCacheStale(_matchesLastFetchedAt, _ttlMatches)) {
-      refreshCache(CacheType.matches);
-      _scheduleChangeData();
+    if (_isCollectionStale(_rentalItemsCachedTime, _ttlRentalItems)) {
+      refreshCache(CacheType.rentalItems).then((_) => changeData());
     }
     return _matches;
   }
 
   Map<String, RentalItem> get rentalItems {
-    if (_isCacheStale(_rentalItemsLastFetchedAt, _ttlRentalItems)) {
-      refreshCache(CacheType.rentalItems);
-      _scheduleChangeData();
+    if (_isCollectionStale(_rentalItemsCachedTime, _ttlRentalItems)) {
+      refreshCache(CacheType.rentalItems).then((_) => changeData());
     }
     return _rentalItems;
   }
 
   // ── 캐시 유틸리티 ──────────────────────────────────────────────────────────
-  bool _isCacheStale(DateTime? lastFetch, Duration ttl) {
-    if (lastFetch == null) return true;
-    return DateTime.now().difference(lastFetch) > ttl;
+
+  // 특정 원소 하나가 만료됐는지 확인
+  bool _isElementStale(
+    String id,
+    Map<String, DateTime> cachedTimes,
+    Duration ttl,
+  ) {
+    final t = cachedTimes[id];
+    if (t == null) return true;
+    return DateTime.now().difference(t) > ttl;
   }
 
-  bool _pendingChangeData = false;
-  void _scheduleChangeData() {
-    if (_pendingChangeData) return;
-    _pendingChangeData = true;
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      _pendingChangeData = false;
-      changeData();
-    });
+  // 컬렉션에 만료 항목이 하나라도 있으면(또는 비어 있으면) stale
+  bool _isCollectionStale(Map<String, DateTime> cachedTimes, Duration ttl) {
+    if (cachedTimes.isEmpty) return true;
+    final now = DateTime.now();
+    return cachedTimes.values.any((t) => now.difference(t) > ttl);
   }
 
   void invalidateCache(CacheType type) {
     switch (type) {
       case CacheType.users:
-        _usersLastFetchedAt = null;
+        _usersCachedTime.clear();
       case CacheType.reviews:
-        _reviewsLastFetchedAt = null;
+        _reviewsCachedTime.clear();
       case CacheType.chattings:
-        _chattingsLastFetchedAt = null;
+        _chattingsCachedTime.clear();
       case CacheType.matches:
-        _matchesLastFetchedAt = null;
       case CacheType.rentalItems:
-        _rentalItemsLastFetchedAt = null;
+        _rentalItemsCachedTime.clear();
     }
   }
 
-  void refreshCache(CacheType type) {
-    final server = MockServerInterceptor();
-    switch (type) {
-      case CacheType.users:
-        _users = server.usersSnapshot;
-        _usersLastFetchedAt = DateTime.now();
-      case CacheType.reviews:
-        _reviews = server.reviewsSnapshot;
-        _reviewsLastFetchedAt = DateTime.now();
-      case CacheType.chattings:
-        _chattings = server.chattingsSnapshot;
-        _chattingsLastFetchedAt = DateTime.now();
-      case CacheType.matches:
-        _matches = server.matchesSnapshot;
-        _matchesLastFetchedAt = DateTime.now();
-      case CacheType.rentalItems:
-        _rentalItems = server.rentalItemsSnapshot;
-        _rentalItemsLastFetchedAt = DateTime.now();
+  void _invalidateElement(Map<String, DateTime> cachedTimes, String id) {
+    cachedTimes.remove(id);
+  }
+
+  Future<void> refreshCache(CacheType type) async {
+    final dio = ApiClient().dio;
+    try {
+      switch (type) {
+        case CacheType.users:
+          // bulk 조회 엔드포인트 없음 — getUserById()로 on-demand 로드
+          break;
+        case CacheType.reviews:
+          // bulk 조회 엔드포인트 없음 — 리뷰 작성 후 로컬에서 직접 캐시
+          break;
+        case CacheType.chattings:
+          final userId = LoginManager().currentUser?.id ?? '';
+          final res = await dio.get(
+            '/api/v1/chats',
+            queryParameters: {'userId': userId},
+          );
+          _chattings = {};
+          final now = DateTime.now();
+          for (final c in res.data as List<dynamic>) {
+            final ch = Chatting.fromJson(c as Map<String, dynamic>);
+            _chattings[ch.id] = ch;
+            _chattingsCachedTime[ch.id] = now;
+          }
+        case CacheType.matches:
+          // matches는 rentalItems 조회 시 함께 파싱됨
+          await refreshCache(CacheType.rentalItems);
+        case CacheType.rentalItems:
+          final results = await Future.wait([
+            dio.get('/api/v1/requests/nearby'),
+            dio.get('/api/v1/requests/me', queryParameters: {'type': 'active'}),
+            dio.get(
+              '/api/v1/requests/me',
+              queryParameters: {'type': 'history'},
+            ),
+          ]);
+          final merged = <String, RentalItem>{};
+          final mergedMatches = <String, Match>{};
+          final now = DateTime.now();
+          for (final res in results) {
+            for (final json in res.data as List<dynamic>) {
+              final data = json as Map<String, dynamic>;
+              final item = RentalItem.fromJson(data);
+              merged[item.id] = item;
+              _rentalItemsCachedTime[item.id] = now;
+              if (data['matchId'] != null) {
+                final match = Match.fromJson(data);
+                if (match.matchID.isNotEmpty) {
+                  mergedMatches[match.matchID] = match;
+                }
+              }
+            }
+          }
+          _rentalItems = merged;
+          _matches = mergedMatches;
+      }
+    } catch (_) {
+      // 에러 시 기존 캐시 유지
     }
   }
 
-  void refreshIfStale(CacheType type) {
+  Future<void> refreshIfStale(CacheType type) async {
     final bool stale;
     switch (type) {
       case CacheType.users:
-        stale = _isCacheStale(_usersLastFetchedAt, _ttlUsers);
       case CacheType.reviews:
-        stale = _isCacheStale(_reviewsLastFetchedAt, _ttlReviews);
+        stale = false; // bulk refresh 없음
       case CacheType.chattings:
-        stale = _isCacheStale(_chattingsLastFetchedAt, _ttlChattings);
+        stale = _isCollectionStale(_chattingsCachedTime, _ttlChattings);
       case CacheType.matches:
-        stale = _isCacheStale(_matchesLastFetchedAt, _ttlMatches);
       case CacheType.rentalItems:
-        stale = _isCacheStale(_rentalItemsLastFetchedAt, _ttlRentalItems);
+        stale = _isCollectionStale(_rentalItemsCachedTime, _ttlRentalItems);
     }
-    if (stale) refreshCache(type);
+    if (stale) await refreshCache(type);
   }
 
-  void initCache() {
-    _refreshAllSync();
+  Future<void> _initAsync() async {
+    await Future.wait([
+      refreshCache(CacheType.rentalItems),
+      refreshCache(CacheType.chattings),
+    ]);
     changeData();
   }
 
-  void _refreshAllSync() {
-    final server = MockServerInterceptor();
-    final now = DateTime.now();
-    _users = server.usersSnapshot;
-    _usersLastFetchedAt = now;
-    _reviews = server.reviewsSnapshot;
-    _reviewsLastFetchedAt = now;
-    _chattings = server.chattingsSnapshot;
-    _chattingsLastFetchedAt = now;
-    _matches = server.matchesSnapshot;
-    _matchesLastFetchedAt = now;
-    _rentalItems = server.rentalItemsSnapshot;
-    _rentalItemsLastFetchedAt = now;
+  Future<void> initCache() async {
+    await _initAsync();
   }
 
   // ── Lookups ───────────────────────────────────────────────────────────────
 
+  // 개별 유저: 만료됐으면 /api/v1/users/{id} 단건 조회
   User getUserById(String id) {
-    if (!_users.containsKey(id)) {
-      refreshCache(CacheType.users);
-      _scheduleChangeData();
+    if (_isElementStale(id, _usersCachedTime, _ttlUsers)) {
+      ApiClient().dio
+          .get('/api/v1/users/$id')
+          .then((res) {
+            _users[id] = User.fromJson(res.data as Map<String, dynamic>);
+            _usersCachedTime[id] = DateTime.now();
+            changeData();
+          })
+          .catchError((_) {});
     }
     return _users[id] ?? User(id: id, name: '알 수 없음', email: '');
   }
 
-  Review? getReviewById(String id) {
-    if (!_reviews.containsKey(id)) {
-      refreshCache(CacheType.reviews);
-      _scheduleChangeData();
-    }
-    return _reviews[id];
-  }
+  // 리뷰: 단건 조회 엔드포인트 없음 — 로컬 캐시만 참조
+  Review? getReviewById(String id) => _reviews[id];
 
+  // 채팅방: 만료됐으면 해당 방 메시지만 단건 재조회
   Chatting? getChattingById(String id) {
-    if (!_chattings.containsKey(id)) {
-      refreshCache(CacheType.chattings);
-      _scheduleChangeData();
+    if (_isElementStale(id, _chattingsCachedTime, _ttlChattings)) {
+      fetchChatMessages(id);
     }
     return _chattings[id];
   }
@@ -549,7 +572,9 @@ class DataManager extends ChangeNotifier {
     final item = rentalItems[rentalItemId];
     if (item == null) return RentalStatus.pending;
     if (item.requesterID == userId) return item.rentalStatus;
-    if (item.rentalStatus == RentalStatus.cancelled) return RentalStatus.cancelled;
+    if (item.rentalStatus == RentalStatus.cancelled) {
+      return RentalStatus.cancelled;
+    }
     if (item.matchedID != null) {
       final confirmedMatch = matches[item.matchedID!];
       if (confirmedMatch?.lenderID == userId) return item.rentalStatus;
@@ -560,80 +585,160 @@ class DataManager extends ChangeNotifier {
 
   // ── Match 생성 ─────────────────────────────────────────────────────────────
 
-  Match createMatchWithChatting(String rentalItemId, String lenderId) {
-    final newMatch = MockServerInterceptor().serverCreateMatchWithChatting(
-      rentalItemId,
-      lenderId,
+  Future<Match> createMatchWithChatting(
+    String rentalItemId,
+    String lenderId,
+  ) async {
+    // Step 1: 대여자가 요청 수락 → 매치 생성
+    final acceptRes = await ApiClient().dio.post(
+      '/api/v1/requests/$rentalItemId/accept',
+      data: {'providerId': lenderId},
     );
-    refreshCache(CacheType.matches);
-    refreshCache(CacheType.chattings);
-    refreshCache(CacheType.rentalItems);
+    final matchId =
+        (acceptRes.data as Map<String, dynamic>)['matchId'] as String;
+
+    // Step 2: 해당 매치의 채팅방 생성
+    final chatRes = await ApiClient().dio.post(
+      '/api/v1/chats',
+      data: {'matchId': matchId},
+    );
+    final roomId = (chatRes.data as Map<String, dynamic>)['roomId'] as String;
+
+    // rentalItems 갱신 시 match도 함께 파싱됨
+    await Future.wait([
+      refreshCache(CacheType.rentalItems),
+      refreshCache(CacheType.chattings),
+    ]);
     changeData();
-    return newMatch;
+
+    return _matches[matchId] ??
+        Match(
+          matchID: matchId,
+          rentalItemID: rentalItemId,
+          requesterID: _rentalItems[rentalItemId]?.requesterID ?? '',
+          lenderID: lenderId,
+          chattingID: roomId,
+        );
   }
 
   // ── Match 상태 변경 ────────────────────────────────────────────────────────
 
-  void confirmMatch(String matchId) {
-    MockServerInterceptor().serverConfirmMatch(matchId);
-    refreshCache(CacheType.rentalItems);
-    refreshCache(CacheType.matches);
+  // TODO: 이게 무슨 말임?
+  // accept가 이미 ACCEPTED 상태로 생성하므로 실질적 no-op이지만 하위 호환 유지
+  Future<void> confirmMatch(String matchId) async {
+    final match = _matches[matchId];
+    if (match == null) return;
+    await ApiClient().dio.post(
+      '/api/v1/requests/${match.rentalItemID}/accept',
+      data: {'providerId': match.lenderID},
+    );
+    _invalidateElement(_rentalItemsCachedTime, match.rentalItemID);
+    await refreshCache(CacheType.rentalItems);
     changeData();
   }
 
-  void cancelAllMatchesForItem(String rentalItemId) {
-    MockServerInterceptor().serverCancelAllMatchesForItem(rentalItemId);
-    refreshCache(CacheType.rentalItems);
-    refreshCache(CacheType.matches);
+  // TODO: 이름 변경 필요
+  Future<void> cancelAllMatchesForItem(String rentalItemId) async {
+    await ApiClient().dio.patch('/api/v1/requests/$rentalItemId/cancel');
+    _invalidateElement(_rentalItemsCachedTime, rentalItemId);
+    await refreshCache(CacheType.rentalItems);
     changeData();
   }
 
-  void cancelLenderMatch(String matchId) {
-    MockServerInterceptor().serverCancelLenderMatch(matchId);
-    refreshCache(CacheType.rentalItems);
-    refreshCache(CacheType.matches);
+  // TODO: 백에서는 요청 취소가 대여자와 요청자가 구분되지 않음
+  Future<void> cancelLenderMatch(String matchId) async {
+    final rentalItemId = _matches[matchId]?.rentalItemID;
+    if (rentalItemId == null) return;
+    await ApiClient().dio.patch('/api/v1/requests/$rentalItemId/cancel');
+    _invalidateElement(_rentalItemsCachedTime, rentalItemId);
+    await refreshCache(CacheType.rentalItems);
     changeData();
   }
 
-  void updateMatchStatus(String matchId, RentalStatus newStatus) {
-    MockServerInterceptor().serverUpdateMatchStatus(matchId, newStatus);
-    refreshCache(CacheType.rentalItems);
-    refreshCache(CacheType.matches);
-    if (newStatus == RentalStatus.returned) refreshCache(CacheType.users);
+  Future<void> updateMatchStatus(String matchId, RentalStatus newStatus) async {
+    final rentalItemId = _matches[matchId]?.rentalItemID;
+    if (rentalItemId == null) return;
+    final action = newStatus == RentalStatus.inProgress
+        ? 'handover'
+        : 'complete';
+    await ApiClient().dio.patch('/api/v1/requests/$rentalItemId/$action');
+    _invalidateElement(_rentalItemsCachedTime, rentalItemId);
+    await refreshCache(CacheType.rentalItems);
+    if (newStatus == RentalStatus.returned) {
+      // 반납 완료 시 관련 유저 점수 만료
+      final match = _matches[matchId];
+      if (match != null) {
+        _invalidateElement(_usersCachedTime, match.lenderID);
+        _invalidateElement(_usersCachedTime, match.requesterID);
+      }
+    }
     changeData();
   }
 
-  void updateMatchLenderReview(String matchId, Review newReview) {
-    MockServerInterceptor().serverUpdateMatchLenderReview(matchId, newReview);
-    refreshCache(CacheType.reviews);
-    refreshCache(CacheType.matches);
-    refreshCache(CacheType.rentalItems);
-    refreshCache(CacheType.users);
+  Future<void> updateMatchLenderReview(String matchId, Review newReview) async {
+    final match = _matches[matchId];
+    await ApiClient().dio.post(
+      '/api/v1/reviews',
+      data: {
+        'reviewerId': match?.lenderID,
+        'revieweeId': match?.requesterID,
+        'matchId': matchId,
+        'score': newReview.score,
+        'comments': newReview.reviewText,
+      },
+    );
+    // 리뷰를 로컬 캐시에 등록
+    _reviews[newReview.id] = newReview;
+    _reviewsCachedTime[newReview.id] = DateTime.now();
+    // 관련 rentalItem·유저 만료
+    if (match != null) {
+      _invalidateElement(_rentalItemsCachedTime, match.rentalItemID);
+      _invalidateElement(_usersCachedTime, match.requesterID);
+    }
+    await refreshCache(CacheType.rentalItems);
     changeData();
   }
 
-  void updateMatchRequesterReview(String matchId, Review newReview) {
-    MockServerInterceptor().serverUpdateMatchRequesterReview(matchId, newReview);
-    refreshCache(CacheType.reviews);
-    refreshCache(CacheType.matches);
-    refreshCache(CacheType.rentalItems);
-    refreshCache(CacheType.users);
+  Future<void> updateMatchRequesterReview(
+    String matchId,
+    Review newReview,
+  ) async {
+    final match = _matches[matchId];
+    await ApiClient().dio.post(
+      '/api/v1/reviews',
+      data: {
+        'reviewerId': match?.requesterID,
+        'revieweeId': match?.lenderID,
+        'matchId': matchId,
+        'score': newReview.score,
+        'comments': newReview.reviewText,
+      },
+    );
+    _reviews[newReview.id] = newReview;
+    _reviewsCachedTime[newReview.id] = DateTime.now();
+    if (match != null) {
+      _invalidateElement(_rentalItemsCachedTime, match.rentalItemID);
+      _invalidateElement(_usersCachedTime, match.lenderID);
+    }
+    await refreshCache(CacheType.rentalItems);
     changeData();
   }
 
   // ── 채팅 ──────────────────────────────────────────────────────────────────
 
-  void addChat(String chattingId, Chat chat) {
-    MockServerInterceptor().serverAddChat(chattingId, chat);
-    refreshCache(CacheType.chattings);
-    changeData();
+  Future<void> addChat(String chattingId, Chat chat) async {
+    await ApiClient().dio.post(
+      '/api/v1/chats/$chattingId/messages',
+      data: chat.toJson(),
+    );
+    await fetchChatMessages(chattingId);
   }
 
   // ── 아이템 목록 ───────────────────────────────────────────────────────────
 
-  void addRentalItem(RentalItem item) {
-    MockServerInterceptor().serverAddRentalItem(item);
-    refreshCache(CacheType.rentalItems);
+  Future<void> addRentalItem(RentalItem item) async {
+    await ApiClient().dio.post('/api/v1/requests', data: item.toJson());
+    await refreshCache(CacheType.rentalItems);
     changeData();
   }
 
@@ -659,28 +764,38 @@ class DataManager extends ChangeNotifier {
   // ── 서버 데이터 페치 ──────────────────────────────────────────────────────────
 
   Future<void> fetchMyData(String userId) async {
-    refreshCache(CacheType.rentalItems);
-    refreshCache(CacheType.matches);
-    refreshCache(CacheType.reviews);
-    refreshCache(CacheType.users);
+    await Future.wait([
+      refreshCache(CacheType.rentalItems),
+      refreshCache(CacheType.chattings),
+    ]);
     changeData();
   }
 
   Future<void> fetchAvailableRentalItems(String userId) async {
-    refreshCache(CacheType.rentalItems);
+    await refreshCache(CacheType.rentalItems);
     changeData();
   }
 
   Future<void> fetchUserProfile(String userId) async {
-    refreshCache(CacheType.users);
-    refreshCache(CacheType.reviews);
-    refreshCache(CacheType.matches);
+    _invalidateElement(_usersCachedTime, userId);
+    getUserById(userId); // 만료 처리 후 단건 재조회
+    await refreshCache(CacheType.rentalItems);
     changeData();
   }
 
+  // 특정 채팅방 메시지만 단건 갱신 — 채팅 화면 진입 시 호출
   Future<void> fetchChatMessages(String chattingId) async {
-    refreshCache(CacheType.chattings);
-    changeData();
+    try {
+      final res = await ApiClient().dio.get(
+        '/api/v1/chats/$chattingId/messages',
+      );
+      final messages = (res.data as List<dynamic>)
+          .map((m) => Chat.fromJson(m as Map<String, dynamic>))
+          .toList();
+      _chattings[chattingId] = Chatting(id: chattingId, chats: messages);
+      _chattingsCachedTime[chattingId] = DateTime.now();
+      changeData();
+    } catch (_) {}
   }
 
   void changeData() => notifyListeners();

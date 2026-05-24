@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:open_source_software/screens/chatting_list.dart';
-import 'package:open_source_software/screens/rental_list_screen.dart';
-import 'package:open_source_software/screens/rental_request_screen.dart';
-import 'package:open_source_software/screens/user_profile_screen.dart';
+import '/screens/chatting_list.dart';
+import '/screens/rental_list_screen.dart';
+import '/screens/rental_request_screen.dart';
+import '/screens/user_profile_screen.dart';
 
 class HomeNavigation extends StatefulWidget {
   const HomeNavigation({super.key});

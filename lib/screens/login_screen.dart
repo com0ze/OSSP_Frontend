@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:open_source_software/extensions/theme_extension.dart';
-import 'package:open_source_software/managers/active_notification_manager.dart';
-import 'package:open_source_software/managers/login_manager.dart';
-import 'package:open_source_software/screens/home_navigation.dart';
-import 'package:open_source_software/screens/signin_screen.dart';
+import '/extensions/theme_extension.dart';
+import '/managers/active_notification_manager.dart';
+import '/managers/login_manager.dart';
+import '/screens/home_navigation.dart';
+import '/screens/signup_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -160,7 +160,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => const SigninScreen(),
+                          builder: (context) => const SignUpScreen(),
                         ),
                       );
                     },

@@ -1,13 +1,15 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
-import 'screens/login_screen.dart';
-import 'managers/theme_mode_manager.dart';
-import 'package:open_source_software/managers/active_notification_manager.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:open_source_software/app_keys.dart';
-import 'package:open_source_software/managers/login_manager.dart';
-import 'package:open_source_software/screens/home_navigation.dart';
+import '/api/api_client.dart';
+import '/screens/login_screen.dart';
+import '/managers/active_notification_manager.dart';
+import '/managers/data_manager.dart';
+import '/managers/theme_mode_manager.dart';
+import '/app_keys.dart';
+import '/managers/login_manager.dart';
+import '/screens/home_navigation.dart';
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -19,6 +21,9 @@ void main() async {
   }
   await activeNotificationManager.initialize();
   activeNotificationManager.updateDeviceTokenToServer();
+
+  ApiClient();
+  DataManager();
 
   await LoginManager().initAutoLogin();
 

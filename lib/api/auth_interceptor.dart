@@ -1,6 +1,6 @@
 import 'package:dio/dio.dart';
-import 'package:open_source_software/managers/token_storage_manager.dart';
-import 'package:open_source_software/managers/login_manager.dart';
+import '/managers/token_storage_manager.dart';
+import '/managers/login_manager.dart';
 // ================================================================
 // [MOCK - 삭제 대상] 실제 서버 연결 시 아래 import를 삭제하세요.
 import 'mock_server_interceptor.dart';
@@ -59,8 +59,11 @@ class AuthInterceptor extends Interceptor {
     // [MOCK - 삭제 대상] 실제 서버 연결 시 아래 줄을 삭제하세요.
     refreshDio.interceptors.add(MockServerInterceptor());
     // [MOCK - 삭제 끝] ================================================
-    final res = await refreshDio.post('/refresh', data: {'token': refreshToken});
-    final newAccess = res.data['access_token'] as String;
+    final res = await refreshDio.post(
+      '/api/v1/auth/refresh',
+      data: {'token': refreshToken},
+    );
+    final newAccess = res.data['accessToken'] as String;
     await _storage.saveTokens(newAccess, refreshToken);
     return newAccess;
   }

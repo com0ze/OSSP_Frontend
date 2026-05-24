@@ -4,9 +4,9 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart'
     show TargetPlatform, defaultTargetPlatform;
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:open_source_software/managers/abstract_notification_manager.dart';
-import 'package:open_source_software/managers/mock_notification_manager.dart';
-import 'package:open_source_software/api/api_client.dart';
+import '/managers/abstract_notification_manager.dart';
+import '/managers/mock_notification_manager.dart';
+import '/api/api_client.dart';
 
 AbstractNotificationManager createManager() {
   if (defaultTargetPlatform == TargetPlatform.windows) {

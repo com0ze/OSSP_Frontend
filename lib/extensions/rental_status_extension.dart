@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:open_source_software/models/rental_status.dart';
+import '/models/rental_status.dart';
 
 extension RentalStatusExtension on RentalStatus {
   Color get color {
