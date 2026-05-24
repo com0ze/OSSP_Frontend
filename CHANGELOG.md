@@ -294,3 +294,40 @@
 
                 - `item_detail_screen.dart` 중복 `DataManager` 지역 변수 제거
                     - `_onChatPressed`, `_onCancelPressed` 내부의 `DataManager dataManager = TestDataManager()` 중복 선언 제거
+
+- # feature/location
+    - ## version: 1.1.0
+        - ### commit: 위치 기반 캠퍼스 건물 인식 및 서버 연동 구현
+            - #### author: Lee JaeWon
+            - #### date: 2026-05-24
+            - feature:
+                - 지오펜싱(Geofencing) 기반 LocationManager 구현 (managers/location_manager.dart 신규 생성)
+                    - geolocator 패키지를 활용한 실시간 GPS 위치 스트림 구독 적용 (distanceFilter 5m)
+                    - maps_toolkit을 활용하여 현재 사용자 좌표가 17개 캠퍼스 건물(GeoJSON) 폴리곤 내에 속하는지 판별하는 로직 추가
+                    - ChangeNotifier 및 싱글톤 패턴을 적용하여 건물 전환 시 상태를 전역으로 관리하고 UI를 자동 갱신하도록 구현
+                    - 위치 권한 미허용 시에도 초기화는 완료 처리, startTracking으로 재시도 가능하도록 구현
+
+                - CampusBuilding 모델 신규 생성 (models/campus_building.dart)
+                    - 건물 이름과 폴리곤 좌표(maps_toolkit LatLng 리스트)를 담는 위치 판별 전용 모델
+                    - fromGeoJsonFeature 팩토리 생성자로 GeoJSON feature 파싱
+                    - contains 메서드로 point-in-polygon 기반 건물 내부 판별
+                    - 기존 Place/Building은 원형(GeofenceRegion) 구조라 폴리곤과 맞지 않아 별도 모델로 분리
+
+                - Dwell Time(체류 시간) 로직 도입
+                    - 건물 경계선에서 GPS 오차로 인해 위치가 수시로 바뀌는 핑퐁(바운싱) 현상 방지
+                    - 특정 건물의 영역 내에 5초(_dwellTime) 이상 연속 체류할 때만 최종 현재 건물로 확정하도록 알고리즘 구성
+
+                - GeoJSON 데이터 로드 및 매핑 버그 수정
+                    - assets/ 폴더 신설 및 동국대 캠퍼스 17개 건물 폴리곤 데이터 추가 (assets/dongguk_campus.geojson)
+                    - pubspec.yaml 및 assets 폴더 구조의 경로/띄어쓰기 오류 수정으로 Unable to load asset 문제 해결
+                    - 데이터 파싱 과정에서 [경도, 위도] 순서로 들어오는 좌표 배열을 LatLng(위도, 경도) 순서로 올바르게 매핑하도록 수정
+
+                - 위치 정보 서버 전송 구조 마련
+                    - 건물 전환 확정 시 _sendLocationToServer를 호출하여 /users/location API로 건물명을 전송하는 구조 구축
+                    - 백엔드 위치 API 미확정 상태로 실제 전송(ApiClient.dio.patch)은 주석 처리, 현재는 로그 출력으로 동작 검증 (백엔드 연동 시 주석 해제 예정)
+                    - 연동 시 기존 AuthInterceptor와 함께 JWT 토큰 기반 통신이 적용되도록 설계
+
+                - 홈 네비게이션 및 대여 요청 화면 위치 연동
+                    - home_navigation.dart를 StatefulWidget으로 전환, initState에서 LocationManager 초기화 (로그인 후 메인 화면 진입 시점에 위치 권한 요청)
+                    - rental_request_screen.dart의 현재 위치 버튼이 LocationManager가 판별한 건물명을 입력칸에 자동 입력하도록 변경
+                    - 건물 미판별 시 직접 입력 안내 스낵바 표시, 위치 입력 필드 라벨/힌트를 건물명 기준으로 수정

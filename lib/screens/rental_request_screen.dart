@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:geolocator/geolocator.dart';
 import 'package:open_source_software/extensions/theme_extension.dart';
 import 'package:open_source_software/managers/data_manager.dart';
+import 'package:open_source_software/managers/location_manager.dart';
 import 'package:open_source_software/managers/login_manager.dart';
 import 'package:open_source_software/managers/test_data_manager.dart';
 import 'package:open_source_software/models/product.dart';
@@ -23,8 +23,6 @@ class _RentalRequestScreenState extends State<RentalRequestScreen> {
   final _preferencesController = TextEditingController();
   final _descriptionController = TextEditingController();
 
-  bool _isLoadingLocation = false;
-
   @override
   void dispose() {
     _titleController.dispose();
@@ -36,96 +34,32 @@ class _RentalRequestScreenState extends State<RentalRequestScreen> {
     super.dispose();
   }
 
-  Future<void> _getCurrentLocation() async {
-    setState(() => _isLoadingLocation = true);
+  /// 현재 위치(건물) 가져오기.
+  ///
+  /// LocationManager 가 지오펜싱으로 판별해 둔 현재 건물명을 입력칸에 채운다.
+  /// 좌표 문자열 대신 '원흥관' 같은 건물명이 들어간다.
+  void _fillCurrentBuilding() {
+    final String? building = LocationManager().currentBuildingName;
 
-    try {
-      bool serviceEnabled = await Geolocator.isLocationServiceEnabled();
-      if (!serviceEnabled) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(
-              content: Text(
-                '위치 서비스를 켜주세요',
-                style: TextStyle(color: context.onErrorColor),
-              ),
-              duration: const Duration(milliseconds: 500),
-              backgroundColor: context.errorColor,
-            ),
-          );
-        }
-        return;
-      }
-
-      LocationPermission permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
-        if (permission == LocationPermission.denied) {
-          if (mounted) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(
-                  '위치 권한이 거부되었습니다',
-                  style: TextStyle(color: context.onErrorColor),
-                ),
-                duration: const Duration(milliseconds: 500),
-                backgroundColor: context.errorColor,
-              ),
-            );
-          }
-          return;
-        }
-      }
-
-      Position position = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.high,
+    if (building == null) {
+      // 아직 건물 판별 전이거나, 캠퍼스 건물 밖에 있는 경우
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(
+            '현재 건물을 찾지 못했습니다. 직접 입력해주세요.',
+            style: TextStyle(color: context.onErrorColor),
+          ),
+          duration: const Duration(milliseconds: 800),
+          backgroundColor: context.errorColor,
         ),
       );
-
-      _locationController.text = '${position.latitude}, ${position.longitude}';
-    } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              '위치를 가져올 수 없습니다',
-              style: TextStyle(color: context.onErrorColor),
-            ),
-            duration: const Duration(milliseconds: 500),
-            backgroundColor: context.errorColor,
-          ),
-        );
-      }
-    } finally {
-      if (mounted) {
-        setState(() => _isLoadingLocation = false);
-      }
+      return;
     }
+
+    setState(() {
+      _locationController.text = building;
+    });
   }
-
-  // void _submitRequest() {
-  //   if (_formKey.currentState!.validate()) {
-  //     ScaffoldMessenger.of(context).showSnackBar(
-  //       SnackBar(
-  //         duration: const Duration(milliseconds: 500),
-  //         content: Text(
-  //           '대여 요청이 등록되었습니다',
-  //           style: TextStyle(color: context.onGoodColor),
-  //         ),
-  //         backgroundColor: context.goodColor,
-  //       ),
-  //     );
-
-  //     _formKey.currentState!.reset();
-  //     _titleController.clear();
-  //     _itemNameController.clear();
-  //     _locationController.clear();
-  //     _priceController.clear();
-  //     _preferencesController.clear();
-  //     _descriptionController.clear();
-  //   }
-  // }
 
   void _submitRequest() {
     DataManager dataManager = TestDataManager();
@@ -240,24 +174,15 @@ class _RentalRequestScreenState extends State<RentalRequestScreen> {
             TextFormField(
               controller: _locationController,
               decoration: InputDecoration(
-                labelText: '위치',
-                hintText: '예: 서울시 강남구',
+                labelText: '위치 (건물)',
+                hintText: '예: 원흥관',
                 border: const OutlineInputBorder(),
                 prefixIcon: const Icon(Icons.location_on),
-                suffixIcon: _isLoadingLocation
-                    ? const Padding(
-                        padding: EdgeInsets.all(12.0),
-                        child: SizedBox(
-                          width: 20,
-                          height: 20,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        ),
-                      )
-                    : IconButton(
-                        icon: const Icon(Icons.my_location),
-                        onPressed: _getCurrentLocation,
-                        tooltip: '현재 위치 가져오기',
-                      ),
+                suffixIcon: IconButton(
+                  icon: const Icon(Icons.my_location),
+                  onPressed: _fillCurrentBuilding,
+                  tooltip: '현재 건물 가져오기',
+                ),
               ),
               validator: (value) {
                 if (value == null || value.isEmpty) {
