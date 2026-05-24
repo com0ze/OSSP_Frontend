@@ -3,13 +3,24 @@ import 'package:open_source_software/extensions/theme_extension.dart';
 import 'package:open_source_software/managers/login_manager.dart';
 import 'package:open_source_software/managers/theme_mode_manager.dart';
 
-class SettingScreen extends StatelessWidget {
+class SettingScreen extends StatefulWidget {
   const SettingScreen({super.key});
+
+  @override
+  State<SettingScreen> createState() => _SettingScreenState();
+}
+
+class _SettingScreenState extends State<SettingScreen> {
+  bool _notificationsEnabled = false;
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('설정')),
+      appBar: AppBar(
+        title: const Text('설정'),
+        backgroundColor: context.primaryColor,
+        foregroundColor: context.onPrimaryColor,
+      ),
       body: ListView(
         children: [
           ListTile(
@@ -34,6 +45,16 @@ class SettingScreen extends StatelessWidget {
                   Icons.brightness_auto,
                 ),
               ],
+            ),
+          ),
+          const Divider(),
+          ListTile(
+            leading: Icon(Icons.notifications_outlined, color: context.primaryColor),
+            title: const Text('알림 설정'),
+            subtitle: const Text('앱 알림을 켜거나 끕니다.'),
+            trailing: Switch(
+              value: _notificationsEnabled,
+              onChanged: (value) => setState(() => _notificationsEnabled = value),
             ),
           ),
         ],
@@ -69,7 +90,7 @@ class SettingScreen extends StatelessWidget {
           child: Icon(
             icon,
             color: context.onPrimaryColor,
-            size: screenWidth * 0.075,
+            size: (screenWidth * 0.075).clamp(0.0, 28.0),
           ),
         );
       },

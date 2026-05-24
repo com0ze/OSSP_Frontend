@@ -60,7 +60,11 @@ class _SigninScreenState extends State<SigninScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('회원가입')),
+      appBar: AppBar(
+        title: const Text('회원가입'),
+        backgroundColor: context.primaryColor,
+        foregroundColor: context.onPrimaryColor,
+      ),
       body: SafeArea(
         child: SingleChildScrollView(
           padding: const EdgeInsets.all(24.0),

@@ -63,6 +63,20 @@
             - #### author: Lee JaeWon
             - #### date: 2026-05-23
             - feature: 
+                - 안드로이드 알림 기능 구현
+                    - 포어그라운드 기반
+                    - 채팅 기능 구현 시 사용할 예정
+                    - 현재 화면이 채팅방이 아닌 경우 알림 발생,  채팅방이어도 다른 채팅방이면 알림 발생
+    
+    - ## version: 1.1.0
+        - ### commit: 웹 디버그용 mock제작
+            - #### author: Seo JeongHun
+            - #### date: 2026-05-24
+            - feature: 
+                - 아이폰 알림 코드 수정
+                    - 아이폰은 앱 켜져있을 시 알림 X -> 소리와 앱 아이콘 만 표시
+                - 웹 또는 윈도우에서 테스트 가능하도록 notification_manager 종류를 여러개로 나눔
+                    - 웹 또는 윈도우인 경우 알림 대신 로그 출력
                          
 - # feature/data_widget_refactoring
     - ## version: 1.1.0
@@ -331,3 +345,36 @@
                     - home_navigation.dart를 StatefulWidget으로 전환, initState에서 LocationManager 초기화 (로그인 후 메인 화면 진입 시점에 위치 권한 요청)
                     - rental_request_screen.dart의 현재 위치 버튼이 LocationManager가 판별한 건물명을 입력칸에 자동 입력하도록 변경
                     - 건물 미판별 시 직접 입력 안내 스낵바 표시, 위치 입력 필드 라벨/힌트를 건물명 기준으로 수정
+- # feature/buildng
+    - ## version: 1.1.0
+        - ### commit: rental_item이 place사용하도록 구조 변경
+            - #### author: Seo JeongHun
+            - #### date: 2026-05-24
+            - feature:
+                - geofencing_api 패키지 설치
+                - LentalItem location -> placeID
+                - place.dart 수정
+                    - 필요없는 부분들 삭제
+                - building.dart 수정
+                    - 구조적으로 잘못된 부분 수정
+                    - 이웃 장소 불러오기 수정
+                - rental_request_screen.dart 수정
+                    - 장소를 드롭다운 형식으로 선택할 수 있게함
+                - test_data_manager에 건물 이름과 테두리 좌표 추가
+
+- # feature/design
+    - ## version: 1.1.0
+        - ### commit: 디자인 요소 변경
+            - #### author: Seo JeongHun
+            - #### date: 2026-05-24
+            - feature:
+                - main.dart 스낵바 속도 조절
+                - 상단바에 색 넣음
+
+- # feature/data_structure
+    - ## version: 1.1.0
+        - ### commit: 데이터 매니저 통합
+            - #### author: Seo JeongHun
+            - #### date: 2026-05-24
+            - feature:
+                - test_data_manager 삭제

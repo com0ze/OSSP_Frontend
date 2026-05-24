@@ -1,7 +1,6 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:open_source_software/extensions/theme_extension.dart';
 import 'package:open_source_software/managers/data_manager.dart';
-import 'package:open_source_software/managers/test_data_manager.dart';
 import 'package:open_source_software/models/review.dart';
 import 'package:open_source_software/models/user.dart';
 import 'package:open_source_software/screens/lender_profile_screen.dart';
@@ -17,7 +16,7 @@ class OtherUserProfileScreen extends StatefulWidget {
 }
 
 class _OtherUserProfileScreenState extends State<OtherUserProfileScreen> {
-  final DataManager dataManager = TestDataManager();
+  final DataManager dataManager = DataManager();
 
   @override
   void initState() {
@@ -51,7 +50,11 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen> {
         final reviews = _generateReviews();
 
         return Scaffold(
-          appBar: AppBar(title: const Text('사용자 정보')),
+          appBar: AppBar(
+            title: const Text('사용자 정보'),
+            backgroundColor: context.primaryColor,
+            foregroundColor: context.onPrimaryColor,
+          ),
           body: RefreshIndicator(
             onRefresh: () => dataManager.fetchUserProfile(widget.user.id),
             child: ListView(

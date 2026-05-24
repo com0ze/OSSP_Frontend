@@ -1,7 +1,6 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:open_source_software/extensions/theme_extension.dart';
 import 'package:open_source_software/managers/data_manager.dart';
-import 'package:open_source_software/managers/test_data_manager.dart';
 import 'package:open_source_software/models/match.dart';
 import 'package:open_source_software/models/rental_item.dart';
 import 'package:open_source_software/models/review.dart';
@@ -74,7 +73,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
       ),
     );
 
-    final DataManager dataManager = TestDataManager();
+    final DataManager dataManager = DataManager();
     final review = Review(
       id: '${widget.match.matchID}_${widget.reviewee.id}',
       score: _rating,
@@ -97,7 +96,11 @@ class _ReviewScreenState extends State<ReviewScreen> {
     final double screenWidth = MediaQuery.of(context).size.width;
 
     return Scaffold(
-      appBar: AppBar(title: const Text('리뷰 작성')),
+      appBar: AppBar(
+        title: const Text('리뷰 작성'),
+        backgroundColor: context.primaryColor,
+        foregroundColor: context.onPrimaryColor,
+      ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(24.0),
         child: Column(

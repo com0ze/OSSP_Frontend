@@ -1,20 +1,23 @@
 import 'package:open_source_software/models/place.dart';
 
 class Building extends Place {
+  final String _id;
   final String _name;
-  final GeofenceRegion _area;
-  final HashPlace _neighbor;
-  final List<Place> neighborPlace;
+  final GeofencePolygonRegion _area;
+  final List<String> _neighbor;
 
   Building({
+    required String id,
     required String name,
-    required GeofenceRegion area,
-    required HashPlace neighbor,
-    List<Place>? neighborPlace,
-  })  : _name = name,
-        _area = area,
-        _neighbor = neighbor,
-        neighborPlace = neighborPlace ?? [];
+    required GeofencePolygonRegion area,
+    required List<String> neighbor,
+  }) : _id = id,
+       _name = name,
+       _area = area,
+       _neighbor = neighbor;
+
+  @override
+  String get id => _id;
 
   @override
   String get name => _name;
@@ -23,48 +26,62 @@ class Building extends Place {
   GeofenceRegion get area => _area;
 
   @override
-  HashPlace get neighbor => _neighbor;
+  List<String> get neighbor => _neighbor;
 
+  // extendedNeighbor 호출 시에는 TestDataManager.places로 만든 Map<String, Place>를 넘기면 됨
   @override
-  HashPlace get extendedNeighbor {
-    return HashPlace(
-      hash: _neighbor.hash,
-      neighborHashes: _neighbor.getExtendedNeighbors(),
-    );
+  List<String> extendedNeighbor(Map<String, Place> lookup) {
+    final visited = <String>{};
+    final queue = <String>[..._neighbor];
+    while (queue.isNotEmpty) {
+      final current = queue.removeAt(0);
+      if (visited.add(current)) {
+        queue.addAll(lookup[current]?.neighbor ?? []);
+      }
+    }
+    return visited.toList();
   }
 
   factory Building.fromJson(Map<String, dynamic> json) {
+    final id = json['id'] as String;
     return Building(
-      name: json['name'],
-      area: GeofenceRegion.fromJson(json['area']),
-      neighbor: HashPlace.fromJson(json['neighbor']),
-      neighborPlace: (json['neighborPlace'] as List<dynamic>?)
-          ?.map((e) => Building.fromJson(e as Map<String, dynamic>))
-          .toList(),
+      id: id,
+      name: json['name'] as String,
+      area: GeofencePolygonRegion(
+        id: id,
+        polygon: (json['area'] as List<dynamic>)
+            .map(
+              (e) => LatLng(e['latitude'] as double, e['longitude'] as double),
+            )
+            .toList(),
+      ),
+      neighbor: (json['neighbor'] as List<String>? ?? []),
     );
   }
 
   @override
   Map<String, dynamic> toJson() {
     return {
+      'id': _id,
       'name': _name,
-      'area': _area.toJson(),
-      'neighbor': _neighbor.toJson(),
-      'neighborPlace': neighborPlace.map((e) => e.toJson()).toList(),
+      'area': _area.polygon
+          .map((p) => {'latitude': p.latitude, 'longitude': p.longitude})
+          .toList(),
+      'neighbor': _neighbor.toList(),
     };
   }
 
   Building copyWith({
+    String? id,
     String? name,
-    GeofenceRegion? area,
-    HashPlace? neighbor,
-    List<Place>? neighborPlace,
+    GeofencePolygonRegion? area,
+    List<String>? neighbor,
   }) {
     return Building(
+      id: id ?? _id,
       name: name ?? _name,
       area: area ?? _area,
-      neighbor: neighbor ?? _neighbor,
-      neighborPlace: neighborPlace ?? List.from(this.neighborPlace),
+      neighbor: neighbor ?? List.from(_neighbor),
     );
   }
 }

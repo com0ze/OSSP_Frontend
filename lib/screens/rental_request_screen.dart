@@ -3,7 +3,6 @@ import 'package:open_source_software/extensions/theme_extension.dart';
 import 'package:open_source_software/managers/data_manager.dart';
 import 'package:open_source_software/managers/location_manager.dart';
 import 'package:open_source_software/managers/login_manager.dart';
-import 'package:open_source_software/managers/test_data_manager.dart';
 import 'package:open_source_software/models/product.dart';
 import 'package:open_source_software/models/rental_item.dart';
 
@@ -23,14 +22,19 @@ class _RentalRequestScreenState extends State<RentalRequestScreen> {
   final _preferencesController = TextEditingController();
   final _descriptionController = TextEditingController();
 
+  String? _selectedPlaceId;
+  String? _placeError;
+  final _placeMenuController = TextEditingController();
+
   @override
   void dispose() {
     _titleController.dispose();
     _itemNameController.dispose();
-    _locationController.dispose();
     _priceController.dispose();
+    _locationController.dispose();
     _preferencesController.dispose();
     _descriptionController.dispose();
+    _placeMenuController.dispose();
     super.dispose();
   }
 
@@ -62,12 +66,13 @@ class _RentalRequestScreenState extends State<RentalRequestScreen> {
   }
 
   void _submitRequest() {
-    DataManager dataManager = TestDataManager();
-    if (_formKey.currentState!.validate()) {
-      // 1. 현재 로그인한 사용자 정보 가져오기
+    DataManager dataManager = DataManager();
+    setState(
+      () => _placeError = _selectedPlaceId == null ? '위치를 선택해주세요' : null,
+    );
+    if (_formKey.currentState!.validate() && _selectedPlaceId != null) {
       final currentUser = LoginManager().currentUser;
 
-      // 로그인이 안 된 상태(null)라면 처리 방지
       if (currentUser == null) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
@@ -81,14 +86,11 @@ class _RentalRequestScreenState extends State<RentalRequestScreen> {
         return;
       }
 
-      // 2. 입력된 데이터로 새로운 RentalItem 생성
       final newItem = RentalItem(
-        // 고유 ID는 현재 시간의 밀리초를 문자열로 사용
         id: DateTime.now().millisecondsSinceEpoch.toString(),
         title: _titleController.text,
-        // 카테고리는 우선 '기타'로 지정 (필요 시 선택 UI 추가 가능)
         product: Product(name: _itemNameController.text, category: '기타'),
-        location: _locationController.text,
+        placeID: _selectedPlaceId!,
         price: int.parse(_priceController.text),
         description: _descriptionController.text,
         preferences: _preferencesController.text,
@@ -96,10 +98,8 @@ class _RentalRequestScreenState extends State<RentalRequestScreen> {
         createdAt: DateTime.now(),
       );
 
-      // 3. DataManager에 데이터 추가 및 상태 변경 알림
       dataManager.addRentalItem(newItem);
 
-      // 4. 성공 메시지 띄우기
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           duration: const Duration(milliseconds: 500),
@@ -111,24 +111,29 @@ class _RentalRequestScreenState extends State<RentalRequestScreen> {
         ),
       );
 
-      // 5. 폼 초기화
       _formKey.currentState!.reset();
       _titleController.clear();
       _itemNameController.clear();
-      _locationController.clear();
       _priceController.clear();
       _preferencesController.clear();
       _descriptionController.clear();
-
-      // (선택) 등록 완료 후 이전 화면(홈)으로 돌아가기
-      // Navigator.of(context).pop();
+      _placeMenuController.clear();
+      setState(() {
+        _selectedPlaceId = null;
+        _placeError = null;
+      });
     }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('대여 요청하기'), centerTitle: true),
+      appBar: AppBar(
+        title: const Text('대여 요청하기'),
+        centerTitle: true,
+        backgroundColor: context.primaryColor,
+        foregroundColor: context.onPrimaryColor,
+      ),
       body: Form(
         key: _formKey,
         child: ListView(
@@ -148,9 +153,7 @@ class _RentalRequestScreenState extends State<RentalRequestScreen> {
                 prefixIcon: Icon(Icons.title),
               ),
               validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return '제목을 입력해주세요';
-                }
+                if (value == null || value.isEmpty) return '제목을 입력해주세요';
                 return null;
               },
             ),
@@ -164,32 +167,53 @@ class _RentalRequestScreenState extends State<RentalRequestScreen> {
                 prefixIcon: Icon(Icons.shopping_basket),
               ),
               validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return '물건명을 입력해주세요';
-                }
+                if (value == null || value.isEmpty) return '물건명을 입력해주세요';
                 return null;
               },
             ),
             const SizedBox(height: 16),
-            TextFormField(
-              controller: _locationController,
-              decoration: InputDecoration(
-                labelText: '위치 (건물)',
-                hintText: '예: 원흥관',
-                border: const OutlineInputBorder(),
-                prefixIcon: const Icon(Icons.location_on),
-                suffixIcon: IconButton(
-                  icon: const Icon(Icons.my_location),
-                  onPressed: _fillCurrentBuilding,
-                  tooltip: '현재 건물 가져오기',
+            DropdownMenu<String>(
+              expandedInsets: EdgeInsets.zero,
+              controller: _placeMenuController,
+              initialSelection: _selectedPlaceId,
+              label: const Text('위치'),
+              leadingIcon: const Icon(Icons.location_on),
+              hintText: '장소를 선택해주세요',
+              errorText: _placeError,
+              menuHeight: 260,
+              enableFilter: false,
+              requestFocusOnTap: false,
+              menuStyle: MenuStyle(
+                elevation: const WidgetStatePropertyAll(6),
+                shape: WidgetStatePropertyAll(
+                  RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                ),
+                padding: const WidgetStatePropertyAll(
+                  EdgeInsets.symmetric(vertical: 4),
                 ),
               ),
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return '위치를 입력해주세요';
-                }
-                return null;
-              },
+              dropdownMenuEntries: DataManager.places.map((place) {
+                final isSelected = _selectedPlaceId == place.id;
+                return DropdownMenuEntry(
+                  value: place.id,
+                  label: place.name,
+                  leadingIcon: isSelected
+                      ? Icon(Icons.check, size: 18, color: context.primaryColor)
+                      : const SizedBox(width: 18),
+                  style: MenuItemButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 4,
+                    ),
+                  ),
+                );
+              }).toList(),
+              onSelected: (value) => setState(() {
+                _selectedPlaceId = value;
+                _placeError = null;
+              }),
             ),
             const SizedBox(height: 16),
             TextFormField(
@@ -202,12 +226,8 @@ class _RentalRequestScreenState extends State<RentalRequestScreen> {
                 prefixIcon: Icon(Icons.attach_money),
               ),
               validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return '금액을 입력해주세요';
-                }
-                if (int.tryParse(value) == null) {
-                  return '숫자만 입력해주세요';
-                }
+                if (value == null || value.isEmpty) return '금액을 입력해주세요';
+                if (int.tryParse(value) == null) return '숫자만 입력해주세요';
                 return null;
               },
             ),
@@ -222,9 +242,7 @@ class _RentalRequestScreenState extends State<RentalRequestScreen> {
                 alignLabelWithHint: true,
               ),
               validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return '설명을 입력해주세요';
-                }
+                if (value == null || value.isEmpty) return '설명을 입력해주세요';
                 return null;
               },
             ),

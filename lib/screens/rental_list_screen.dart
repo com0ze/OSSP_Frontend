@@ -1,7 +1,7 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
+import 'package:open_source_software/extensions/theme_extension.dart';
 import 'package:open_source_software/managers/data_manager.dart';
 import 'package:open_source_software/managers/login_manager.dart';
-import 'package:open_source_software/managers/test_data_manager.dart';
 import 'package:open_source_software/screens/item_detail_screen.dart';
 import 'package:open_source_software/widgets/rental_item_widget_factory.dart';
 
@@ -13,7 +13,7 @@ class RentalListScreen extends StatefulWidget {
 }
 
 class _RentalListScreenState extends State<RentalListScreen> {
-  final DataManager dataManager = TestDataManager();
+  final DataManager dataManager = DataManager();
   final LoginManager loginManager = LoginManager();
 
   @override
@@ -28,9 +28,15 @@ class _RentalListScreenState extends State<RentalListScreen> {
             )
             .toList();
         return Scaffold(
-          appBar: AppBar(title: const Text('대여 가능한 물건'), centerTitle: true),
+          appBar: AppBar(
+            title: const Text('대여 가능한 물건'),
+            centerTitle: true,
+            backgroundColor: context.primaryColor,
+            foregroundColor: context.onPrimaryColor,
+          ),
           body: RefreshIndicator(
-            onRefresh: () => dataManager.fetchAvailableRentalItems(currentUser.id),
+            onRefresh: () =>
+                dataManager.fetchAvailableRentalItems(currentUser.id),
             child: rentalItems.isEmpty
                 ? const SingleChildScrollView(
                     physics: AlwaysScrollableScrollPhysics(),
@@ -44,7 +50,10 @@ class _RentalListScreenState extends State<RentalListScreen> {
                             SizedBox(height: 16),
                             Text(
                               '현재 대여 요청이 없습니다',
-                              style: TextStyle(fontSize: 16, color: Colors.grey),
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.grey,
+                              ),
                             ),
                           ],
                         ),
@@ -63,7 +72,8 @@ class _RentalListScreenState extends State<RentalListScreen> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => ItemDetailScreen(item: item),
+                              builder: (context) =>
+                                  ItemDetailScreen(item: item),
                             ),
                           );
                         },

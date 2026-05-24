@@ -3,7 +3,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'screens/login_screen.dart';
 import 'managers/theme_mode_manager.dart';
-import 'package:open_source_software/managers/notification_manager.dart';
+import 'package:open_source_software/managers/active_notification_manager.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:open_source_software/app_keys.dart';
 import 'package:open_source_software/managers/login_manager.dart';
@@ -16,10 +16,9 @@ void main() async {
   // 이제 아래 if문 안으로 들어가 파이어베이스 심장 충격기가 정상 기동됩니다!
   if (!kIsWeb && (Platform.isAndroid || Platform.isIOS)) {
     await Firebase.initializeApp();
-
-    final notificationManager = NotificationManager();
-    await notificationManager.initialize();
-  } else {}
+  }
+  await activeNotificationManager.initialize();
+  activeNotificationManager.updateDeviceTokenToServer();
 
   await LoginManager().initAutoLogin();
 
@@ -30,7 +29,10 @@ void main() async {
     );
     await Future.delayed(const Duration(milliseconds: 300));
     scaffoldMessengerKey.currentState?.showSnackBar(
-      SnackBar(content: Text(message)),
+      SnackBar(
+        content: Text(message),
+        duration: const Duration(milliseconds: 1000),
+      ),
     );
   });
 
@@ -81,6 +83,7 @@ class MyApp extends StatelessWidget {
                     .dark, // 전체 팔레트(Primary, Surface, OnPrimary 등)를 자동으로 생성
               ).copyWith(
                 onSurfaceVariant: Colors.grey[400], // 다크 모드에서 SurfaceVariant 색상
+                surface: Colors.grey[900],
               ),
         ),
 
