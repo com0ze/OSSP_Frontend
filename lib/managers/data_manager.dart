@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '/api/api_client.dart';
-import '/managers/login_manager.dart';
 import '/models/building.dart';
 import '/models/chat.dart';
 import '/models/chatting.dart';
@@ -17,8 +16,14 @@ class DataManager extends ChangeNotifier {
   factory DataManager() => _instance;
 
   DataManager._internal() {
-    _initAsync();
+    _readyFuture = _initAsync();
   }
+
+  late final Future<void> _readyFuture;
+
+  // 초기 데이터 로딩이 완료될 때까지 대기하는 Future.
+  // 이미 완료된 경우 await 시 즉시 반환됩니다.
+  Future<void> get ready => _readyFuture;
 
   // ── 건물 목록 (고정값) ────────────────────────────────────────────────────────
   // GeoJSON의 [경도, 위도] 순서를 LatLng(위도, 경도)로 변환
@@ -359,8 +364,8 @@ class DataManager extends ChangeNotifier {
   static const _ttlRentalItems = Duration(minutes: 1);
 
   // ── 캐시 데이터 ──────────────────────────────────────────────────────────────
-  Map<String, User> _users = {};
-  Map<String, Review> _reviews = {};
+  final Map<String, User> _users = {};
+  final Map<String, Review> _reviews = {};
   Map<String, Chatting> _chattings = {};
   Map<String, Match> _matches = {};
   Map<String, RentalItem> _rentalItems = {};
@@ -378,12 +383,12 @@ class DataManager extends ChangeNotifier {
 
   // Map<String, Review> get reviews => _reviews;
 
-  // Map<String, Chatting> get chattings {
-  //   if (_isCollectionStale(_chattingsCachedTime, _ttlChattings)) {
-  //     refreshCache(CacheType.chattings).then((_) => changeData());
-  //   }
-  //   return _chattings;
-  // }
+  Map<String, Chatting> get chattings {
+    if (_isCollectionStale(_chattingsCachedTime, _ttlChattings)) {
+      refreshCache(CacheType.chattings).then((_) => changeData());
+    }
+    return _chattings;
+  }
 
   Map<String, Match> get matches {
     if (_isCollectionStale(_rentalItemsCachedTime, _ttlRentalItems)) {
@@ -445,14 +450,15 @@ class DataManager extends ChangeNotifier {
           // bulk 조회 엔드포인트 없음 — getUserById()로 on-demand 로드
           break;
         case CacheType.reviews:
-          // bulk 조회 엔드포인트 없음 — 리뷰 작성 후 로컬에서 직접 캐시
-          break;
+          final reviewRes = await dio.get('/api/v1/reviews/my');
+          final now = DateTime.now();
+          for (final r in reviewRes.data as List<dynamic>) {
+            final review = Review.fromJson(r as Map<String, dynamic>);
+            _reviews[review.id] = review;
+            _reviewsCachedTime[review.id] = now;
+          }
         case CacheType.chattings:
-          final userId = LoginManager().currentUser?.id ?? '';
-          final res = await dio.get(
-            '/api/v1/chats',
-            queryParameters: {'userId': userId},
-          );
+          final res = await dio.get('/api/v1/chats');
           _chattings = {};
           final now = DateTime.now();
           for (final c in res.data as List<dynamic>) {
@@ -516,6 +522,7 @@ class DataManager extends ChangeNotifier {
     await Future.wait([
       refreshCache(CacheType.rentalItems),
       refreshCache(CacheType.chattings),
+      refreshCache(CacheType.reviews),
     ]);
     changeData();
   }
@@ -538,7 +545,7 @@ class DataManager extends ChangeNotifier {
           })
           .catchError((_) {});
     }
-    return _users[id] ?? User(id: id, name: '알 수 없음', email: '');
+    return _users[id] ?? User(id: id, name: '알 수 없음');
   }
 
   // 리뷰: 단건 조회 엔드포인트 없음 — 로컬 캐시만 참조
@@ -595,14 +602,15 @@ class DataManager extends ChangeNotifier {
       data: {'providerId': lenderId},
     );
     final matchId =
-        (acceptRes.data as Map<String, dynamic>)['matchId'] as String;
+        (acceptRes.data as Map<String, dynamic>)['matchId'].toString();
 
     // Step 2: 해당 매치의 채팅방 생성
     final chatRes = await ApiClient().dio.post(
       '/api/v1/chats',
       data: {'matchId': matchId},
     );
-    final roomId = (chatRes.data as Map<String, dynamic>)['roomId'] as String;
+    final roomId =
+        (chatRes.data as Map<String, dynamic>)['roomId'].toString();
 
     // rentalItems 갱신 시 match도 함께 파싱됨
     await Future.wait([
@@ -623,7 +631,6 @@ class DataManager extends ChangeNotifier {
 
   // ── Match 상태 변경 ────────────────────────────────────────────────────────
 
-  // TODO: 이게 무슨 말임?
   // accept가 이미 ACCEPTED 상태로 생성하므로 실질적 no-op이지만 하위 호환 유지
   Future<void> confirmMatch(String matchId) async {
     final match = _matches[matchId];
@@ -679,22 +686,19 @@ class DataManager extends ChangeNotifier {
     await ApiClient().dio.post(
       '/api/v1/reviews',
       data: {
-        'reviewerId': match?.lenderID,
-        'revieweeId': match?.requesterID,
         'matchId': matchId,
         'score': newReview.score,
         'comments': newReview.reviewText,
       },
     );
-    // 리뷰를 로컬 캐시에 등록
-    _reviews[newReview.id] = newReview;
-    _reviewsCachedTime[newReview.id] = DateTime.now();
-    // 관련 rentalItem·유저 만료
     if (match != null) {
       _invalidateElement(_rentalItemsCachedTime, match.rentalItemID);
       _invalidateElement(_usersCachedTime, match.requesterID);
     }
-    await refreshCache(CacheType.rentalItems);
+    await Future.wait([
+      refreshCache(CacheType.reviews),
+      refreshCache(CacheType.rentalItems),
+    ]);
     changeData();
   }
 
@@ -706,31 +710,20 @@ class DataManager extends ChangeNotifier {
     await ApiClient().dio.post(
       '/api/v1/reviews',
       data: {
-        'reviewerId': match?.requesterID,
-        'revieweeId': match?.lenderID,
         'matchId': matchId,
         'score': newReview.score,
         'comments': newReview.reviewText,
       },
     );
-    _reviews[newReview.id] = newReview;
-    _reviewsCachedTime[newReview.id] = DateTime.now();
     if (match != null) {
       _invalidateElement(_rentalItemsCachedTime, match.rentalItemID);
       _invalidateElement(_usersCachedTime, match.lenderID);
     }
-    await refreshCache(CacheType.rentalItems);
+    await Future.wait([
+      refreshCache(CacheType.reviews),
+      refreshCache(CacheType.rentalItems),
+    ]);
     changeData();
-  }
-
-  // ── 채팅 ──────────────────────────────────────────────────────────────────
-
-  Future<void> addChat(String chattingId, Chat chat) async {
-    await ApiClient().dio.post(
-      '/api/v1/chats/$chattingId/messages',
-      data: chat.toJson(),
-    );
-    await fetchChatMessages(chattingId);
   }
 
   // ── 아이템 목록 ───────────────────────────────────────────────────────────
@@ -794,7 +787,11 @@ class DataManager extends ChangeNotifier {
       final messages = (res.data as List<dynamic>)
           .map((m) => Chat.fromJson(m as Map<String, dynamic>))
           .toList();
-      _chattings[chattingId] = Chatting(id: chattingId, chats: messages);
+      // 기존 chatting의 matchId·opponentName 등 메타데이터를 보존하고 메시지만 교체
+      final existing = _chattings[chattingId];
+      _chattings[chattingId] = existing != null
+          ? existing.copyWith(chats: messages)
+          : Chatting(id: chattingId, chats: messages);
       _chattingsCachedTime[chattingId] = DateTime.now();
       changeData();
     } catch (_) {}

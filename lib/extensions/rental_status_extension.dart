@@ -12,8 +12,6 @@ extension RentalStatusExtension on RentalStatus {
         return Colors.orange;
       case RentalStatus.returned:
         return Colors.green;
-      case RentalStatus.reviewed:
-        return Colors.amber;
       case RentalStatus.cancelled:
         return Colors.red;
       case RentalStatus.otherUserMatched:
@@ -31,8 +29,6 @@ extension RentalStatusExtension on RentalStatus {
         return '대여 중';
       case RentalStatus.returned:
         return '반납 완료';
-      case RentalStatus.reviewed:
-        return '리뷰 완료';
       case RentalStatus.cancelled:
         return '취소됨';
       case RentalStatus.otherUserMatched:
@@ -50,8 +46,6 @@ extension RentalStatusExtension on RentalStatus {
         return '반납 완료';
       case RentalStatus.returned:
         return '리뷰 작성';
-      case RentalStatus.reviewed:
-        return '완료됨';
       case RentalStatus.cancelled:
         return '취소됨';
       case RentalStatus.otherUserMatched:

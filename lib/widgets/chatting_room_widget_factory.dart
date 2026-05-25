@@ -1,17 +1,16 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '/extensions/rental_status_extension.dart';
 import '/extensions/theme_extension.dart';
 import '/managers/login_manager.dart';
 import '/managers/data_manager.dart';
-import '/models/chat.dart';
-import '/models/match.dart';
+import '/models/chatting.dart';
 import '/widgets/widget_factory.dart';
 
 class ChattingRoomWidgetFactory extends WidgetFactory {
-  final Match match;
+  final Chatting chatting;
   final VoidCallback onTap;
 
-  ChattingRoomWidgetFactory({required this.match, required this.onTap});
+  ChattingRoomWidgetFactory({required this.chatting, required this.onTap});
 
   String _formatTime(DateTime time) {
     final now = DateTime.now();
@@ -24,19 +23,13 @@ class ChattingRoomWidgetFactory extends WidgetFactory {
   @override
   Widget makeWidget(BuildContext context) {
     final dataManager = DataManager();
-    final loginManager = LoginManager();
+    final currentUserId = LoginManager().currentUser.id;
 
-    final currentUserId = loginManager.currentUserOrGuest.id;
-    final otherUserId = match.requesterID == currentUserId
-        ? match.lenderID
-        : match.requesterID;
-    final otherUser = dataManager.getUserById(otherUserId);
-    final item = dataManager.rentalItems[match.rentalItemID];
-    final Chat? lastChat = dataManager
-        .getChattingById(match.chattingID)
-        ?.getLastChat();
+    final item = dataManager.rentalItems[chatting.requestId];
+    final lastMessageText = chatting.getLastMessageText();
+    final lastMessageTime = chatting.getLastMessageTime();
     final status = dataManager.getStatusForUserOnItem(
-      match.rentalItemID,
+      chatting.requestId,
       currentUserId,
     );
 
@@ -52,7 +45,7 @@ class ChattingRoomWidgetFactory extends WidgetFactory {
               CircleAvatar(
                 radius: 24,
                 child: Text(
-                  otherUser.name[0],
+                  chatting.opponentName[0],
                   style: const TextStyle(fontSize: 18),
                 ),
               ),
@@ -64,7 +57,7 @@ class ChattingRoomWidgetFactory extends WidgetFactory {
                     Row(
                       children: [
                         Text(
-                          otherUser.name,
+                          chatting.opponentName,
                           style: const TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.bold,
@@ -82,10 +75,10 @@ class ChattingRoomWidgetFactory extends WidgetFactory {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      lastChat?.chatText ?? '아직 메시지가 없습니다',
+                      lastMessageText ?? '아직 메시지가 없습니다',
                       style: TextStyle(
                         fontSize: 13,
-                        color: lastChat != null
+                        color: lastMessageText != null
                             ? context.onSurfaceColor
                             : context.onSurfaceVariantColor,
                       ),
@@ -99,9 +92,9 @@ class ChattingRoomWidgetFactory extends WidgetFactory {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  if (lastChat != null)
+                  if (lastMessageTime != null)
                     Text(
-                      _formatTime(lastChat.sendTime),
+                      _formatTime(lastMessageTime),
                       style: TextStyle(
                         fontSize: 11,
                         color: context.onSurfaceVariantColor,

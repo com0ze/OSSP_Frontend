@@ -2,7 +2,7 @@ import '/models/user.dart';
 
 class Review {
   final String id;
-  final int score;
+  final double score;
   final String reviewText;
   final User writer;
   final DateTime createdAt;
@@ -17,11 +17,18 @@ class Review {
 
   factory Review.fromJson(Map<String, dynamic> json) {
     return Review(
-      id: json['id'],
-      score: json['score'] ?? 0,
-      reviewText: json['reviewText'],
-      writer: User.fromJson(json['writer']),
-      createdAt: DateTime.parse(json['createdAt']),
+      id: (json['reviewId'] ?? json['id'] ?? '').toString(),
+      score: ((json['score']) as num?)?.toDouble() ?? 0.0,
+      reviewText: (json['comments'] ?? json['reviewText'] ?? '') as String,
+      writer: json['writer'] != null
+          ? User.fromJson(json['writer'] as Map<String, dynamic>)
+          : User(
+              id: (json['reviewerId'] ?? '').toString(),
+              name: (json['writerNickname'] ?? '알 수 없음') as String,
+            ),
+      createdAt: json['createdAt'] != null
+          ? DateTime.parse(json['createdAt'] as String)
+          : DateTime.now(),
     );
   }
 
@@ -35,9 +42,9 @@ class Review {
     };
   }
 
-  Review copyWith({int? score, String? reviewText}) {
+  Review copyWith({String? id, double? score, String? reviewText}) {
     return Review(
-      id: id,
+      id: id ?? this.id,
       score: score ?? this.score,
       reviewText: reviewText ?? this.reviewText,
       writer: writer,

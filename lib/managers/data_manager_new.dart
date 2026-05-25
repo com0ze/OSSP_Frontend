@@ -430,8 +430,8 @@ class DataManager {
   /// [리스트 조회] 내 채팅방 목록 싹 다 가져오기
   Future<Map<String, Chatting>> fetchChattings() async {
     try {
-      final userId = LoginManager().currentUser?.id;
-      if (userId == null || userId.isEmpty) return {};
+      if (!LoginManager().isLoggedIn) return {};
+      final userId = LoginManager().currentUser.id;
 
       final res = await ApiClient().dio.get(
         '/api/v1/chats',

@@ -3,8 +3,8 @@ import 'auth_interceptor.dart';
 // ================================================================
 // [MOCK - 삭제 대상] 실제 서버 연결 시 아래 import를 삭제하세요.
 import 'mock_server_interceptor.dart';
-
 // [MOCK - 삭제 끝] ================================================
+
 class ApiClient {
   // 1. 싱글톤 패턴 뼈대
   static final ApiClient _instance = ApiClient._internal();
@@ -17,7 +17,7 @@ class ApiClient {
   ApiClient._internal() {
     dio = Dio(
       BaseOptions(
-        baseUrl: 'http://localhost:8080', // 또는 실제 도메인
+        baseUrl: 'http://168.110.102.12:8080', // 또는 실제 도메인
         contentType: 'application/json',
         connectTimeout: const Duration(seconds: 5),
         receiveTimeout: const Duration(seconds: 3),

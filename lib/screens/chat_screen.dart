@@ -1,4 +1,5 @@
 ﻿import 'package:flutter/material.dart';
+import '/chat/stomp_client.dart';
 import '/extensions/rental_status_extension.dart';
 import '/extensions/theme_extension.dart';
 import '/managers/data_manager.dart';
@@ -31,7 +32,6 @@ class _ChatScreenState extends State<ChatScreen> {
   bool _isReadingPastMessages = false;
   late RentalStatus _currentStatus;
   late User _otherUser;
-  int _syncedCount = 0;
 
   @override
   void initState() {
@@ -39,10 +39,10 @@ class _ChatScreenState extends State<ChatScreen> {
 
     _currentStatus = dataManager.getStatusForUserOnItem(
       widget.rentalItem.id,
-      loginManager.currentUserOrGuest.id,
+      loginManager.currentUser.id,
     );
 
-    final currentUserId = loginManager.currentUserOrGuest.id;
+    final currentUserId = loginManager.currentUser.id;
     final otherUserId = widget.match.requesterID == currentUserId
         ? widget.match.lenderID
         : widget.match.requesterID;
@@ -60,12 +60,14 @@ class _ChatScreenState extends State<ChatScreen> {
 
     _loadMessages();
     dataManager.addListener(_onDataChanged);
-    // 화면 진입 시 최신 메시지 서버에서 갱신 (_syncFromChatting이 새 메시지를 자동 반영)
-    dataManager.fetchChatMessages(widget.match.chattingID);
+    ChatStompClient().connect();
+    ChatStompClient().subscribeToRoom(widget.match.chattingID, _onStompMessage);
+    _refreshMessages();
   }
 
   @override
   void dispose() {
+    ChatStompClient().unsubscribeFromRoom(widget.match.chattingID);
     dataManager.removeListener(_onDataChanged);
     _scrollController.dispose();
     _messageController.dispose();
@@ -73,54 +75,27 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   void _onDataChanged() {
-    if (mounted) _syncFromChatting();
-  }
-
-  void _loadMessages() {
-    final chatting = dataManager.getChattingById(widget.match.chattingID);
-    if (chatting == null) return;
-    _messages.addAll(chatting.chats);
-    _syncedCount = chatting.chats.length;
-  }
-
-  Future<void> _refreshMessages() async {
-    await dataManager.fetchChatMessages(widget.match.chattingID);
-    if (!mounted) return;
-    final chatting = dataManager.getChattingById(widget.match.chattingID);
-    if (chatting == null) return;
-    setState(() {
-      _messages.clear();
-      _pendingMessages.clear();
-      _messages.addAll(chatting.chats);
-      _syncedCount = chatting.chats.length;
-    });
-  }
-
-  void _syncFromChatting() {
     if (!mounted) return;
     final latestStatus = dataManager.getStatusForUserOnItem(
       widget.rentalItem.id,
-      loginManager.currentUserOrGuest.id,
+      loginManager.currentUser.id,
     );
     if (latestStatus != _currentStatus) {
       setState(() => _currentStatus = latestStatus);
     }
-    final chatting = dataManager.getChattingById(widget.match.chattingID);
-    if (chatting == null) return;
-    final chats = chatting.chats;
-    if (chats.length <= _syncedCount) return;
+  }
 
-    final newChats = chats.sublist(_syncedCount);
-    _syncedCount = chats.length;
-
+  void _onStompMessage(Chat message) {
+    if (!mounted) return;
+    // Skip own messages — already added optimistically in _sendMessage
+    if (message.senderId == loginManager.currentUser.id) return;
     setState(() {
       if (_isReadingPastMessages) {
-        _pendingMessages.addAll(newChats);
+        _pendingMessages.add(message);
       } else {
-        _messages.addAll(newChats);
+        _messages.add(message);
       }
     });
-
     if (!_isReadingPastMessages) {
       WidgetsBinding.instance.addPostFrameCallback((_) {
         if (mounted && _scrollController.hasClients) {
@@ -132,6 +107,24 @@ class _ChatScreenState extends State<ChatScreen> {
         }
       });
     }
+  }
+
+  void _loadMessages() {
+    final chatting = dataManager.getChattingById(widget.match.chattingID);
+    if (chatting == null) return;
+    _messages.addAll(chatting.chats);
+  }
+
+  Future<void> _refreshMessages() async {
+    await dataManager.fetchChatMessages(widget.match.chattingID);
+    if (!mounted) return;
+    final chatting = dataManager.getChattingById(widget.match.chattingID);
+    if (chatting == null) return;
+    setState(() {
+      _messages.clear();
+      _pendingMessages.clear();
+      _messages.addAll(chatting.chats);
+    });
   }
 
   void _releasePendingMessages() {
@@ -150,25 +143,34 @@ class _ChatScreenState extends State<ChatScreen> {
     });
   }
 
-  // 상대방 메시지 수신 시뮬레이션
-  void _receiveMessage(Chat message) {
-    _messageController.clear();
-    dataManager.addChat(widget.match.chattingID, message);
-  }
-
   void _sendMessage() {
-    if (_messageController.text.trim().isEmpty) return;
-
+    final content = _messageController.text.trim();
+    if (content.isEmpty) return;
     if (_pendingMessages.isNotEmpty) _releasePendingMessages();
 
-    final chat = Chat(
-      id: DateTime.now().millisecondsSinceEpoch.toString(),
-      sendUser: loginManager.currentUserOrGuest,
-      chatText: _messageController.text,
-      sendTime: DateTime.now(),
-    );
     _messageController.clear();
-    dataManager.addChat(widget.match.chattingID, chat);
+
+    final chat = Chat(
+      senderId: loginManager.currentUser.id,
+      content: content,
+      createdAt: DateTime.now(),
+    );
+    setState(() => _messages.add(chat));
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (mounted && _scrollController.hasClients) {
+        _scrollController.animateTo(
+          0.0,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
+    });
+
+    ChatStompClient().sendMessage(
+      roomId: widget.match.chattingID,
+      senderId: loginManager.currentUser.id,
+      content: content,
+    );
   }
 
   void _updateRentalStatus() {
@@ -188,26 +190,34 @@ class _ChatScreenState extends State<ChatScreen> {
         dataManager.updateMatchStatus(widget.match.matchID, nextStatus);
         break;
       case RentalStatus.returned:
+        final currentMatch =
+            dataManager.matches[widget.match.matchID] ?? widget.match;
+        final isLender =
+            currentMatch.lenderID == loginManager.currentUser.id;
+        final hasReviewed = isLender
+            ? currentMatch.lenderReviewID != null
+            : currentMatch.requesterReviewID != null;
+        if (hasReviewed) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              duration: const Duration(milliseconds: 500),
+              content: Text(
+                '이미 리뷰를 작성하셨습니다',
+                style: TextStyle(color: context.onSurfaceColor),
+              ),
+              backgroundColor: context.warningColor.withValues(alpha: 0.8),
+            ),
+          );
+          return;
+        }
         Navigator.push(
           context,
           MaterialPageRoute(
             builder: (context) => ReviewScreen(
               rentalItem: widget.rentalItem,
               match: widget.match,
-              reviewee: loginManager.currentUserOrGuest,
+              reviewee: _otherUser,
             ),
-          ),
-        );
-        return;
-      case RentalStatus.reviewed:
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            duration: const Duration(milliseconds: 500),
-            content: Text(
-              '이미 리뷰가 완료된 상태입니다',
-              style: TextStyle(color: context.onSurfaceColor),
-            ),
-            backgroundColor: context.warningColor.withValues(alpha: 0.8),
           ),
         );
         return;
@@ -376,7 +386,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                   return ChatWidgetFactory(
                                     message: message,
                                     currentUserId:
-                                        loginManager.currentUserOrGuest.id,
+                                        loginManager.currentUser.id,
                                   ).makeWidget(context);
                                 },
                               ),
@@ -457,17 +467,7 @@ class _ChatScreenState extends State<ChatScreen> {
                                   vertical: 12,
                                 ),
                               ),
-                              // 테스트용: 엔터를 치면 상대방이 메시지를 보내는 것으로 시뮬레이션
-                              // 실제 구현 시 삭제
-                              onSubmitted: (_) => _receiveMessage(
-                                Chat(
-                                  id: DateTime.now().millisecondsSinceEpoch
-                                      .toString(),
-                                  sendUser: _otherUser,
-                                  chatText: _messageController.text,
-                                  sendTime: DateTime.now(),
-                                ),
-                              ),
+                              onSubmitted: (_) => _sendMessage(),
                             ),
                           ),
                           const SizedBox(width: 8),
@@ -499,8 +499,7 @@ class _ChatScreenState extends State<ChatScreen> {
       case RentalStatus.inProgress:
         return RentalStatus.returned.color;
       case RentalStatus.returned:
-        return RentalStatus.reviewed.color;
-      case RentalStatus.reviewed:
+        return Colors.amber;
       case RentalStatus.cancelled:
       case RentalStatus.otherUserMatched:
         return Colors.grey;
@@ -517,8 +516,6 @@ class _ChatScreenState extends State<ChatScreen> {
         return Icons.sync;
       case RentalStatus.returned:
         return Icons.assignment_turned_in;
-      case RentalStatus.reviewed:
-        return Icons.star;
       case RentalStatus.cancelled:
         return Icons.cancel;
       case RentalStatus.otherUserMatched:
@@ -536,8 +533,6 @@ class _ChatScreenState extends State<ChatScreen> {
         return Icons.check;
       case RentalStatus.returned:
         return Icons.rate_review;
-      case RentalStatus.reviewed:
-        return Icons.done_all;
       case RentalStatus.cancelled:
         return Icons.cancel;
       case RentalStatus.otherUserMatched:
@@ -545,3 +540,4 @@ class _ChatScreenState extends State<ChatScreen> {
     }
   }
 }
+

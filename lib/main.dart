@@ -2,6 +2,7 @@ import 'dart:io';
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import '/api/api_client.dart';
 import '/screens/login_screen.dart';
 import '/managers/active_notification_manager.dart';
@@ -11,13 +12,22 @@ import '/app_keys.dart';
 import '/managers/login_manager.dart';
 import '/screens/home_navigation.dart';
 
+// 앱이 백그라운드/종료 상태일 때 FCM 메시지를 수신하는 top-level 핸들러.
+// isolate가 분리되어 실행되므로 반드시 top-level 함수여야 하며,
+// Firebase를 다시 초기화해야 합니다.
+@pragma('vm:entry-point')
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp();
+  // 데이터 전용 메시지는 여기서 처리합니다.
+  // notification 필드가 있는 메시지는 OS가 자동으로 알림 표시를 처리합니다.
+}
+
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
 
-  // 💡 스마트폰(Android) 환경으로 타겟을 바꿨기 때문에,
-  // 이제 아래 if문 안으로 들어가 파이어베이스 심장 충격기가 정상 기동됩니다!
   if (!kIsWeb && (Platform.isAndroid || Platform.isIOS)) {
     await Firebase.initializeApp();
+    FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
   }
   await activeNotificationManager.initialize();
   activeNotificationManager.updateDeviceTokenToServer();

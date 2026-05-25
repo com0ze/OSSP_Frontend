@@ -1,4 +1,4 @@
-import 'package:dio/dio.dart';
+﻿import 'package:dio/dio.dart';
 import '/models/chat.dart';
 import '/models/chatting.dart';
 import '/models/match.dart';
@@ -28,53 +28,46 @@ class MockServerInterceptor extends Interceptor {
   // ================================================================
 
   final Map<String, User> _users = {
-    'guest': User(id: 'guest', name: 'Guest', email: ''),
+    'guest': User(id: 'guest', name: 'Guest'),
     '0': User(
       id: '0',
       name: 'Kim sample',
-      email: 'test@dgu.ac.kr',
       score: 10.0,
     ),
     '1': User(
       id: '1',
       name: '김철수',
-      email: 'kim@dgu.ac.kr',
       score: 85,
-      rentalHistory: ['deal1', 'deal2', 'deal3'],
+      rentalCount: 3,
     ),
     '2': User(
       id: '2',
       name: '이영희',
-      email: 'lee@dgu.ac.kr',
       score: 92,
-      rentalHistory: ['deal4', 'deal5'],
+      rentalCount: 2,
     ),
     '3': User(
       id: '3',
       name: '박민수',
-      email: 'park@dgu.ac.kr',
       score: 78,
-      rentalHistory: ['deal6'],
+      rentalCount: 1,
     ),
-    'l1': User(id: 'l1', name: '김대여', email: 'lender@dgu.ac.kr', score: 90),
-    'l2': User(id: 'l2', name: '이빌려', email: 'lender2@dgu.ac.kr', score: 85),
-    'r1': User(id: 'r1', name: '박여행', email: 'renter@dgu.ac.kr', score: 82),
+    'l1': User(id: 'l1', name: '김대여', score: 90),
+    'l2': User(id: 'l2', name: '이빌려', score: 85),
+    'r1': User(id: 'r1', name: '박여행', score: 82),
     'reviewer1': User(
       id: 'reviewer1',
       name: '김리뷰',
-      email: 'reviewer1@dgu.ac.kr',
       score: 85,
     ),
     'reviewer2': User(
       id: 'reviewer2',
       name: '이후기',
-      email: 'reviewer2@dgu.ac.kr',
       score: 90,
     ),
     'reviewer3': User(
       id: 'reviewer3',
       name: '박평가',
-      email: 'reviewer3@dgu.ac.kr',
       score: 75,
     ),
   };
@@ -87,7 +80,6 @@ class MockServerInterceptor extends Interceptor {
       writer: User(
         id: '0',
         name: 'Kim sample',
-        email: 'test@dgu.ac.kr',
         score: 10.0,
       ),
       createdAt: DateTime.now().subtract(const Duration(days: 2)),
@@ -99,7 +91,6 @@ class MockServerInterceptor extends Interceptor {
       writer: User(
         id: 'reviewer1',
         name: '김리뷰',
-        email: 'reviewer1@dgu.ac.kr',
         score: 85,
       ),
       createdAt: DateTime.now().subtract(const Duration(days: 3)),
@@ -111,7 +102,6 @@ class MockServerInterceptor extends Interceptor {
       writer: User(
         id: 'reviewer2',
         name: '이후기',
-        email: 'reviewer2@dgu.ac.kr',
         score: 90,
       ),
       createdAt: DateTime.now().subtract(const Duration(days: 10)),
@@ -123,10 +113,17 @@ class MockServerInterceptor extends Interceptor {
       writer: User(
         id: 'reviewer3',
         name: '박평가',
-        email: 'reviewer3@dgu.ac.kr',
         score: 75,
       ),
       createdAt: DateTime.now().subtract(const Duration(days: 20)),
+    ),
+    // user '0'이 lender로서 이미 작성한 리뷰
+    'rev_l_done': Review(
+      id: 'rev_l_done',
+      score: 5,
+      reviewText: '요청자분이 매우 친절하셨습니다.',
+      writer: User(id: '0', name: 'Kim sample', score: 10.0),
+      createdAt: DateTime.now().subtract(const Duration(days: 1)),
     ),
   };
 
@@ -135,6 +132,8 @@ class MockServerInterceptor extends Interceptor {
     'chat_m_b2': Chatting(id: 'chat_m_b2'),
     'chat_m_b3': Chatting(id: 'chat_m_b3'),
     'chat_m_l1': Chatting(id: 'chat_m_l1'),
+    'chat_m_l_done': Chatting(id: 'chat_m_l_done'),
+    'chat_m_l_todo': Chatting(id: 'chat_m_l_todo'),
     'chat_m_ri1': Chatting(id: 'chat_m_ri1'),
     'chat_m_ri2': Chatting(id: 'chat_m_ri2'),
     'chat_m_ri3': Chatting(id: 'chat_m_ri3'),
@@ -171,6 +170,23 @@ class MockServerInterceptor extends Interceptor {
       requesterID: 'r1',
       lenderID: '0',
       chattingID: 'chat_m_l1',
+    ),
+    // user '0' = lender, 이미 리뷰 작성 완료 → 스낵바 표시
+    'm_l_done': const Match(
+      matchID: 'm_l_done',
+      rentalItemID: 'l_done',
+      requesterID: 'r1',
+      lenderID: '0',
+      chattingID: 'chat_m_l_done',
+      lenderReviewID: 'rev_l_done',
+    ),
+    // user '0' = lender, 아직 리뷰 미작성 → 리뷰 화면 이동
+    'm_l_todo': const Match(
+      matchID: 'm_l_todo',
+      rentalItemID: 'l_todo',
+      requesterID: 'r1',
+      lenderID: '0',
+      chattingID: 'chat_m_l_todo',
     ),
     'm_ri1': const Match(
       matchID: 'm_ri1',
@@ -215,71 +231,59 @@ class MockServerInterceptor extends Interceptor {
   final Map<String, RentalItem> _rentalItems = {
     '1': RentalItem(
       id: '1',
-      title: '급하게 드릴 필요해요',
       product: Product(name: '전동 드릴', category: '공구'),
       placeID: '신공학관',
       price: 10000,
       description: '가구 조립용으로 오늘 저녁까지 필요합니다',
-      preferences: '오늘 저녁까지 필요합니다',
       requesterID: '1',
       createdAt: DateTime.now().subtract(const Duration(hours: 2)),
     ),
     'qwer': RentalItem(
       id: 'qwer',
-      title: '급하게 드릴 필요해요',
       product: Product(name: '전동 드릴', category: '공구'),
       placeID: '정보문화관',
       price: 10000,
       description: '가구 조립용으로 오늘 저녁까지 필요합니다',
-      preferences: '오늘 저녁까지 필요합니다',
       requesterID: '1',
       createdAt: DateTime.now().subtract(const Duration(hours: 2)),
     ),
     '2': RentalItem(
       id: '2',
-      title: '캠핑용 텐트 빌려주실 분',
       product: Product(name: '4인용 텐트', category: '캠핑 용품'),
       placeID: '원흥관',
       price: 30000,
       description: '이번 주말 캠핑 가는데 텐트가 필요합니다',
-      preferences: '금요일 오후에 수령 가능합니다',
       requesterID: '2',
       createdAt: DateTime.now().subtract(const Duration(hours: 5)),
     ),
     '3': RentalItem(
       id: '3',
-      title: '빔프로젝터 급구',
       product: Product(name: '빔프로젝터', category: '전자기기'),
       placeID: '만해광장',
       price: 20000,
       description: '회사 프레젠테이션용으로 필요합니다',
-      preferences: '내일 오전까지 필요',
       requesterID: '3',
       createdAt: DateTime.now().subtract(const Duration(hours: 1)),
     ),
     'b1': RentalItem(
       id: 'b1',
-      title: '드릴 대여',
       product: Product(name: '전동 드릴', category: '공구'),
       placeID: '원흥관',
       price: 10000,
       description: '가구 조립용',
-      preferences: '',
       requesterID: '0',
       createdAt: DateTime.now().subtract(const Duration(days: 2)),
       matchIDs: ['m_b1'],
       isMatched: true,
       matchedID: 'm_b1',
-      rentalStatus: RentalStatus.reviewed,
+      rentalStatus: RentalStatus.returned,
     ),
     'b2': RentalItem(
       id: 'b2',
-      title: '드릴 대여',
       product: Product(name: '전동 드릴', category: '공구'),
       placeID: '정보문화관',
       price: 10000,
       description: '가구 조립용',
-      preferences: '',
       requesterID: '0',
       createdAt: DateTime.now().subtract(const Duration(days: 2)),
       matchIDs: ['m_b2'],
@@ -289,12 +293,10 @@ class MockServerInterceptor extends Interceptor {
     ),
     'b3': RentalItem(
       id: 'b3',
-      title: '캠핑 텐트',
       product: Product(name: '4인용 텐트', category: '캠핑 용품'),
       placeID: '신공학관',
       price: 30000,
       description: '캠핑용',
-      preferences: '',
       requesterID: '0',
       createdAt: DateTime.now().subtract(const Duration(days: 10)),
       matchIDs: ['m_b3'],
@@ -304,12 +306,10 @@ class MockServerInterceptor extends Interceptor {
     ),
     'l1': RentalItem(
       id: 'l1',
-      title: '카메라 대여',
       product: Product(name: '미러리스 카메라', category: '전자기기'),
       placeID: '학림관',
       price: 25000,
       description: '여행용',
-      preferences: '',
       requesterID: 'r1',
       createdAt: DateTime.now().subtract(const Duration(days: 1)),
       matchIDs: ['m_l1'],
@@ -317,59 +317,79 @@ class MockServerInterceptor extends Interceptor {
       matchedID: 'm_l1',
       rentalStatus: RentalStatus.matchConfirmed,
     ),
+    // user '0' = lender, returned, 이미 리뷰 작성 → 스낵바
+    'l_done': RentalItem(
+      id: 'l_done',
+      product: Product(name: '자전거', category: '스포츠'),
+      placeID: '원흥관',
+      price: 5000,
+      description: '단거리 이동용',
+      requesterID: 'r1',
+      createdAt: DateTime.now().subtract(const Duration(days: 3)),
+      matchIDs: ['m_l_done'],
+      isMatched: true,
+      matchedID: 'm_l_done',
+      rentalStatus: RentalStatus.returned,
+    ),
+    // user '0' = lender, returned, 리뷰 미작성 → 리뷰 화면
+    'l_todo': RentalItem(
+      id: 'l_todo',
+      product: Product(name: '자전거', category: '스포츠'),
+      placeID: '원흥관',
+      price: 5000,
+      description: '단거리 이동용',
+      requesterID: 'r1',
+      createdAt: DateTime.now().subtract(const Duration(days: 5)),
+      matchIDs: ['m_l_todo'],
+      isMatched: true,
+      matchedID: 'm_l_todo',
+      rentalStatus: RentalStatus.returned,
+    ),
     'ri1': RentalItem(
       id: 'ri1',
-      title: '',
       product: Product(name: '전동 드릴', category: '공구'),
       placeID: '',
       price: 0,
       description: '',
-      preferences: '',
       requesterID: '1',
       createdAt: DateTime.now().subtract(const Duration(hours: 2)),
       matchIDs: ['m_ri1'],
       isMatched: true,
       matchedID: 'm_ri1',
-      rentalStatus: RentalStatus.reviewed,
+      rentalStatus: RentalStatus.returned,
     ),
     'ri2': RentalItem(
       id: 'ri2',
-      title: '',
       product: Product(name: '전동 드릴', category: '공구'),
       placeID: '',
       price: 0,
       description: '',
-      preferences: '',
       requesterID: '1',
       createdAt: DateTime.now().subtract(const Duration(hours: 2)),
       matchIDs: ['m_ri2'],
       isMatched: true,
       matchedID: 'm_ri2',
-      rentalStatus: RentalStatus.reviewed,
+      rentalStatus: RentalStatus.returned,
     ),
     'ri3': RentalItem(
       id: 'ri3',
-      title: '',
       product: Product(name: '전동 드릴', category: '공구'),
       placeID: '',
       price: 0,
       description: '',
-      preferences: '',
       requesterID: '1',
       createdAt: DateTime.now().subtract(const Duration(hours: 2)),
       matchIDs: ['m_ri3'],
       isMatched: true,
       matchedID: 'm_ri3',
-      rentalStatus: RentalStatus.reviewed,
+      rentalStatus: RentalStatus.returned,
     ),
     'ri_test': RentalItem(
       id: 'ri_test',
-      title: 'ri_test',
       product: Product(name: '휴지', category: '생필품'),
       placeID: '신공학관',
       price: 1000,
       description: 'test',
-      preferences: 'test',
       requesterID: '1',
       createdAt: DateTime.now(),
       matchIDs: ['m_test', 'm_test2'],
@@ -384,7 +404,9 @@ class MockServerInterceptor extends Interceptor {
   // ================================================================
 
   bool _isActiveStatus(RentalStatus s) =>
-      s != RentalStatus.reviewed && s != RentalStatus.cancelled;
+      s == RentalStatus.pending ||
+      s == RentalStatus.matchConfirmed ||
+      s == RentalStatus.inProgress;
 
   // Returns created matchId
   String serverAcceptRequest(String requestId, String providerId) {
@@ -437,10 +459,8 @@ class MockServerInterceptor extends Interceptor {
     if (match != null) {
       for (final uid in [match.lenderID, match.requesterID]) {
         final user = _users[uid];
-        if (user != null && !user.rentalHistory.contains(requestId)) {
-          _users[uid] = user.copyWith(
-            rentalHistory: [...user.rentalHistory, requestId],
-          );
+        if (user != null) {
+          _users[uid] = user.copyWith(rentalCount: user.rentalCount + 1);
         }
       }
     }
@@ -458,13 +478,13 @@ class MockServerInterceptor extends Interceptor {
     required String reviewerId,
     required String revieweeId,
     required String matchId,
-    required int score,
+    required double score,
     required String comments,
   }) {
     final match = _matches[matchId];
     final reviewId = 'review_${matchId}_$revieweeId';
     final reviewer =
-        _users[reviewerId] ?? User(id: reviewerId, name: 'Unknown', email: '');
+        _users[reviewerId] ?? User(id: reviewerId, name: 'Unknown');
     _reviews[reviewId] = Review(
       id: reviewId,
       score: score,
@@ -481,7 +501,7 @@ class MockServerInterceptor extends Interceptor {
       final item = _rentalItems[match.rentalItemID];
       if (item != null) {
         _rentalItems[match.rentalItemID] = item.copyWith(
-          rentalStatus: RentalStatus.reviewed,
+          rentalStatus: RentalStatus.returned,
         );
       }
       final newScore = _recalculateScore(revieweeId);
@@ -494,7 +514,7 @@ class MockServerInterceptor extends Interceptor {
   }
 
   double _recalculateScore(String userId) {
-    final scores = <int>[];
+    final scores = <double>[];
     for (final match in _matches.values) {
       if (match.requesterID == userId && match.lenderReviewID != null) {
         final r = _reviews[match.lenderReviewID!];
@@ -518,19 +538,17 @@ class MockServerInterceptor extends Interceptor {
   String _statusToApi(RentalStatus status) {
     switch (status) {
       case RentalStatus.pending:
-        return 'PENDING';
+        return 'WAITING';
       case RentalStatus.matchConfirmed:
-        return 'ACCEPTED';
+        return 'MATCHED';
       case RentalStatus.inProgress:
-        return 'HANDOVER';
+        return 'IN_USE';
       case RentalStatus.returned:
-        return 'COMPLETE';
+        return 'COMPLETED';
       case RentalStatus.cancelled:
-        return 'CANCELLED';
-      case RentalStatus.reviewed:
-        return 'REVIEWED';
+        return 'CANCELED';
       case RentalStatus.otherUserMatched:
-        return 'PENDING';
+        return 'WAITING';
     }
   }
 
@@ -541,7 +559,7 @@ class MockServerInterceptor extends Interceptor {
       'itemName': item.product.name,
       'buildingName': item.placeID,
       'rewardAmt': item.price,
-      'duration': 60,
+      'duration': item.duration,
       'memo': item.description,
       'requesterId': item.requesterID,
       'createdAt': item.createdAt.toIso8601String(),
@@ -549,18 +567,15 @@ class MockServerInterceptor extends Interceptor {
       if (match != null) 'matchId': match.matchID,
       if (match != null) 'providerId': match.lenderID,
       if (match != null) 'roomId': match.chattingID,
+      if (match?.lenderReviewID != null) 'lenderReviewID': match!.lenderReviewID,
+      if (match?.requesterReviewID != null) 'requesterReviewID': match!.requesterReviewID,
     };
   }
 
   Map<String, dynamic> _userToApiJson(User user) => {
-    'id': user.id,
-    'name': user.name,
-    'email': user.email,
-    'score': user.score,
-    'profileImage': user.profileImage,
-    'fcmToken': user.fcmToken,
-    'isOnDuty': user.isOnDuty,
-    'rentalHistory': user.rentalHistory,
+    'userId': user.id,
+    'nickname': user.name,
+    'mannerScore': user.score,
   };
 
   Map<String, dynamic> _authTokenResponse() => {
@@ -641,7 +656,7 @@ class MockServerInterceptor extends Interceptor {
 
     // ── 내 정보 ───────────────────────────────────────────────────────────────
 
-    if (method == 'GET' && path == '/api/v1/auth/me') {
+    if (method == 'GET' && path == '/api/v1/users/me') {
       final me = _users[_currentUserId]!;
       return handler.resolve(
         Response(
@@ -670,6 +685,7 @@ class MockServerInterceptor extends Interceptor {
 
     if (method == 'GET' && path == '/api/v1/requests/me') {
       final type = options.queryParameters['type'] as String? ?? 'active';
+      // userId 파라미터는 현재 mock에서는 무시하고 항상 _currentUserId 사용
       final isActive = type == 'active';
 
       // Items where current user is requester
@@ -714,15 +730,14 @@ class MockServerInterceptor extends Interceptor {
       final id = 'req_${DateTime.now().millisecondsSinceEpoch}';
       final item = RentalItem(
         id: id,
-        title: (body['itemName'] as String? ?? ''),
         product: Product(
           name: body['itemName'] as String? ?? '',
           category: '기타',
         ),
         placeID: body['buildingName'] as String? ?? '',
         price: (body['rewardAmt'] as num? ?? 0).toInt(),
+        duration: (body['duration'] as num? ?? 3600).toInt(),
         description: body['memo'] as String? ?? '',
-        preferences: '',
         requesterID: body['requesterId'] as String? ?? _currentUserId,
         createdAt: DateTime.now(),
       );
@@ -820,21 +835,33 @@ class MockServerInterceptor extends Interceptor {
     // ── 채팅방 목록 ───────────────────────────────────────────────────────────
 
     if (method == 'GET' && path == '/api/v1/chats') {
-      final userId =
-          options.queryParameters['userId'] as String? ?? _currentUserId;
-      final roomIds = _matches.values
-          .where((m) => m.lenderID == userId || m.requesterID == userId)
-          .map((m) => m.chattingID)
-          .toSet();
-      final result = _chattings.entries
-          .where((e) => roomIds.contains(e.key))
-          .map(
-            (e) => {
-              'roomId': e.key,
-              'messages': e.value.chats.map((c) => c.toJson()).toList(),
-            },
-          )
-          .toList();
+      final result = <Map<String, dynamic>>[];
+      for (final match in _matches.values) {
+        if (match.lenderID != _currentUserId &&
+            match.requesterID != _currentUserId) {
+          continue;
+        }
+        final chatting = _chattings[match.chattingID];
+        if (chatting == null) {
+          continue;
+        }
+        final opponentId = match.lenderID == _currentUserId
+            ? match.requesterID
+            : match.lenderID;
+        final opponent = _users[opponentId];
+        final lastChat =
+            chatting.chats.isNotEmpty ? chatting.chats.last : null;
+        result.add({
+          'roomId': match.chattingID,
+          'matchId': match.matchID,
+          'requestId': match.rentalItemID,
+          'opponentId': opponentId,
+          'opponentName': opponent?.name ?? '알 수 없음',
+          'lastMessage': lastChat?.content,
+          'updatedAt': lastChat?.createdAt.toIso8601String() ??
+              DateTime.now().toIso8601String(),
+        });
+      }
       return handler.resolve(
         Response(requestOptions: options, statusCode: 200, data: result),
       );
@@ -966,19 +993,67 @@ class MockServerInterceptor extends Interceptor {
 
     if (method == 'POST' && path == '/api/v1/reviews') {
       final body = options.data as Map<String, dynamic>;
-      final reviewId = serverCreateReview(
-        reviewerId: body['reviewerId'] as String,
-        revieweeId: body['revieweeId'] as String,
-        matchId: body['matchId'] as String,
-        score: (body['score'] as num).toInt(),
+      final matchId = body['matchId'] as String;
+      final match = _matches[matchId];
+      // 서버는 인증 토큰으로 reviewer를 판단 — mock은 _currentUserId로 대체
+      final reviewerId = _currentUserId;
+      final revieweeId = match?.lenderID == _currentUserId
+          ? match?.requesterID ?? ''
+          : match?.lenderID ?? '';
+      serverCreateReview(
+        reviewerId: reviewerId,
+        revieweeId: revieweeId,
+        matchId: matchId,
+        score: (body['score'] as num).toDouble(),
         comments: body['comments'] as String? ?? '',
       );
       return handler.resolve(
         Response(
           requestOptions: options,
-          statusCode: 201,
-          data: {'reviewId': reviewId},
+          statusCode: 200,
+          data: <String, dynamic>{},
         ),
+      );
+    }
+
+    // ── 내가 작성한 리뷰 목록 ─────────────────────────────────────────────────
+    if (method == 'GET' && path == '/api/v1/reviews/my') {
+      final myReviews = <Map<String, dynamic>>[];
+      for (final match in _matches.values) {
+        if (match.lenderID == _currentUserId && match.lenderReviewID != null) {
+          final review = _reviews[match.lenderReviewID!];
+          if (review != null) {
+            myReviews.add({
+              'reviewId': review.id,
+              'reviewerId': _currentUserId,
+              'revieweeId': match.requesterID,
+              'score': review.score,
+              'comments': review.reviewText,
+              'matchId': match.matchID,
+              'writerNickname': review.writer.name,
+              'createdAt': review.createdAt.toIso8601String(),
+            });
+          }
+        }
+        if (match.requesterID == _currentUserId &&
+            match.requesterReviewID != null) {
+          final review = _reviews[match.requesterReviewID!];
+          if (review != null) {
+            myReviews.add({
+              'reviewId': review.id,
+              'reviewerId': _currentUserId,
+              'revieweeId': match.lenderID,
+              'score': review.score,
+              'comments': review.reviewText,
+              'matchId': match.matchID,
+              'writerNickname': review.writer.name,
+              'createdAt': review.createdAt.toIso8601String(),
+            });
+          }
+        }
+      }
+      return handler.resolve(
+        Response(requestOptions: options, statusCode: 200, data: myReviews),
       );
     }
 

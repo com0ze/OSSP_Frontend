@@ -1,29 +1,26 @@
 import '/models/user.dart';
 
 class MainUser extends User {
-  final String personalInformation;
+  final String email;
+  final bool isOnDuty;
 
   MainUser({
     required super.id,
     required super.name,
-    required super.email,
-    super.profileImage,
+    required this.email,
     super.score = 0,
-    List<String>? rentalHistory,
-    required this.personalInformation,
-  }) : super(rentalHistory: rentalHistory ?? []);
+    super.rentalCount = 0,
+    this.isOnDuty = false,
+  });
 
   factory MainUser.fromJson(Map<String, dynamic> json) {
     return MainUser(
-      id: json['id'],
-      name: json['name'],
-      score: json['score'] ?? 0,
-      personalInformation: json['personalInformation'] ?? '',
-      rentalHistory: (json['rentalHistory'] as List<dynamic>?)
-          ?.map((e) => e as String)
-          .toList(),
-      email: json['email'],
-      profileImage: json['profileImage'],
+      id: (json['userId'] ?? json['id'] ?? '').toString(),
+      name: (json['nickname'] ?? json['name'] ?? '') as String,
+      email: (json['email'] ?? '') as String,
+      score:
+          ((json['mannerScore'] ?? json['score']) as num?)?.toDouble() ?? 0.0,
+      isOnDuty: (json['isOnDuty'] as bool?) ?? false,
     );
   }
 
@@ -32,11 +29,9 @@ class MainUser extends User {
     return {
       'id': id,
       'name': name,
-      'score': score,
-      'personalInformation': personalInformation,
-      'rentalHistory': rentalHistory,
       'email': email,
-      'profileImage': profileImage,
+      'score': score,
+      'isOnDuty': isOnDuty,
     };
   }
 
@@ -44,20 +39,18 @@ class MainUser extends User {
   MainUser copyWith({
     String? id,
     String? name,
-    double? score,
-    String? personalInformation,
-    List<String>? rentalHistory,
     String? email,
-    String? profileImage,
+    double? score,
+    int? rentalCount,
+    bool? isOnDuty,
   }) {
     return MainUser(
       id: id ?? this.id,
       name: name ?? this.name,
-      score: score ?? this.score,
-      personalInformation: personalInformation ?? this.personalInformation,
-      rentalHistory: rentalHistory ?? List.from(this.rentalHistory),
       email: email ?? this.email,
-      profileImage: profileImage ?? this.profileImage,
+      score: score ?? this.score,
+      rentalCount: rentalCount ?? this.rentalCount,
+      isOnDuty: isOnDuty ?? this.isOnDuty,
     );
   }
 }

@@ -23,7 +23,7 @@ class _UserProfileScreenState extends State<UserProfileScreen>
   late TabController _tabController;
   final LoginManager loginManager = LoginManager();
   final DataManager dataManager = DataManager();
-  final String _currentUserId = LoginManager().currentUserOrGuest.id;
+  final String _currentUserId = LoginManager().currentUser.id;
 
   @override
   void initState() {
@@ -81,7 +81,7 @@ class _UserProfileScreenState extends State<UserProfileScreen>
                 onRefresh: _refreshMyData,
                 child: SingleChildScrollView(
                   physics: const AlwaysScrollableScrollPhysics(),
-                  child: UserInfoHeader(user: freshUser, showEmail: true),
+                  child: UserInfoHeader(user: freshUser, email: LoginManager().currentUser.email),
                 ),
               ),
               const Divider(height: 1),
@@ -303,3 +303,4 @@ class _UserProfileScreenState extends State<UserProfileScreen>
     );
   }
 }
+

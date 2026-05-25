@@ -37,27 +37,6 @@ class RentalItemWidgetFactory extends WidgetFactory {
             children: [
               Row(
                 children: [
-                  Expanded(
-                    child: Text(
-                      item.title,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                  Text(
-                    _getTimeAgo(item.createdAt),
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: context.onSurfaceVariantColor,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
                   Icon(
                     Icons.shopping_basket,
                     size: 16,
@@ -68,7 +47,15 @@ class RentalItemWidgetFactory extends WidgetFactory {
                     item.product.name,
                     style: const TextStyle(
                       fontSize: 16,
-                      fontWeight: FontWeight.w500,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const Spacer(),
+                  Text(
+                    _getTimeAgo(item.createdAt),
+                    style: TextStyle(
+                      fontSize: 12,
+                      color: context.onSurfaceVariantColor,
                     ),
                   ),
                 ],

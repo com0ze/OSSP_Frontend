@@ -1,6 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 import '/extensions/theme_extension.dart';
 import '/managers/data_manager.dart';
+import '/managers/login_manager.dart';
 import '/models/match.dart';
 import '/models/rental_item.dart';
 import '/models/review.dart';
@@ -23,7 +24,7 @@ class ReviewScreen extends StatefulWidget {
 }
 
 class _ReviewScreenState extends State<ReviewScreen> {
-  int _rating = 0;
+  double _rating = 0;
   final TextEditingController _commentController = TextEditingController();
 
   @override
@@ -74,21 +75,21 @@ class _ReviewScreenState extends State<ReviewScreen> {
     );
 
     final DataManager dataManager = DataManager();
+    final currentUser = LoginManager().currentUser;
     final review = Review(
       id: '${widget.match.matchID}_${widget.reviewee.id}',
       score: _rating,
       reviewText: reviewText,
-      writer: widget.reviewee,
+      writer: currentUser,
       createdAt: DateTime.now(),
     );
 
+    // reviewee가 lender면 현재 사용자는 requester → requesterReview
+    // reviewee가 requester면 현재 사용자는 lender → lenderReview
     if (widget.match.lenderID == widget.reviewee.id) {
-      await dataManager.updateMatchLenderReview(widget.match.matchID, review);
+      await dataManager.updateMatchRequesterReview(widget.match.matchID, review);
     } else {
-      await dataManager.updateMatchRequesterReview(
-        widget.match.matchID,
-        review,
-      );
+      await dataManager.updateMatchLenderReview(widget.match.matchID, review);
     }
 
     if (!mounted) return;

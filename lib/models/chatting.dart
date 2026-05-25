@@ -1,36 +1,58 @@
 import '/models/chat.dart';
 
 class Chatting {
-  final String id;
+  final String id; // roomId
+  final String matchId;
+  final String requestId;
+  final String opponentId;
+  final String opponentName;
+  final String? lastMessage; // 목록 API에서 내려주는 마지막 메시지 미리보기
+  final DateTime? updatedAt;
   final List<Chat> _chats;
 
-  Chatting({required this.id, List<Chat>? chats}) : _chats = chats ?? [];
+  Chatting({
+    required this.id,
+    this.matchId = '',
+    this.requestId = '',
+    this.opponentId = '',
+    this.opponentName = '',
+    this.lastMessage,
+    this.updatedAt,
+    List<Chat>? chats,
+  }) : _chats = chats ?? [];
 
   List<Chat> get chats => List.unmodifiable(_chats);
 
-  void addChat(Chat chat) {
-    _chats.add(chat);
+  void addChat(Chat chat) => _chats.add(chat);
+
+  void addChats(List<Chat> newChats) => _chats.addAll(newChats);
+
+  // 실제 메시지가 로드된 경우 마지막 Chat, 없으면 null
+  Chat? getLastChat() => _chats.isEmpty ? null : _chats.last;
+
+  // 실제 메시지 > 목록 API 미리보기 순으로 반환
+  String? getLastMessageText() {
+    if (_chats.isNotEmpty) return _chats.last.content;
+    return lastMessage;
   }
 
-  void addChats(List<Chat> newChats) {
-    _chats.addAll(newChats);
+  DateTime? getLastMessageTime() {
+    if (_chats.isNotEmpty) return _chats.last.createdAt;
+    return updatedAt;
   }
 
-  Chat? getLastChat() {
-    if (_chats.isEmpty) return null;
-    return _chats.last;
-  }
-
-  int get unreadCount {
-    return _chats.where((chat) => !chat.isRead).length;
-  }
-
-  // 서버 응답(roomId/messages) 또는 레거시 형식(id/chats) 모두 지원
   factory Chatting.fromJson(Map<String, dynamic> json) {
-    final rawChats =
-        json['messages'] as List<dynamic>? ?? json['chats'] as List<dynamic>?;
+    final rawChats = json['messages'] as List<dynamic>?;
     return Chatting(
       id: (json['roomId'] ?? json['id'] ?? '').toString(),
+      matchId: (json['matchId'] ?? '').toString(),
+      requestId: (json['requestId'] ?? '').toString(),
+      opponentId: (json['opponentId'] ?? '').toString(),
+      opponentName: (json['opponentName'] ?? '알 수 없음') as String,
+      lastMessage: json['lastMessage'] as String?,
+      updatedAt: json['updatedAt'] != null
+          ? DateTime.parse(json['updatedAt'] as String)
+          : null,
       chats: rawChats
           ?.map((e) => Chat.fromJson(e as Map<String, dynamic>))
           .toList(),
@@ -42,6 +64,15 @@ class Chatting {
   }
 
   Chatting copyWith({String? id, List<Chat>? chats}) {
-    return Chatting(id: id ?? this.id, chats: chats ?? List.from(_chats));
+    return Chatting(
+      id: id ?? this.id,
+      matchId: matchId,
+      requestId: requestId,
+      opponentId: opponentId,
+      opponentName: opponentName,
+      lastMessage: lastMessage,
+      updatedAt: updatedAt,
+      chats: chats ?? List.from(_chats),
+    );
   }
 }

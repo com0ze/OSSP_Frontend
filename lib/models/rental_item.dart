@@ -5,15 +5,13 @@ export '/models/rental_status.dart';
 
 class RentalItem {
   final String id;
-  final String title;
   final Product product;
   final String placeID;
   final int price;
-  final String description;
-  final String preferences;
+  final String description; // 백에서는 memo
   final String requesterID;
   final DateTime createdAt;
-  final String? imageUrl;
+  final int duration; // 분 단위
   final List<String> matchIDs;
   final bool isMatched;
   final String? matchedID;
@@ -21,41 +19,35 @@ class RentalItem {
 
   RentalItem({
     required this.id,
-    required this.title,
     required this.product,
     required this.placeID,
     required this.price,
     required this.description,
-    required this.preferences,
     required this.requesterID,
     required this.createdAt,
-    this.imageUrl,
+    this.duration = 3600,
     this.matchIDs = const [],
     this.isMatched = false,
     this.matchedID,
     this.rentalStatus = RentalStatus.pending,
   });
 
-  // 서버 응답(requestId/itemName/buildingName/rewardAmt/memo/status) 또는
-  // 레거시 형식(id/title/product/placeID/price/description) 모두 지원
   factory RentalItem.fromJson(Map<String, dynamic> json) {
     final itemName = json['itemName'] as String?;
     return RentalItem(
       id: (json['requestId'] ?? json['id'] ?? '').toString(),
-      title: itemName ?? (json['title'] as String? ?? ''),
       product: itemName != null
           ? Product(name: itemName, category: '기타')
           : Product.fromJson(json['product'] as Map<String, dynamic>),
       placeID: (json['buildingName'] ?? json['placeID'] ?? '').toString(),
       price: ((json['rewardAmt'] ?? json['price'] ?? 0) as num).toInt(),
+      duration: ((json['duration'] as num?)?.toInt() ?? 3600),
       description: (json['memo'] ?? json['description'] ?? '').toString(),
-      preferences: (json['preferences'] ?? '').toString(),
       requesterID: (json['requesterId'] ?? json['requesterID'] ?? '')
           .toString(),
       createdAt: json['createdAt'] != null
           ? DateTime.parse(json['createdAt'] as String)
           : DateTime.now(),
-      imageUrl: json['imageUrl'] as String?,
       matchIDs:
           (json['matchIDs'] as List<dynamic>?)?.cast<String>() ??
           (json['matchId'] != null ? [(json['matchId']).toString()] : []),
@@ -69,18 +61,16 @@ class RentalItem {
   static RentalStatus _parseStatus(dynamic status) {
     if (status == null) return RentalStatus.pending;
     switch (status.toString().toUpperCase()) {
-      case 'PENDING':
+      case 'WAITING':
         return RentalStatus.pending;
-      case 'ACCEPTED':
+      case 'MATCHED':
         return RentalStatus.matchConfirmed;
-      case 'HANDOVER':
+      case 'IN_USE':
         return RentalStatus.inProgress;
-      case 'COMPLETE':
+      case 'COMPLETED':
         return RentalStatus.returned;
-      case 'CANCELLED':
+      case 'CANCELED':
         return RentalStatus.cancelled;
-      case 'REVIEWED':
-        return RentalStatus.reviewed;
       default:
         try {
           return RentalStatus.values.byName(status.toString());
@@ -96,13 +86,14 @@ class RentalItem {
       'itemName': product.name,
       'buildingName': placeID,
       'rewardAmt': price,
-      'duration': 60,
+      'duration': duration,
       'memo': description,
       'requesterId': requesterID,
     };
   }
 
   RentalItem copyWith({
+    int? duration,
     List<String>? matchIDs,
     bool? isMatched,
     String? matchedID,
@@ -111,15 +102,13 @@ class RentalItem {
   }) {
     return RentalItem(
       id: id,
-      title: title,
       product: product,
       placeID: placeID,
       price: price,
       description: description,
-      preferences: preferences,
       requesterID: requesterID,
       createdAt: createdAt,
-      imageUrl: imageUrl,
+      duration: duration ?? this.duration,
       matchIDs: matchIDs ?? this.matchIDs,
       isMatched: isMatched ?? this.isMatched,
       matchedID: clearMatchedID ? null : (matchedID ?? this.matchedID),

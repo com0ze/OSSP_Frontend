@@ -14,10 +14,9 @@ class RentalRequestScreen extends StatefulWidget {
 
 class _RentalRequestScreenState extends State<RentalRequestScreen> {
   final _formKey = GlobalKey<FormState>();
-  final _titleController = TextEditingController();
   final _itemNameController = TextEditingController();
   final _priceController = TextEditingController();
-  final _preferencesController = TextEditingController();
+  final _durationController = TextEditingController();
   final _descriptionController = TextEditingController();
 
   String? _selectedPlaceId;
@@ -26,10 +25,9 @@ class _RentalRequestScreenState extends State<RentalRequestScreen> {
 
   @override
   void dispose() {
-    _titleController.dispose();
     _itemNameController.dispose();
     _priceController.dispose();
-    _preferencesController.dispose();
+    _durationController.dispose();
     _descriptionController.dispose();
     _placeMenuController.dispose();
     super.dispose();
@@ -43,27 +41,13 @@ class _RentalRequestScreenState extends State<RentalRequestScreen> {
     if (_formKey.currentState!.validate() && _selectedPlaceId != null) {
       final currentUser = LoginManager().currentUser;
 
-      if (currentUser == null) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(
-              '로그인이 필요한 서비스입니다.',
-              style: TextStyle(color: context.onErrorColor),
-            ),
-            backgroundColor: context.errorColor,
-          ),
-        );
-        return;
-      }
-
       final newItem = RentalItem(
         id: DateTime.now().millisecondsSinceEpoch.toString(),
-        title: _titleController.text,
         product: Product(name: _itemNameController.text, category: '기타'),
         placeID: _selectedPlaceId!,
         price: int.parse(_priceController.text),
+        duration: int.parse(_durationController.text) * 60,
         description: _descriptionController.text,
-        preferences: _preferencesController.text,
         requesterID: currentUser.id,
         createdAt: DateTime.now(),
       );
@@ -82,10 +66,9 @@ class _RentalRequestScreenState extends State<RentalRequestScreen> {
       );
 
       _formKey.currentState!.reset();
-      _titleController.clear();
       _itemNameController.clear();
       _priceController.clear();
-      _preferencesController.clear();
+      _durationController.clear();
       _descriptionController.clear();
       _placeMenuController.clear();
       setState(() {
@@ -114,20 +97,6 @@ class _RentalRequestScreenState extends State<RentalRequestScreen> {
               style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 24),
-            TextFormField(
-              controller: _titleController,
-              decoration: const InputDecoration(
-                labelText: '게시물 제목',
-                hintText: '예: 급하게 드릴 필요해요',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.title),
-              ),
-              validator: (value) {
-                if (value == null || value.isEmpty) return '제목을 입력해주세요';
-                return null;
-              },
-            ),
-            const SizedBox(height: 16),
             TextFormField(
               controller: _itemNameController,
               decoration: const InputDecoration(
@@ -203,6 +172,24 @@ class _RentalRequestScreenState extends State<RentalRequestScreen> {
             ),
             const SizedBox(height: 16),
             TextFormField(
+              controller: _durationController,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                labelText: '대여 시간 (분)',
+                hintText: '예: 60',
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.timer_outlined),
+                suffixText: '분',
+              ),
+              validator: (value) {
+                if (value == null || value.isEmpty) return '대여 시간을 입력해주세요';
+                final n = int.tryParse(value);
+                if (n == null || n <= 0) return '1 이상의 숫자를 입력해주세요';
+                return null;
+              },
+            ),
+            const SizedBox(height: 16),
+            TextFormField(
               controller: _descriptionController,
               maxLines: 3,
               decoration: const InputDecoration(
@@ -215,17 +202,6 @@ class _RentalRequestScreenState extends State<RentalRequestScreen> {
                 if (value == null || value.isEmpty) return '설명을 입력해주세요';
                 return null;
               },
-            ),
-            const SizedBox(height: 16),
-            TextFormField(
-              controller: _preferencesController,
-              maxLines: 2,
-              decoration: const InputDecoration(
-                labelText: '희망 사항',
-                hintText: '예: 오늘 저녁까지 필요합니다',
-                border: OutlineInputBorder(),
-                alignLabelWithHint: true,
-              ),
             ),
             const SizedBox(height: 24),
             ElevatedButton(

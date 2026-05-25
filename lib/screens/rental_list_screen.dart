@@ -21,7 +21,7 @@ class _RentalListScreenState extends State<RentalListScreen> {
     return ListenableBuilder(
       listenable: dataManager,
       builder: (context, child) {
-        final currentUser = loginManager.currentUserOrGuest;
+        final currentUser = loginManager.currentUser;
         final rentalItems = dataManager.rentalItems.values
             .where(
               (item) => !item.isMatched && item.requesterID != currentUser.id,
@@ -86,3 +86,4 @@ class _RentalListScreenState extends State<RentalListScreen> {
     );
   }
 }
+

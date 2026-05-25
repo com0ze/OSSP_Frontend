@@ -12,6 +12,7 @@
 	<array>
 		<string>fetch</string>
 		<string>location</string>
+		<string>remote-notification</string>
 	</array>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
@@ -87,9 +88,5 @@
 	<key>NSLocationAlwaysUsageDescription</key>
 	<string>항상 위치를 추적하여 지오펜싱 기능을 수행합니다.</string>
 
-	<key>UIBackgroundModes</key>
-	<array>
-    	<string>location</string>
-	</array>
 </dict>
 </plist>

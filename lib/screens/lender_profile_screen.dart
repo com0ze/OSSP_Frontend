@@ -5,9 +5,9 @@ import '/models/user.dart';
 /// 사용자 정보 헤더 위젯 (프로필 화면 공통 사용)
 class UserInfoHeader extends StatelessWidget {
   final User user;
-  final bool showEmail;
+  final String? email;
 
-  const UserInfoHeader({super.key, required this.user, this.showEmail = false});
+  const UserInfoHeader({super.key, required this.user, this.email});
 
   @override
   Widget build(BuildContext context) {
@@ -27,10 +27,10 @@ class UserInfoHeader extends StatelessWidget {
             user.name,
             style: const TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
           ),
-          if (showEmail) ...[
+          if (email != null) ...[
             const SizedBox(height: 4),
             Text(
-              user.email,
+              email!,
               style: TextStyle(
                 fontSize: 10,
                 color: context.onSurfaceVariantColor,
@@ -50,7 +50,7 @@ class UserInfoHeader extends StatelessWidget {
                       color: context.primaryColor,
                     ),
                     label: '총 거래',
-                    value: user.rentalHistory.length.toString(),
+                    value: user.rentalCount.toString(),
                   ),
                 ),
               ),

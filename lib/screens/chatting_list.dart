@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '/extensions/theme_extension.dart';
 import '/managers/data_manager.dart';
 import '/managers/login_manager.dart';
@@ -21,14 +21,17 @@ class _ChattingListScreenState extends State<ChattingListScreen> {
     return ListenableBuilder(
       listenable: dataManager,
       builder: (context, child) {
-        final currentUser = loginManager.currentUserOrGuest;
-        final matches = dataManager.matches.values
-            .where(
-              (m) =>
-                  m.requesterID == currentUser.id ||
-                  m.lenderID == currentUser.id,
-            )
-            .toList();
+        final currentUser = loginManager.currentUser;
+        final chattings = dataManager.chattings.values.toList()
+          ..sort((a, b) {
+            final aTime = a.getLastMessageTime();
+            final bTime = b.getLastMessageTime();
+            if (aTime == null && bTime == null) return 0;
+            if (aTime == null) return 1;
+            if (bTime == null) return -1;
+            return bTime.compareTo(aTime);
+          });
+
         return Scaffold(
           appBar: AppBar(
             title: const Text('내 채팅'),
@@ -38,7 +41,7 @@ class _ChattingListScreenState extends State<ChattingListScreen> {
           ),
           body: RefreshIndicator(
             onRefresh: () => dataManager.fetchMyData(currentUser.id),
-            child: matches.isEmpty
+            child: chattings.isEmpty
                 ? const SingleChildScrollView(
                     physics: AlwaysScrollableScrollPhysics(),
                     child: SizedBox(
@@ -64,15 +67,16 @@ class _ChattingListScreenState extends State<ChattingListScreen> {
                 : ListView.builder(
                     physics: const AlwaysScrollableScrollPhysics(),
                     padding: const EdgeInsets.all(16),
-                    itemCount: matches.length,
+                    itemCount: chattings.length,
                     itemBuilder: (context, index) {
-                      final match = matches[index];
+                      final chatting = chattings[index];
+                      final match = dataManager.matches[chatting.matchId];
                       final rentalItem =
-                          dataManager.rentalItems[match.rentalItemID];
+                          dataManager.rentalItems[chatting.requestId];
                       return ChattingRoomWidgetFactory(
-                        match: match,
+                        chatting: chatting,
                         onTap: () {
-                          if (rentalItem == null) return;
+                          if (match == null || rentalItem == null) return;
                           Navigator.push(
                             context,
                             MaterialPageRoute(

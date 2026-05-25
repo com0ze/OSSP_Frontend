@@ -12,6 +12,23 @@ class SettingScreen extends StatefulWidget {
 
 class _SettingScreenState extends State<SettingScreen> {
   bool _notificationsEnabled = false;
+  late bool _isOnDuty;
+
+  @override
+  void initState() {
+    super.initState();
+    _isOnDuty = LoginManager().currentUser.isOnDuty;
+  }
+
+  Future<void> _toggleDuty(bool value) async {
+    setState(() => _isOnDuty = value);
+    try {
+      await LoginManager().updateDutyStatus(value);
+    } catch (_) {
+      // 실패 시 롤백
+      setState(() => _isOnDuty = !value);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -59,6 +76,16 @@ class _SettingScreenState extends State<SettingScreen> {
               value: _notificationsEnabled,
               onChanged: (value) =>
                   setState(() => _notificationsEnabled = value),
+            ),
+          ),
+          const Divider(),
+          ListTile(
+            leading: Icon(Icons.work_outline, color: context.primaryColor),
+            title: const Text('당직 설정'),
+            subtitle: const Text('당직 중일 때 주변 대여 요청 알림을 받습니다.'),
+            trailing: Switch(
+              value: _isOnDuty,
+              onChanged: _toggleDuty,
             ),
           ),
         ],

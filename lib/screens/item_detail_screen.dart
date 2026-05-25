@@ -21,7 +21,7 @@ class ItemDetailScreen extends StatelessWidget {
       body: RefreshIndicator(
         onRefresh: () => Future.wait([
           dataManager.fetchAvailableRentalItems(
-            LoginManager().currentUserOrGuest.id,
+            LoginManager().currentUser.id,
           ),
           dataManager.fetchUserProfile(item.requesterID),
         ]),
@@ -53,7 +53,7 @@ class ItemDetailScreen extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          currentItem.title,
+                          currentItem.product.name,
                           style: const TextStyle(
                             fontSize: 24,
                             fontWeight: FontWeight.bold,
@@ -88,6 +88,12 @@ class ItemDetailScreen extends StatelessWidget {
                         ),
                         const SizedBox(height: 12),
                         _InfoRow(
+                          icon: Icons.timer_outlined,
+                          label: '대여 시간',
+                          value: _formatDuration(currentItem.duration),
+                        ),
+                        const SizedBox(height: 12),
+                        _InfoRow(
                           icon: Icons.calendar_today,
                           label: '등록일',
                           value: _formatDate(currentItem.createdAt),
@@ -108,21 +114,6 @@ class ItemDetailScreen extends StatelessWidget {
                           style: const TextStyle(fontSize: 16, height: 1.5),
                         ),
                         const SizedBox(height: 16),
-                        if (currentItem.preferences.isNotEmpty) ...[
-                          const Text(
-                            '희망 사항',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 8),
-                          Text(
-                            currentItem.preferences,
-                            style: const TextStyle(fontSize: 16, height: 1.5),
-                          ),
-                          const SizedBox(height: 16),
-                        ],
                         const Divider(),
                         const SizedBox(height: 16),
                         const Text(
@@ -190,7 +181,7 @@ class ItemDetailScreen extends StatelessWidget {
                                           ),
                                           const SizedBox(width: 12),
                                           Text(
-                                            '거래 ${requester.rentalHistory.length}건',
+                                            '거래 ${requester.rentalCount}건',
                                             style: TextStyle(
                                               fontSize: 14,
                                               color:
@@ -252,7 +243,7 @@ class ItemDetailScreen extends StatelessWidget {
         listenable: dataManager,
         builder: (context, _) {
           final tdm = dataManager;
-          final currentUser = LoginManager().currentUserOrGuest;
+          final currentUser = LoginManager().currentUser;
           final currentItem = tdm.rentalItems[item.id] ?? item;
           final isRequester = currentItem.requesterID == currentUser.id;
 
@@ -380,7 +371,7 @@ class ItemDetailScreen extends StatelessWidget {
           match ??
           await DataManager().createMatchWithChatting(
             currentItem.id,
-            LoginManager().currentUserOrGuest.id,
+            LoginManager().currentUser.id,
           );
       if (!context.mounted) return;
       Navigator.push(
@@ -428,6 +419,12 @@ class ItemDetailScreen extends StatelessWidget {
   String _formatDate(DateTime date) {
     return '${date.year}.${date.month.toString().padLeft(2, '0')}.${date.day.toString().padLeft(2, '0')}';
   }
+
+  String _formatDuration(int seconds) {
+    final h = seconds ~/ 3600;
+    final m = (seconds % 3600) ~/ 60;
+    return '${h.toString().padLeft(2, '0')}시간${m.toString().padLeft(2, '0')}분';
+  }
 }
 
 class _InfoRow extends StatelessWidget {
@@ -465,3 +462,4 @@ class _InfoRow extends StatelessWidget {
     );
   }
 }
+

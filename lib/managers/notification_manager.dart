@@ -3,10 +3,14 @@ import 'dart:developer';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart'
     show TargetPlatform, defaultTargetPlatform;
+import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
+import '/app_keys.dart';
 import '/managers/abstract_notification_manager.dart';
 import '/managers/mock_notification_manager.dart';
+import '/managers/data_manager.dart';
 import '/api/api_client.dart';
+import '/screens/item_detail_screen.dart';
 
 AbstractNotificationManager createManager() {
   if (defaultTargetPlatform == TargetPlatform.windows) {
@@ -57,7 +61,7 @@ class NotificationManager extends AbstractNotificationManager {
     try {
       await _apiClient.dio.patch(
         '/api/v1/users/me/device-token',
-        data: {'fcmToken': token},
+        data: {'deviceToken': token},
       );
       log('✅ 서버에 기기 토큰 갱신 성공');
     } catch (e) {
@@ -83,28 +87,18 @@ class NotificationManager extends AbstractNotificationManager {
   void _setupMessageHandlers() async {
     final RemoteMessage? initialMessage = await _messaging.getInitialMessage();
     if (initialMessage != null) {
+      await DataManager().ready;
       _handleNotificationClick(initialMessage.data);
     }
 
     FirebaseMessaging.onMessage.listen((message) {
       if (message.notification == null) return;
+      final type = message.data['type'] as String?;
       _localNotifications.show(
-        message.notification.hashCode,
+        message.hashCode,
         message.notification!.title,
         message.notification!.body,
-        const NotificationDetails(
-          android: AndroidNotificationDetails(
-            'urgent_rental_channel',
-            '긴급 알림',
-            importance: Importance.max,
-            priority: Priority.high,
-          ),
-          iOS: DarwinNotificationDetails(
-            presentAlert: true, // ⭐️ 포그라운드에서 알림 배너 표시
-            presentSound: true, // ⭐️ 알림 소리 재생
-            presentBadge: true, // ⭐️ 앱 아이콘 배지 표시
-          ),
-        ),
+        _notificationDetails(type),
         payload: jsonEncode(message.data),
       );
     });
@@ -114,10 +108,51 @@ class NotificationManager extends AbstractNotificationManager {
     });
   }
 
+  NotificationDetails _notificationDetails(String? type) {
+    switch (type) {
+      case 'RENTAL_REQUEST':
+        return const NotificationDetails(
+          android: AndroidNotificationDetails(
+            'rental_request_channel',
+            '대여 요청 알림',
+            channelDescription: '새로운 대여 요청 알림',
+            importance: Importance.max,
+            priority: Priority.high,
+            color: Color(0xFF2196F3),
+          ),
+          iOS: DarwinNotificationDetails(
+            presentAlert: true,
+            presentSound: true,
+            presentBadge: true,
+          ),
+        );
+      default:
+        return const NotificationDetails(
+          android: AndroidNotificationDetails(
+            'urgent_rental_channel',
+            '긴급 알림',
+            importance: Importance.max,
+            priority: Priority.high,
+          ),
+          iOS: DarwinNotificationDetails(
+            presentAlert: true,
+            presentSound: true,
+            presentBadge: true,
+          ),
+        );
+    }
+  }
+
   void _handleNotificationClick(Map<String, dynamic> data) {
     final String? type = data['type'];
     if (type == 'RENTAL_REQUEST') {
-      log('🔗 라우팅: 대여 상세로 이동 (ID: ${data['requestId']})');
+      final String? requestId = data['requestId']?.toString();
+      if (requestId == null) return;
+      final item = DataManager().rentalItems[requestId];
+      if (item == null) return;
+      navigatorKey.currentState?.push(
+        MaterialPageRoute(builder: (_) => ItemDetailScreen(item: item)),
+      );
     } else if (type == 'CHAT_MESSAGE') {
       log('🔗 라우팅: 채팅방으로 이동 (ID: ${data['roomId']})');
     }

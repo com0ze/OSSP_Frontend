@@ -2,7 +2,8 @@
   "permissions": {
     "allow": [
       "Bash(flutter analyze *)",
-      "WebFetch(domain:pub.dev)"
+      "WebFetch(domain:pub.dev)",
+      "Bash(find \"c:\\\\\\\\Users\\\\\\\\Seo-JeongHun\\\\\\\\source\\\\\\\\StudioProjects\\\\\\\\open_source_software\\\\\\\\android\" -type f -name \"build.gradle\")"
     ]
   },
   "model": "claude-sonnet-4-6"
