@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:open_source_software/models/rental_status.dart';
 import '/extensions/theme_extension.dart';
 import '/managers/data_manager.dart';
 import '/managers/login_manager.dart';
@@ -17,11 +18,21 @@ class _ChattingListScreenState extends State<ChattingListScreen> {
   final LoginManager loginManager = LoginManager();
 
   @override
+  void initState() {
+    super.initState();
+
+    // ⭐️ 화면 렌더링 프레임이 끝난 직후(화면이 안전하게 켜진 직후) 딱 한 번 비동기 함수를 실행함
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await DataManager().chattingListScreenInitCache(); // 비동기 초기화 실행
+      setState(() {}); // 데이터 가져온 후 화면 딱 한 번만 갱신
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
       listenable: dataManager,
       builder: (context, child) {
-        final currentUser = loginManager.currentUser;
         final chattings = dataManager.chattings.values.toList()
           ..sort((a, b) {
             final aTime = a.getLastMessageTime();
@@ -40,7 +51,10 @@ class _ChattingListScreenState extends State<ChattingListScreen> {
             foregroundColor: context.onPrimaryColor,
           ),
           body: RefreshIndicator(
-            onRefresh: () => dataManager.fetchMyData(currentUser.id),
+            onRefresh: () async {
+              await dataManager.chattingListScreenInitCache();
+              setState(() {});
+            },
             child: chattings.isEmpty
                 ? const SingleChildScrollView(
                     physics: AlwaysScrollableScrollPhysics(),
@@ -74,8 +88,11 @@ class _ChattingListScreenState extends State<ChattingListScreen> {
                       final rentalItem =
                           dataManager.rentalItems[chatting.requestId];
                       return ChattingRoomWidgetFactory(
+                        productName: rentalItem?.product.name ?? "unknown",
+                        status:
+                            rentalItem?.rentalStatus ?? RentalStatus.pending,
                         chatting: chatting,
-                        onTap: () {
+                        onTap: () async {
                           if (match == null || rentalItem == null) return;
                           Navigator.push(
                             context,
@@ -86,6 +103,9 @@ class _ChattingListScreenState extends State<ChattingListScreen> {
                               ),
                             ),
                           );
+                          // 다시 화면으로 돌아올 때 데이터 초기화
+                          await dataManager.rentalListScreenInitCache();
+                          setState(() {});
                         },
                       ).makeWidget(context);
                     },

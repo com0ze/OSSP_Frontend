@@ -2,6 +2,7 @@
 import '/extensions/theme_extension.dart';
 import '/managers/data_manager.dart';
 import '/managers/login_manager.dart';
+import '/models/rental_item.dart';
 import '/screens/item_detail_screen.dart';
 import '/widgets/rental_item_widget_factory.dart';
 
@@ -17,11 +18,24 @@ class _RentalListScreenState extends State<RentalListScreen> {
   final LoginManager loginManager = LoginManager();
 
   @override
+  void initState() {
+    super.initState();
+
+    // ⭐️ 화면 렌더링 프레임이 끝난 직후(화면이 안전하게 켜진 직후) 딱 한 번 비동기 함수를 실행함
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await DataManager().rentalListScreenInitCache(); // 비동기 초기화 실행
+      setState(() {}); // 데이터 가져온 후 화면 딱 한 번만 갱신
+    });
+  }
+
+  @override
   Widget build(BuildContext context) {
     return ListenableBuilder(
       listenable: dataManager,
       builder: (context, child) {
         final currentUser = loginManager.currentUser;
+        // 데이터 필터링 안 해도 이미 원하는 데이터 만 있는 상황이나
+        // 혹시 모를 오류 방지를 위해서 남겨놓음
         final rentalItems = dataManager.rentalItems.values
             .where(
               (item) => !item.isMatched && item.requesterID != currentUser.id,
@@ -35,8 +49,10 @@ class _RentalListScreenState extends State<RentalListScreen> {
             foregroundColor: context.onPrimaryColor,
           ),
           body: RefreshIndicator(
-            onRefresh: () =>
-                dataManager.fetchAvailableRentalItems(currentUser.id),
+            onRefresh: () async {
+              await dataManager.rentalListScreenInitCache();
+              setState(() {});
+            },
             child: rentalItems.isEmpty
                 ? const SingleChildScrollView(
                     physics: AlwaysScrollableScrollPhysics(),
@@ -68,14 +84,25 @@ class _RentalListScreenState extends State<RentalListScreen> {
                       final item = rentalItems[index];
                       return RentalItemWidgetFactory(
                         item: item,
-                        onTap: () {
-                          Navigator.push(
+                        onTap: () async {
+                          // item detail screen은 stateless이므로
+                          // 표시할 아이템의 정보를 미리 구해서 전송
+                          final RentalItem? updatedItem = await dataManager
+                              .getRentalItem(item.id);
+                          if (!context.mounted) {
+                            return; // 비동기 작업 후 context가 유효한지 안전하게 검사
+                          }
+                          if (updatedItem == null) return;
+                          await Navigator.push(
                             context,
                             MaterialPageRoute(
                               builder: (context) =>
-                                  ItemDetailScreen(item: item),
+                                  ItemDetailScreen(item: updatedItem),
                             ),
                           );
+                          // 다시 화면으로 돌아올 때 데이터 초기화
+                          await dataManager.rentalListScreenInitCache();
+                          setState(() {});
                         },
                       ).makeWidget(context);
                     },
@@ -86,4 +113,3 @@ class _RentalListScreenState extends State<RentalListScreen> {
     );
   }
 }
-

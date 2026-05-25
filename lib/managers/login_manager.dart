@@ -1,5 +1,6 @@
 import '/api/api_client.dart';
 import '/managers/token_storage_manager.dart';
+import '/managers/data_manager.dart';
 import '/models/main_user.dart';
 
 // user와 accessToken을 묶어 원자적으로 관리한다.
@@ -50,6 +51,7 @@ class LoginManager {
     final s = _session;
     if (s == null) return;
     _session = s.copyWithUser(user);
+    DataManager().updateMainUser();
   }
 
   Future<void> updateDutyStatus(bool isOnDuty) async {
@@ -81,6 +83,7 @@ class LoginManager {
         user: MainUser.fromJson(res.data as Map<String, dynamic>),
         accessToken: token,
       );
+      DataManager().updateMainUser();
     } catch (_) {
       await _tokenStorage.clearSessionTokens();
     }

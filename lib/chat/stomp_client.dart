@@ -12,7 +12,7 @@ class ChatStompClient {
   static const _baseUrl = 'ws://168.110.102.12:8080';
 
   // ⚠️ 백엔드의 실제 WebSocket 등록 경로로 수정 필요 (Spring: 보통 /ws 또는 /stomp)
-  static const _wsPath = '/ws';
+  static const _wsPath = '/ws-stomp';
 
   StompClient? _client;
   final Map<String, void Function()> _subscriptions = {};
@@ -63,7 +63,7 @@ class ChatStompClient {
     }
 
     final unsubscribe = _client!.subscribe(
-      destination: '/topic/chat/$roomId',
+      destination: '/topic/rooms/$roomId',
       callback: (frame) {
         if (frame.body == null) return;
         try {

@@ -1,9 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 import '/extensions/theme_extension.dart';
 import '/managers/data_manager.dart';
-import '/managers/login_manager.dart';
 import '/models/product.dart';
-import '/models/rental_item.dart';
 
 class RentalRequestScreen extends StatefulWidget {
   const RentalRequestScreen({super.key});
@@ -39,20 +37,14 @@ class _RentalRequestScreenState extends State<RentalRequestScreen> {
       () => _placeError = _selectedPlaceId == null ? '위치를 선택해주세요' : null,
     );
     if (_formKey.currentState!.validate() && _selectedPlaceId != null) {
-      final currentUser = LoginManager().currentUser;
-
-      final newItem = RentalItem(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-        product: Product(name: _itemNameController.text, category: '기타'),
-        placeID: _selectedPlaceId!,
+      // 서버에 데이터 전송
+      dataManager.addRentalItem(
+        product: Product(name: _itemNameController.text, category: "none"),
+        placeId: _selectedPlaceId!,
         price: int.parse(_priceController.text),
         duration: int.parse(_durationController.text) * 60,
         description: _descriptionController.text,
-        requesterID: currentUser.id,
-        createdAt: DateTime.now(),
       );
-
-      dataManager.addRentalItem(newItem);
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(

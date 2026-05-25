@@ -51,7 +51,7 @@ class Chatting {
       opponentName: (json['opponentName'] ?? '알 수 없음') as String,
       lastMessage: json['lastMessage'] as String?,
       updatedAt: json['updatedAt'] != null
-          ? DateTime.parse(json['updatedAt'] as String)
+          ? DateTime.parse(json['updatedAt'] ?? json['createdAt'] as String)
           : null,
       chats: rawChats
           ?.map((e) => Chat.fromJson(e as Map<String, dynamic>))
@@ -63,15 +63,24 @@ class Chatting {
     return {'id': id, 'chats': _chats.map((e) => e.toJson()).toList()};
   }
 
-  Chatting copyWith({String? id, List<Chat>? chats}) {
+  Chatting copyWith({
+    String? id,
+    List<Chat>? chats,
+    String? matchId,
+    String? requestId,
+    String? opponentId,
+    String? opponentName,
+    String? lastMessage,
+    DateTime? updatedAt,
+  }) {
     return Chatting(
       id: id ?? this.id,
-      matchId: matchId,
-      requestId: requestId,
-      opponentId: opponentId,
-      opponentName: opponentName,
-      lastMessage: lastMessage,
-      updatedAt: updatedAt,
+      matchId: matchId ?? this.matchId,
+      requestId: requestId ?? this.requestId,
+      opponentId: opponentId ?? this.opponentId,
+      opponentName: opponentName ?? this.opponentName,
+      lastMessage: lastMessage ?? this.lastMessage,
+      updatedAt: updatedAt ?? this.updatedAt,
       chats: chats ?? List.from(_chats),
     );
   }

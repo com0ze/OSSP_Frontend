@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import '/extensions/theme_extension.dart';
+import '/managers/data_manager.dart';
 import '/models/review.dart';
 import '/widgets/widget_factory.dart';
 
@@ -20,7 +21,7 @@ class ReviewWidgetFactory extends WidgetFactory {
             Row(
               children: [
                 Text(
-                  review.writer.name,
+                  DataManager().getUser(review.writerId)?.name ?? review.writerId,
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 14,

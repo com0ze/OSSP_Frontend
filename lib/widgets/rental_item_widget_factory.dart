@@ -24,7 +24,28 @@ class RentalItemWidgetFactory extends WidgetFactory {
   @override
   Widget makeWidget(BuildContext context) {
     final dataManager = DataManager();
-    final requester = dataManager.getUserById(item.requesterID);
+    final requester = dataManager.getUser(item.requesterID);
+    if (requester == null) {
+      return const SingleChildScrollView(
+        physics: AlwaysScrollableScrollPhysics(),
+        child: SizedBox(
+          height: 400,
+          child: Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.inbox, size: 64, color: Colors.grey),
+                SizedBox(height: 16),
+                Text(
+                  '요청하신 물건 정보가 없습니다',
+                  style: TextStyle(fontSize: 16, color: Colors.grey),
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: InkWell(

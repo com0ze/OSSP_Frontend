@@ -323,6 +323,57 @@
                 - 각 클래스 별 TTL 도입
                 - mock서버에서 클론뜨는 게 아니라 실제로 통신하는 것 처럼 구현
 
+        - ### commit: 데이터 매니저 교체
+            - #### author: Seo JeongHun
+            - #### date: 2026-05-25
+            - feature:
+                - **STOMP 실시간 채팅 클라이언트 구현** (`lib/chat/stomp_client.dart` 신규)
+                    - WebSocket + STOMP 프로토콜 기반 `ChatStompClient` 클래스 추가
+                    - STOMP 프레임 수동 파싱 (CONNECT / SUBSCRIBE / SEND / DISCONNECT)
+                    - 채널 구독·해제 및 메시지 발행 기능 구현
+                    - `chat_screen.dart`에 연동하여 실시간 메시지 송수신 적용
+
+                - **DataManager 완전 교체 및 API 정합성 확보** (`data_manager.dart`)
+                    - `getUserReceivedReview(userId)` 메서드 추가: `revieweeId` 기반으로 받은 리뷰 필터링
+                    - `getUserWriteReview(userId)` 메서드 추가: `writerId` 기반으로 작성한 리뷰 필터링
+                    - `getStatusForUserOnItem(itemId, userId)` 시그니처 변경: async 제거 → 동기 2-인자 메서드로 단순화
+                    - 취소 API 메서드 수정: `dio.post` → `dio.patch` (`/api/v1/requests/{id}/cancel`)
+                    - `userProfileScreenInitCache` / `otherUserProfileScreenInitCache`: 리뷰 로드 시 `..revieweeId = userId` cascade 설정 추가
+                    - `data_manager_new.dart`, `temp_data_manager.dart` 임시 파일 삭제 후 단일 `DataManager`로 통합
+
+                - **모델 구조 변경**
+                    - `review.dart`: `User writer` → `String writerId` 교체, `String? revieweeId` 필드 추가 (직렬화 시 cascade로 설정)
+                    - `user.dart`: `email` 필드 제거 (`MainUser`에만 유지), `rentalHistory: List<String>` → `rentalCount: int` 로 교체
+                    - `chatting.dart`: `matchId`, `requestId`, `opponentId`, `opponentName`, `lastMessage`, `updatedAt` 필드 추가
+                    - `match.dart`: 백엔드 미지원으로 `requesterReviewID`, `lenderReviewID` 필드 제거
+                    - `chat.dart`, `rental_item.dart`, `main_user.dart`: API 스펙에 맞게 `fromJson` 키 매핑 정비
+
+                - **LoginManager 리팩토링** (`login_manager.dart`)
+                    - 내부 `_Session` 클래스 도입으로 user + accessToken 원자적 관리
+                    - `currentUser` / `accessToken` 접근자를 null 대신 `StateError` 발생 방식으로 명확화
+                    - 불필요한 메서드 제거 및 코드 간소화
+
+                - **화면 및 위젯 DataManager 연동**
+                    - `chat_screen.dart`: `getStatusForUserOnItem`으로 상태 구독, `getUserWriteReview`로 리뷰 작성 여부 확인, STOMP 클라이언트 연동
+                    - `user_profile_screen.dart`: `userProfileScreenInitCache` / `getUserReceivedReview` 사용하도록 재작성
+                    - `review_widget_factory.dart`: `review.writer.name` → `DataManager().getUser(review.writerId)?.name`으로 교체
+                    - `chatting_room_widget_factory.dart`, `rental_item_widget_factory.dart`, `chat_widget_factory.dart`: DataManager 기반 데이터 조회로 전환
+                    - `chatting_list.dart`, `item_detail_screen.dart`, `rental_request_screen.dart`, `review_screen.dart`, `lender_profile_screen.dart`: API 변경 사항 반영
+                    - `setting_screen.dart` 신규 추가
+
+                - **Mock 서버 재구성** (`mock_server_interceptor.dart`)
+                    - 취소 엔드포인트: `POST` → `PATCH` 수정
+                    - 리뷰 목록 응답에 `{'data': ...}` 래핑 추가 (Spring Page 형식 정합)
+                    - `_recalculateScore`, `_receivedReviewsFor` 함수를 `revieweeId` 필드 기반으로 재작성
+                    - `requesterReviewID`, `lenderReviewID` 관련 코드 전면 제거
+                    - 테스트 데이터 전면 재구성: 산발적 ID 체계(`'0'`, `'b1'`, `'reviewer1'` 등) → 일관된 `u0`~`u4` / `i_b1`~`i_n3` 체계로 교체
+                        - u0(김샘플) 기준 빌린 물건 5건(pending·matchConfirmed·inProgress·returned×2), 빌려준 물건 2건, 주변 아이템 3건
+                        - 각 매치에 실제 대화 흐름이 있는 채팅 메시지 포함
+                        - 완료된 거래(i_b4, i_l2)에 한해 양방향 리뷰 데이터 포함, i_b5는 리뷰 미작성 상태로 유지
+
+                - **임시 문서 정리**
+                    - `data update.md`, `data_manager_calls.md`, `data_manager_design.md`, `data_manager_reference.md` 삭제
+
 
 - # feature/buildng
     - ## version: 1.1.0

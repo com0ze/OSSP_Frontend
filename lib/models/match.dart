@@ -3,33 +3,31 @@ class Match {
   final String rentalItemID;
   final String requesterID;
   final String lenderID;
-  final String chattingID;
-  final String? requesterReviewID;
-  final String? lenderReviewID;
+  final String? chattingID;
+  // final String? requesterReviewID;
+  // final String? lenderReviewID;
 
   const Match({
     required this.matchID,
     required this.rentalItemID,
     required this.requesterID,
     required this.lenderID,
-    required this.chattingID,
-    this.requesterReviewID,
-    this.lenderReviewID,
+    this.chattingID,
+    // this.requesterReviewID,
+    // this.lenderReviewID,
   });
 
-  // 서버 응답(matchId/requestId/requesterId/providerId/roomId) 또는
-  // 레거시 형식(matchID/rentalItemID/requesterID/lenderID/chattingID) 모두 지원
   factory Match.fromJson(Map<String, dynamic> json) {
     return Match(
       matchID: (json['matchId'] ?? json['matchID'] ?? '').toString(),
-      rentalItemID:
-          (json['requestId'] ?? json['rentalItemID'] ?? '').toString(),
-      requesterID:
-          (json['requesterId'] ?? json['requesterID'] ?? '').toString(),
+      rentalItemID: (json['requestId'] ?? json['rentalItemID'] ?? '')
+          .toString(),
+      requesterID: (json['requesterId'] ?? json['requesterID'] ?? '')
+          .toString(),
       lenderID: (json['providerId'] ?? json['lenderID'] ?? '').toString(),
       chattingID: (json['roomId'] ?? json['chattingID'] ?? '').toString(),
-      requesterReviewID: json['requesterReviewID'] as String?,
-      lenderReviewID: json['lenderReviewID'] as String?,
+      // requesterReviewID: json['requesterReviewID'] as String?,
+      // lenderReviewID: json['lenderReviewID'] as String?,
     );
   }
 
@@ -40,8 +38,8 @@ class Match {
       'requesterID': requesterID,
       'lenderID': lenderID,
       'chattingID': chattingID,
-      'requesterReviewID': requesterReviewID,
-      'lenderReviewID': lenderReviewID,
+      // 'requesterReviewID': requesterReviewID,
+      // 'lenderReviewID': lenderReviewID,
     };
   }
 
@@ -60,8 +58,8 @@ class Match {
       requesterID: requesterID ?? this.requesterID,
       lenderID: lenderID ?? this.lenderID,
       chattingID: chattingID ?? this.chattingID,
-      requesterReviewID: requesterReviewID ?? this.requesterReviewID,
-      lenderReviewID: lenderReviewID ?? this.lenderReviewID,
+      // requesterReviewID: requesterReviewID ?? this.requesterReviewID,
+      // lenderReviewID: lenderReviewID ?? this.lenderReviewID,
     );
   }
 }

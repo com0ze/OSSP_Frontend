@@ -1,10 +1,9 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '/extensions/rental_status_extension.dart';
 import '/extensions/theme_extension.dart';
 import '/managers/data_manager.dart';
 import '/managers/login_manager.dart';
 import '/models/rental_item.dart';
-import '/models/review.dart';
 import '/models/user.dart';
 import '/screens/item_detail_screen.dart';
 import '/screens/lender_profile_screen.dart';
@@ -23,12 +22,17 @@ class _UserProfileScreenState extends State<UserProfileScreen>
   late TabController _tabController;
   final LoginManager loginManager = LoginManager();
   final DataManager dataManager = DataManager();
-  final String _currentUserId = LoginManager().currentUser.id;
+
+  String get _currentUserId => loginManager.currentUser.id;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await dataManager.userProfileScreenInitCache();
+      if (mounted) setState(() {});
+    });
   }
 
   @override
@@ -37,7 +41,7 @@ class _UserProfileScreenState extends State<UserProfileScreen>
     super.dispose();
   }
 
-  Future<void> _refreshMyData() => dataManager.fetchMyData(_currentUserId);
+  Future<void> _refreshMyData() => dataManager.userProfileScreenInitCache();
 
   @override
   Widget build(BuildContext context) {
@@ -47,9 +51,20 @@ class _UserProfileScreenState extends State<UserProfileScreen>
     return ListenableBuilder(
       listenable: dataManager,
       builder: (context, child) {
-        final freshUser = dataManager.getUserById(_currentUserId);
-        final borrowedItems = dataManager.requestRentalItems(freshUser);
-        final lentItems = dataManager.lentRentalItems(freshUser);
+        final freshUser =
+            dataManager.getUser(_currentUserId) ?? loginManager.currentUser;
+
+        final borrowedItems = dataManager.rentalItems.values
+            .where((i) => i.requesterID == freshUser.id)
+            .toList();
+
+        final lentItemIds = dataManager.matches.values
+            .where((m) => m.lenderID == freshUser.id)
+            .map((m) => m.rentalItemID)
+            .toSet();
+        final lentItems = dataManager.rentalItems.values
+            .where((i) => lentItemIds.contains(i.id))
+            .toList();
 
         return Scaffold(
           appBar: AppBar(
@@ -76,12 +91,14 @@ class _UserProfileScreenState extends State<UserProfileScreen>
           ),
           body: Column(
             children: [
-              // 사용자 정보 영역에서만 당겨서 새로고침 가능
               RefreshIndicator(
                 onRefresh: _refreshMyData,
                 child: SingleChildScrollView(
                   physics: const AlwaysScrollableScrollPhysics(),
-                  child: UserInfoHeader(user: freshUser, email: LoginManager().currentUser.email),
+                  child: UserInfoHeader(
+                    user: freshUser,
+                    email: LoginManager().currentUser.email,
+                  ),
                 ),
               ),
               const Divider(height: 1),
@@ -97,9 +114,9 @@ class _UserProfileScreenState extends State<UserProfileScreen>
                 child: TabBarView(
                   controller: _tabController,
                   children: [
-                    _buildItemList(borrowedItems, freshUser, isBorrowed: true),
-                    _buildItemList(lentItems, freshUser, isBorrowed: false),
-                    _buildReviews(freshUser),
+                    _buildItemList(borrowedItems, isBorrowed: true),
+                    _buildItemList(lentItems, isBorrowed: false),
+                    _buildReviews(),
                   ],
                 ),
               ),
@@ -110,19 +127,8 @@ class _UserProfileScreenState extends State<UserProfileScreen>
     );
   }
 
-  Widget _buildReviews(User currentUser) {
-    final List<Review> reviews = dataManager.matches.values
-        .map((m) {
-          if (m.requesterID == currentUser.id && m.lenderReviewID != null) {
-            return dataManager.getReviewById(m.lenderReviewID!);
-          }
-          if (m.lenderID == currentUser.id && m.requesterReviewID != null) {
-            return dataManager.getReviewById(m.requesterReviewID!);
-          }
-          return null;
-        })
-        .whereType<Review>()
-        .toList();
+  Widget _buildReviews() {
+    final reviews = dataManager.getUserReceivedReview(_currentUserId);
 
     if (reviews.isEmpty) {
       return Center(
@@ -150,18 +156,12 @@ class _UserProfileScreenState extends State<UserProfileScreen>
     return ListView.builder(
       padding: const EdgeInsets.all(16),
       itemCount: reviews.length,
-      itemBuilder: (context, index) {
-        final review = reviews[index];
-        return ReviewWidgetFactory(review: review).makeWidget(context);
-      },
+      itemBuilder: (context, index) =>
+          ReviewWidgetFactory(review: reviews[index]).makeWidget(context),
     );
   }
 
-  Widget _buildItemList(
-    List<RentalItem> items,
-    User currentUser, {
-    required bool isBorrowed,
-  }) {
+  Widget _buildItemList(List<RentalItem> items, {required bool isBorrowed}) {
     if (items.isEmpty) {
       return Center(
         child: Column(
@@ -193,19 +193,18 @@ class _UserProfileScreenState extends State<UserProfileScreen>
 
         final User? otherUser;
         if (isBorrowed) {
-          final lenderId = dataManager.getMatchedLenderIdForItem(item.id);
-          otherUser = lenderId != null
-              ? dataManager.getUserById(lenderId)
+          final confirmedMatch = item.matchedID != null
+              ? dataManager.matches[item.matchedID!]
               : null;
+          otherUser = dataManager.getUser(confirmedMatch?.lenderID);
         } else {
-          otherUser = dataManager.getUserById(item.requesterID);
+          otherUser = dataManager.getUser(item.requesterID);
         }
 
         final status = dataManager.getStatusForUserOnItem(
           item.id,
-          currentUser.id,
+          _currentUserId,
         );
-
         return _buildItemCard(item, otherUser, status);
       },
     );
@@ -303,4 +302,3 @@ class _UserProfileScreenState extends State<UserProfileScreen>
     );
   }
 }
-

@@ -143,12 +143,12 @@ class NotificationManager extends AbstractNotificationManager {
     }
   }
 
-  void _handleNotificationClick(Map<String, dynamic> data) {
+  Future<void> _handleNotificationClick(Map<String, dynamic> data) async {
     final String? type = data['type'];
     if (type == 'RENTAL_REQUEST') {
       final String? requestId = data['requestId']?.toString();
       if (requestId == null) return;
-      final item = DataManager().rentalItems[requestId];
+      final item = await DataManager().getRentalItem(requestId);
       if (item == null) return;
       navigatorKey.currentState?.push(
         MaterialPageRoute(builder: (_) => ItemDetailScreen(item: item)),

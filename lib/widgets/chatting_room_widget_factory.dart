@@ -1,16 +1,22 @@
 import 'package:flutter/material.dart';
 import '/extensions/rental_status_extension.dart';
 import '/extensions/theme_extension.dart';
-import '/managers/login_manager.dart';
-import '/managers/data_manager.dart';
 import '/models/chatting.dart';
+import '/models/rental_item.dart';
 import '/widgets/widget_factory.dart';
 
 class ChattingRoomWidgetFactory extends WidgetFactory {
   final Chatting chatting;
   final VoidCallback onTap;
+  final String productName;
+  final RentalStatus status;
 
-  ChattingRoomWidgetFactory({required this.chatting, required this.onTap});
+  ChattingRoomWidgetFactory({
+    required this.chatting,
+    required this.onTap,
+    required this.productName,
+    required this.status,
+  });
 
   String _formatTime(DateTime time) {
     final now = DateTime.now();
@@ -22,16 +28,8 @@ class ChattingRoomWidgetFactory extends WidgetFactory {
 
   @override
   Widget makeWidget(BuildContext context) {
-    final dataManager = DataManager();
-    final currentUserId = LoginManager().currentUser.id;
-
-    final item = dataManager.rentalItems[chatting.requestId];
     final lastMessageText = chatting.getLastMessageText();
     final lastMessageTime = chatting.getLastMessageTime();
-    final status = dataManager.getStatusForUserOnItem(
-      chatting.requestId,
-      currentUserId,
-    );
 
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
@@ -65,7 +63,7 @@ class ChattingRoomWidgetFactory extends WidgetFactory {
                         ),
                         const SizedBox(width: 6),
                         Text(
-                          item?.product.name ?? '',
+                          productName,
                           style: TextStyle(
                             fontSize: 12,
                             color: context.onSurfaceVariantColor,

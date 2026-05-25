@@ -1,7 +1,6 @@
 ﻿import 'package:flutter/material.dart';
 import '/extensions/theme_extension.dart';
 import '/managers/data_manager.dart';
-import '/models/review.dart';
 import '/models/user.dart';
 import '/screens/lender_profile_screen.dart';
 import '/widgets/review_widget_factory.dart';
@@ -21,23 +20,12 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen> {
   @override
   void initState() {
     super.initState();
-    // 화면 진입 시 해당 유저의 최신 정보와 리뷰를 서버에서 갱신
-    dataManager.fetchUserProfile(widget.user.id).ignore();
-  }
-
-  List<Review> _generateReviews() {
-    return dataManager.matches.values
-        .map((m) {
-          if (m.requesterID == widget.user.id && m.lenderReviewID != null) {
-            return dataManager.getReviewById(m.lenderReviewID!);
-          }
-          if (m.lenderID == widget.user.id && m.requesterReviewID != null) {
-            return dataManager.getReviewById(m.requesterReviewID!);
-          }
-          return null;
-        })
-        .whereType<Review>()
-        .toList();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await DataManager().otherUserProfileScreenInitCache(
+        widget.user.id,
+      ); // 비동기 초기화 실행
+      setState(() {}); // 데이터 가져온 후 화면 딱 한 번만 갱신
+    });
   }
 
   @override
@@ -46,8 +34,8 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen> {
       listenable: dataManager,
       builder: (context, _) {
         // 캐시에서 최신 유저 정보 조회
-        final freshUser = dataManager.getUserById(widget.user.id);
-        final reviews = _generateReviews();
+        final freshUser = dataManager.getUser(widget.user.id)!;
+        final reviews = DataManager().getUserReceivedReview(widget.user.id);
 
         return Scaffold(
           appBar: AppBar(
@@ -56,7 +44,9 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen> {
             foregroundColor: context.onPrimaryColor,
           ),
           body: RefreshIndicator(
-            onRefresh: () => dataManager.fetchUserProfile(widget.user.id),
+            onRefresh: () async {
+              await dataManager.otherUserProfileScreenInitCache(widget.user.id);
+            },
             child: ListView(
               physics: const AlwaysScrollableScrollPhysics(),
               children: [

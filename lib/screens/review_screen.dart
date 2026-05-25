@@ -1,10 +1,8 @@
 ﻿import 'package:flutter/material.dart';
 import '/extensions/theme_extension.dart';
 import '/managers/data_manager.dart';
-import '/managers/login_manager.dart';
 import '/models/match.dart';
 import '/models/rental_item.dart';
-import '/models/review.dart';
 import '/models/user.dart';
 
 class ReviewScreen extends StatefulWidget {
@@ -75,22 +73,11 @@ class _ReviewScreenState extends State<ReviewScreen> {
     );
 
     final DataManager dataManager = DataManager();
-    final currentUser = LoginManager().currentUser;
-    final review = Review(
-      id: '${widget.match.matchID}_${widget.reviewee.id}',
-      score: _rating,
+    await dataManager.postReview(
+      score: _rating.toInt(),
       reviewText: reviewText,
-      writer: currentUser,
-      createdAt: DateTime.now(),
+      matchId: widget.match.matchID,
     );
-
-    // reviewee가 lender면 현재 사용자는 requester → requesterReview
-    // reviewee가 requester면 현재 사용자는 lender → lenderReview
-    if (widget.match.lenderID == widget.reviewee.id) {
-      await dataManager.updateMatchRequesterReview(widget.match.matchID, review);
-    } else {
-      await dataManager.updateMatchLenderReview(widget.match.matchID, review);
-    }
 
     if (!mounted) return;
     Navigator.of(context).popUntil((route) => route.isFirst);
