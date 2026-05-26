@@ -52,6 +52,11 @@ class LoginManager {
     _currentUser = user;
   }
 
+  void updateCurrentBuilding(String? building) {
+    if (_currentUser == null) return;
+    _currentUser = _currentUser!.copyWith(currentBuilding: building);
+  }
+
   // ⭐️ 3. 앱 시작 시 자동 로그인을 위한 초기화 함수
   Future<void> initAutoLogin() async {
     // 기기에 저장된 액세스 토큰이 있는지 확인

@@ -9,6 +9,7 @@ class MainUser extends User {
     required super.email,
     super.profileImage,
     super.score = 0,
+    super.currentBuilding,
     List<String>? rentalHistory,
     required this.personalInformation,
   }) : super(rentalHistory: rentalHistory ?? []);
@@ -49,6 +50,7 @@ class MainUser extends User {
     List<String>? rentalHistory,
     String? email,
     String? profileImage,
+    String? currentBuilding,
   }) {
     return MainUser(
       id: id ?? this.id,
@@ -58,6 +60,7 @@ class MainUser extends User {
       rentalHistory: rentalHistory ?? List.from(this.rentalHistory),
       email: email ?? this.email,
       profileImage: profileImage ?? this.profileImage,
+      currentBuilding: currentBuilding ?? this.currentBuilding,
     );
   }
 }

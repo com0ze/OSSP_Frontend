@@ -378,3 +378,21 @@
             - #### date: 2026-05-24
             - feature:
                 - test_data_manager 삭제
+
+- # feature/location_background
+    - ## version: 1.2.0
+        - ### commit: 백그라운드 GPS 지오펜싱 및 서버 위치 연동 완성
+            - #### author: Lee JaeWon
+            - #### date: 2026-05-26
+            - feature:
+                - 백그라운드 위치 추적 인프라 구축
+                    - 안드로이드 Foreground Service 권한 및 알림 설정 적용 완료
+                    - 앱이 백그라운드 상태일 때도 OS에 의해 강제 종료되지 않고 GPS 업데이트가 유지되도록 구현
+                - 지오펜싱(건물 매칭) 및 바운싱 방지 알고리즘 적용
+                    - 캠퍼스 17개 건물 GeoJSON 폴리곤 데이터 로드 및 매칭 로직 적용 완료
+                    - GPS 신호 핑퐁 현상 방지를 위해 Dwell Time(5초 연속 체류) 필터링 로직 구현 및 적용
+                - API 통신 Base URL 실제 배포 서버로 변경
+                    - api_manager.dart의 baseUrl을 localhost에서 실제 백엔드 운영 서버(168.110.102.12:8080)로 수정
+                    - 앱 구동 시 발생하던 FCM 기기 토큰 동기화(Connection refused) 통신 에러 완벽 해결
+                - 불필요한 테스트 UI 제거
+                    - 로그인 화면(login_screen.dart)에 존재하던 개발 테스트용 임시 상단 알림 띄우기 버튼 완전 삭제               

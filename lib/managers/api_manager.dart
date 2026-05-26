@@ -5,9 +5,9 @@ class ApiManager {
   factory ApiManager() => _instance;
   ApiManager._internal();
 
-  // 노션 명세서의 로컬 배포 주소 반영
+  // 실제 백엔드 배포 서버 주소 반영
   final Dio dio = Dio(BaseOptions(
-    baseUrl: 'http://localhost:8080',
+    baseUrl: 'http://168.110.102.12:8080',
     contentType: 'application/json',
   ));
 

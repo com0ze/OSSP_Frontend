@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:open_source_software/managers/location_manager.dart';
+import 'package:open_source_software/managers/login_manager.dart';
 import 'package:open_source_software/screens/chatting_list.dart';
 import 'package:open_source_software/screens/rental_list_screen.dart';
 import 'package:open_source_software/screens/rental_request_screen.dart';
@@ -29,6 +30,9 @@ class _HomeNavigationState extends State<HomeNavigation> {
     // 로그인 후 메인 화면에 진입한 시점에 위치 추적을 시작한다.
     // (앱 시작 시점이 아니라 이 시점에 권한을 요청해야 사용자 맥락에 자연스럽다)
     LocationManager().initialize();
+    LocationManager().onBuildingChanged = (buildingName) {
+      LoginManager().updateCurrentBuilding(buildingName);
+    };
   }
 
   @override

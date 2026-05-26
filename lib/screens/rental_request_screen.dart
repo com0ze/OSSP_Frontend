@@ -17,7 +17,6 @@ class _RentalRequestScreenState extends State<RentalRequestScreen> {
   final _formKey = GlobalKey<FormState>();
   final _titleController = TextEditingController();
   final _itemNameController = TextEditingController();
-  final _locationController = TextEditingController();
   final _priceController = TextEditingController();
   final _preferencesController = TextEditingController();
   final _descriptionController = TextEditingController();
@@ -27,30 +26,48 @@ class _RentalRequestScreenState extends State<RentalRequestScreen> {
   final _placeMenuController = TextEditingController();
 
   @override
+  void initState() {
+    super.initState();
+    // GPS가 이미 건물을 감지한 상태라면 즉시 드롭다운에 반영한다.
+    WidgetsBinding.instance.addPostFrameCallback((_) => _autoFillIfDetected());
+  }
+
+  /// 화면 진입 시 GPS 감지 건물이 있으면 조용히 자동 선택한다 (스낵바 없음).
+  void _autoFillIfDetected() {
+    final String? buildingName = LocationManager().currentBuildingName;
+    if (buildingName == null) return;
+
+    final place = DataManager.places.firstWhere(
+      (p) => p.name == buildingName,
+      orElse: () => DataManager.places.first,
+    );
+
+    setState(() {
+      _selectedPlaceId = place.id;
+      _placeMenuController.text = place.name;
+    });
+  }
+
+  @override
   void dispose() {
     _titleController.dispose();
     _itemNameController.dispose();
     _priceController.dispose();
-    _locationController.dispose();
     _preferencesController.dispose();
     _descriptionController.dispose();
     _placeMenuController.dispose();
     super.dispose();
   }
 
-  /// 현재 위치(건물) 가져오기.
-  ///
-  /// LocationManager 가 지오펜싱으로 판별해 둔 현재 건물명을 입력칸에 채운다.
-  /// 좌표 문자열 대신 '원흥관' 같은 건물명이 들어간다.
+  /// GPS로 감지된 현재 건물을 위치 드롭다운에 자동 선택한다.
   void _fillCurrentBuilding() {
-    final String? building = LocationManager().currentBuildingName;
+    final String? buildingName = LocationManager().currentBuildingName;
 
-    if (building == null) {
-      // 아직 건물 판별 전이거나, 캠퍼스 건물 밖에 있는 경우
+    if (buildingName == null) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(
-            '현재 건물을 찾지 못했습니다. 직접 입력해주세요.',
+            '현재 건물을 찾지 못했습니다. 직접 선택해주세요.',
             style: TextStyle(color: context.onErrorColor),
           ),
           duration: const Duration(milliseconds: 800),
@@ -60,8 +77,15 @@ class _RentalRequestScreenState extends State<RentalRequestScreen> {
       return;
     }
 
+    final place = DataManager.places.firstWhere(
+      (p) => p.name == buildingName,
+      orElse: () => DataManager.places.first,
+    );
+
     setState(() {
-      _locationController.text = building;
+      _selectedPlaceId = place.id;
+      _placeMenuController.text = place.name;
+      _placeError = null;
     });
   }
 
@@ -172,48 +196,64 @@ class _RentalRequestScreenState extends State<RentalRequestScreen> {
               },
             ),
             const SizedBox(height: 16),
-            DropdownMenu<String>(
-              expandedInsets: EdgeInsets.zero,
-              controller: _placeMenuController,
-              initialSelection: _selectedPlaceId,
-              label: const Text('위치'),
-              leadingIcon: const Icon(Icons.location_on),
-              hintText: '장소를 선택해주세요',
-              errorText: _placeError,
-              menuHeight: 260,
-              enableFilter: false,
-              requestFocusOnTap: false,
-              menuStyle: MenuStyle(
-                elevation: const WidgetStatePropertyAll(6),
-                shape: WidgetStatePropertyAll(
-                  RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                padding: const WidgetStatePropertyAll(
-                  EdgeInsets.symmetric(vertical: 4),
-                ),
-              ),
-              dropdownMenuEntries: DataManager.places.map((place) {
-                final isSelected = _selectedPlaceId == place.id;
-                return DropdownMenuEntry(
-                  value: place.id,
-                  label: place.name,
-                  leadingIcon: isSelected
-                      ? Icon(Icons.check, size: 18, color: context.primaryColor)
-                      : const SizedBox(width: 18),
-                  style: MenuItemButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 4,
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Expanded(
+                  child: DropdownMenu<String>(
+                    expandedInsets: EdgeInsets.zero,
+                    controller: _placeMenuController,
+                    initialSelection: _selectedPlaceId,
+                    label: const Text('위치'),
+                    leadingIcon: const Icon(Icons.location_on),
+                    hintText: '장소를 선택해주세요',
+                    errorText: _placeError,
+                    menuHeight: 260,
+                    enableFilter: false,
+                    requestFocusOnTap: false,
+                    menuStyle: MenuStyle(
+                      elevation: const WidgetStatePropertyAll(6),
+                      shape: WidgetStatePropertyAll(
+                        RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      padding: const WidgetStatePropertyAll(
+                        EdgeInsets.symmetric(vertical: 4),
+                      ),
                     ),
+                    dropdownMenuEntries: DataManager.places.map((place) {
+                      final isSelected = _selectedPlaceId == place.id;
+                      return DropdownMenuEntry(
+                        value: place.id,
+                        label: place.name,
+                        leadingIcon: isSelected
+                            ? Icon(
+                                Icons.check,
+                                size: 18,
+                                color: context.primaryColor,
+                              )
+                            : const SizedBox(width: 18),
+                        style: MenuItemButton.styleFrom(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 4,
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                    onSelected: (value) => setState(() {
+                      _selectedPlaceId = value;
+                      _placeError = null;
+                    }),
                   ),
-                );
-              }).toList(),
-              onSelected: (value) => setState(() {
-                _selectedPlaceId = value;
-                _placeError = null;
-              }),
+                ),
+                IconButton(
+                  tooltip: 'GPS로 현재 위치 자동 선택',
+                  icon: const Icon(Icons.my_location),
+                  onPressed: _fillCurrentBuilding,
+                ),
+              ],
             ),
             const SizedBox(height: 16),
             TextFormField(

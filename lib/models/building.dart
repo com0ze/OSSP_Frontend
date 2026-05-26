@@ -1,3 +1,4 @@
+import 'package:maps_toolkit/maps_toolkit.dart' as mk;
 import 'package:open_source_software/models/place.dart';
 
 class Building extends Place {
@@ -42,6 +43,28 @@ class Building extends Place {
     return visited.toList();
   }
 
+  factory Building.fromGeoJsonFeature(Map<String, dynamic> feature) {
+    final properties = feature['properties'] as Map<String, dynamic>;
+    final String name = properties['이름'] as String;
+
+    final geometry = feature['geometry'] as Map<String, dynamic>;
+    final outerRing = (geometry['coordinates'] as List<dynamic>)[0] as List<dynamic>;
+
+    final polygon = outerRing.map((point) {
+      final coord = point as List<dynamic>;
+      final double lng = (coord[0] as num).toDouble();
+      final double lat = (coord[1] as num).toDouble();
+      return LatLng(lat, lng); // geofencing_api LatLng (위도, 경도)
+    }).toList();
+
+    return Building(
+      id: name,
+      name: name,
+      area: GeofencePolygonRegion(id: name, polygon: polygon),
+      neighbor: [],
+    );
+  }
+
   factory Building.fromJson(Map<String, dynamic> json) {
     final id = json['id'] as String;
     return Building(
@@ -69,6 +92,15 @@ class Building extends Place {
           .toList(),
       'neighbor': _neighbor.toList(),
     };
+  }
+
+  /// GPS 좌표가 이 건물 폴리곤 안에 있는지 판별한다.
+  bool containsLocation(double latitude, double longitude) {
+    final point = mk.LatLng(latitude, longitude);
+    final mkPolygon = _area.polygon
+        .map((p) => mk.LatLng(p.latitude, p.longitude))
+        .toList();
+    return mk.PolygonUtil.containsLocation(point, mkPolygon, true);
   }
 
   Building copyWith({

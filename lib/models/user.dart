@@ -9,6 +9,7 @@ class User {
   // 💡 백엔드 DB 스키마 업데이트 반영
   final String? fcmToken;
   final bool isOnDuty;
+  final String? currentBuilding;
 
   User({
     required this.id,
@@ -18,6 +19,7 @@ class User {
     this.score = 0,
     this.fcmToken,
     this.isOnDuty = true,
+    this.currentBuilding,
     List<String>? rentalHistory,
   }) : rentalHistory = List<String>.from(rentalHistory ?? []);
 
@@ -36,6 +38,7 @@ class User {
       score: (json['score'] as num?)?.toDouble() ?? 0.0,
       fcmToken: json['fcmToken'],
       isOnDuty: json['isOnDuty'] ?? true,
+      currentBuilding: json['currentBuilding'] as String?,
       rentalHistory: (json['rentalHistory'] as List<dynamic>?)
           ?.map((e) => e as String)
           .toList(),
@@ -51,6 +54,7 @@ class User {
       'score': score,
       'fcmToken': fcmToken,
       'isOnDuty': isOnDuty,
+      'currentBuilding': currentBuilding,
       'rentalHistory': rentalHistory,
     };
   }
@@ -60,6 +64,7 @@ class User {
     String? email,
     String? profileImage,
     double? score,
+    String? currentBuilding,
     List<String>? rentalHistory,
   }) {
     return User(
@@ -68,6 +73,9 @@ class User {
       email: email ?? this.email,
       profileImage: profileImage ?? this.profileImage,
       score: score ?? this.score,
+      fcmToken: fcmToken,
+      isOnDuty: isOnDuty,
+      currentBuilding: currentBuilding ?? this.currentBuilding,
       rentalHistory: rentalHistory ?? List.from(this.rentalHistory),
     );
   }

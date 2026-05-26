@@ -9,7 +9,7 @@ class ApiClient {
   static final Dio dio = _createDio();
 
   static Dio _createDio() {
-    final dio = Dio(BaseOptions(baseUrl: 'https://api.domain.com'));
+    final dio = Dio(BaseOptions(baseUrl: 'http://168.110.102.12:8080'));
     dio.interceptors.add(AuthInterceptor(dio));
     dio.interceptors.add(LogInterceptor(responseBody: true));
     // ================================================================
