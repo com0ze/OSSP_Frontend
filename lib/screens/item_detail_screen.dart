@@ -341,9 +341,8 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                 width: double.infinity,
                 child: ElevatedButton(
                   onPressed: () =>
-                      // 취소나 대기인 경우 채팅하기 버튼 비활성화
-                      currentItem.rentalStatus == RentalStatus.cancelled ||
-                          currentItem.rentalStatus == RentalStatus.pending
+                      // 취소된 경우 채팅하기 버튼 비활성화
+                      currentItem.rentalStatus == RentalStatus.cancelled
                       ? null
                       : _onChatPressed(
                           context,
@@ -403,6 +402,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
     Match? match,
     bool isRequester,
   ) async {
+    print("------------");
     if (isRequester) {
       Navigator.push(
         context,
@@ -421,6 +421,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
           currentItem.id,
         );
       }
+      print(effectiveMatch);
       if (effectiveMatch == null) return;
       if (!context.mounted) return;
       Navigator.push(

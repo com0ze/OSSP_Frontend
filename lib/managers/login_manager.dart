@@ -79,7 +79,7 @@ class LoginManager {
     try {
       final res = await apiClient.dio.get('/api/v1/users/me');
       _session = _Session(
-        user: MainUser.fromJson(res.data as Map<String, dynamic>),
+        user: MainUser.fromJson(ApiClient.extractData(res.data) as Map<String, dynamic>),
         accessToken: token,
       );
       DataManager().updateMainUser();
@@ -94,9 +94,10 @@ class LoginManager {
         '/api/v1/auth/login',
         data: {'email': email, 'password': password},
       );
+      final loginData = ApiClient.extractData(res.data) as Map<String, dynamic>;
       await _tokenStorage.saveTokens(
-        res.data['accessToken'] as String,
-        res.data['refreshToken'] as String,
+        loginData['accessToken'] as String,
+        loginData['refreshToken'] as String,
       );
       await initAutoLogin();
       return isLoggedIn;

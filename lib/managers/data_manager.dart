@@ -389,7 +389,9 @@ class DataManager extends ChangeNotifier {
       // 정보를 서버로 부터 요청
       // GET /api/v1/users/me
       final resUser = await ApiClient().dio.get('/api/v1/users/me');
-      final newMe = MainUser.fromJson(resUser.data as Map<String, dynamic>);
+      final newMe = MainUser.fromJson(
+        ApiClient.extractData(resUser.data) as Map<String, dynamic>,
+      );
 
       // 더 자세한 정보로 업데이트
       _users[myId] = newMe;
@@ -424,7 +426,8 @@ class DataManager extends ChangeNotifier {
       );
 
       // chat클래스 리스트를 생성하고 채팅 클래스 생성
-      final List<dynamic> rawChatList = resChats.data as List<dynamic>;
+      final List<dynamic> rawChatList =
+          ApiClient.extractData(resChats.data) as List<dynamic>;
       final List<Chat> chatList = rawChatList
           .map((json) => Chat.fromJson(json as Map<String, dynamic>))
           .toList();
@@ -438,12 +441,16 @@ class DataManager extends ChangeNotifier {
         '/api/v1/users/${chatting.opponentId}',
       );
 
-      final opponent = User.fromJson(resOtherUser.data as Map<String, dynamic>);
+      final opponent = User.fromJson(
+        ApiClient.extractData(resOtherUser.data) as Map<String, dynamic>,
+      );
       _users[opponent.id] = opponent;
 
       // GET /api/v1/requests/{requestId}
       final resItem = await ApiClient().dio.get('/api/v1/requests/$itemId');
-      final newItem = RentalItem.fromJson(resItem.data as Map<String, dynamic>);
+      final newItem = RentalItem.fromJson(
+        ApiClient.extractData(resItem.data) as Map<String, dynamic>,
+      );
 
       // 더 자세한 정보로 업데이트
       _rentalItems[itemId] = newItem;
@@ -484,7 +491,8 @@ class DataManager extends ChangeNotifier {
       final resChattings = await ApiClient().dio.get('/api/v1/chats');
 
       // chatint클래스 리스트를 생성하고 데이터 삽입
-      final List<dynamic> rawChattingList = resChattings.data as List<dynamic>;
+      final List<dynamic> rawChattingList =
+          ApiClient.extractData(resChattings.data) as List<dynamic>;
       final List<Chatting> chatttingList = rawChattingList
           .map((json) => Chatting.fromJson(json as Map<String, dynamic>))
           .toList();
@@ -498,7 +506,8 @@ class DataManager extends ChangeNotifier {
       final resRentals = await ApiClient().dio.get('/api/v1/requests/me');
 
       // rental item 리스트를 생성 및 저장
-      final List<dynamic> rawRentalList = resRentals.data as List<dynamic>;
+      final List<dynamic> rawRentalList =
+          ApiClient.extractData(resRentals.data) as List<dynamic>;
       final List<RentalItem> rentalList = rawRentalList
           .map((json) => RentalItem.fromJson(json as Map<String, dynamic>))
           .toList();
@@ -537,7 +546,8 @@ class DataManager extends ChangeNotifier {
       // 정보를 서버로 부터 요청
       // GET /api/v1/requests/{requestId}
       final resItem = await ApiClient().dio.get('/api/v1/requests/$itemId');
-      Map<String, dynamic> resItemData = resItem.data as Map<String, dynamic>;
+      Map<String, dynamic> resItemData =
+          ApiClient.extractData(resItem.data) as Map<String, dynamic>;
       final newItem = RentalItem.fromJson(resItemData);
 
       // 더 자세한 정보로 업데이트
@@ -549,7 +559,7 @@ class DataManager extends ChangeNotifier {
       );
 
       final requester = User.fromJson(
-        resRequester.data as Map<String, dynamic>,
+        ApiClient.extractData(resRequester.data) as Map<String, dynamic>,
       );
       _users[requester.id] = requester;
 
@@ -582,7 +592,9 @@ class DataManager extends ChangeNotifier {
       // 정보를 서버로 부터 요청
       // GET /api/v1/users/{userId}
       final resUser = await ApiClient().dio.get('/api/v1/users/$userId');
-      final newUser = User.fromJson(resUser.data as Map<String, dynamic>);
+      final newUser = User.fromJson(
+        ApiClient.extractData(resUser.data) as Map<String, dynamic>,
+      );
 
       // 더 자세한 정보로 업데이트
       _users[userId] = newUser;
@@ -632,7 +644,8 @@ class DataManager extends ChangeNotifier {
       final resRentals = await ApiClient().dio.get('/api/v1/requests/me');
 
       // rental item 리스트를 생성 및 저장
-      final List<dynamic> rawRentalList = resRentals.data as List<dynamic>;
+      final List<dynamic> rawRentalList =
+          ApiClient.extractData(resRentals.data) as List<dynamic>;
       final List<RentalItem> rentalList = rawRentalList
           .map((json) => RentalItem.fromJson(json as Map<String, dynamic>))
           .toList();
@@ -683,7 +696,8 @@ class DataManager extends ChangeNotifier {
       final resRentals = await ApiClient().dio.get('/api/v1/requests/nearby');
 
       // rental item 리스트를 생성 및 저장
-      final List<dynamic> rawRentalList = resRentals.data as List<dynamic>;
+      final List<dynamic> rawRentalList =
+          ApiClient.extractData(resRentals.data) as List<dynamic>;
       final List<RentalItem> rentalList = rawRentalList
           .map((json) => RentalItem.fromJson(json as Map<String, dynamic>))
           .toList();
@@ -754,12 +768,15 @@ class DataManager extends ChangeNotifier {
       // 정보를 서버에 전송
 
       // POST /api/v1/requests/{requestId}/accept
-      final Map<String, dynamic> requestDataMatch = {"providerId": itemId};
+      final Map<String, dynamic> requestDataMatch = {
+        "providerId": loginManager.currentUser.id,
+      };
       final resMatch = await ApiClient().dio.post(
         '/api/v1/requests/$itemId/accept',
         data: requestDataMatch,
       );
-      Map<String, dynamic> resMatchData = resMatch.data as Map<String, dynamic>;
+      Map<String, dynamic> resMatchData =
+          ApiClient.extractData(resMatch.data) as Map<String, dynamic>;
 
       if (resMatch.statusCode == 404) throw Error();
       if (resMatch.statusCode == 409) throw Error();
@@ -773,7 +790,7 @@ class DataManager extends ChangeNotifier {
         data: requestDataChatting,
       );
       Map<String, dynamic> resChattingData =
-          resChatting.data as Map<String, dynamic>;
+          ApiClient.extractData(resChatting.data) as Map<String, dynamic>;
 
       Chatting chatting = Chatting.fromJson(
         resChattingData,

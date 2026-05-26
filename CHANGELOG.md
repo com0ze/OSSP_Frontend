@@ -451,6 +451,31 @@
                     - `GET /api/v1/reviews/my` 호출을 추가하여 `_reviews` 캐시에 내가 작성한 리뷰 적재
                     - `hasReviewed` 체크(`matchId` 기반)가 실제로 동작하기 위한 데이터 공급
 
+        - ### commit: 실서버 응답 wrapper 파싱 전면 적용
+            - #### author: Seo JeongHun
+            - #### date: 2026-05-26
+            - fix:
+                - **`ApiClient.extractData()` 헬퍼 추가** (`api_client.dart`)
+                    - 실서버 응답 `{"status":int,"message":"...","data":{...}}` wrapper를 자동으로 벗겨냄
+                    - `status` 또는 `message` 키가 있고 `data` 키가 존재할 때만 unwrap, 그 외(mock 서버 직접 응답 등)는 그대로 반환
+
+                - **전체 API 파싱 지점에 `extractData` 적용** (`login_manager.dart`, `data_manager.dart`)
+                    - `initAutoLogin`: `/api/v1/users/me` 응답 → `MainUser.fromJson` 파싱 시 적용
+                    - `login`: `/api/v1/auth/login` 응답 → `accessToken` / `refreshToken` 추출 시 적용
+                    - `updateMainUser`: `/api/v1/users/me` 응답 → `MainUser.fromJson` 파싱 시 적용
+                    - `chatScreenInitCache`: 채팅 메시지 목록, 상대방 유저, 아이템 3개 파싱 지점 적용
+                    - `chattingListScreenInitCache`: 채팅 목록, 대여 아이템 목록 파싱 지점 적용
+                    - `itemDetailScreenInitCache`: 아이템, 요청자 유저 파싱 지점 적용
+                    - `otherUserProfileScreenInitCache`: 유저 파싱 지점 적용
+                    - `userProfileScreenInitCache`: 대여 아이템 목록 파싱 지점 적용
+                    - `rentalListScreenInitCache`: 주변 아이템 목록 파싱 지점 적용
+                    - `createMatchWithChatting`: 매치, 채팅방 파싱 지점 2곳 적용
+                    - 리뷰 페이지네이션(`['data']['content']`) 및 `reviews/my`(`['data']`) 경로는 이미 양쪽 서버 모두 정상 동작하므로 변경 없음
+
+                - **물건 상세 화면 채팅하기 버튼 `pending` 비활성화 조건 제거** (`item_detail_screen.dart`)
+                    - 대여자(lender) 입장에서 WAITING(pending) 상태 아이템의 채팅하기 버튼이 실서버에서 비활성화되던 문제 수정
+                    - 요청자는 `confirmed != null`일 때만 버튼이 표시되므로 pending 비활성화 조건이 불필요
+                    - `cancelled` 상태일 때만 비활성화하도록 변경
 
 - # feature/buildng
     - ## version: 1.1.0

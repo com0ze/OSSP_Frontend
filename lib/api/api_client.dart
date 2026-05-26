@@ -33,4 +33,15 @@ class ApiClient {
     dio.interceptors.add(MockServerInterceptor());
     // [MOCK - 삭제 끝] ================================================
   }
+
+  // 실서버 응답 wrapper {"status":..., "message":..., "data":{...}} 를 벗겨냄.
+  // mock 서버처럼 data 필드가 없으면 그대로 반환.
+  static dynamic extractData(dynamic data) {
+    if (data is Map<String, dynamic> &&
+        data.containsKey('data') &&
+        (data.containsKey('status') || data.containsKey('message'))) {
+      return data['data'];
+    }
+    return data;
+  }
 }
