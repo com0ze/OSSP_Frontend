@@ -1,10 +1,13 @@
 import 'dart:convert';
 import 'dart:developer';
 import 'package:stomp_dart_client/stomp_dart_client.dart';
+import '/chat/abstract_stomp_client.dart';
 import '/managers/login_manager.dart';
 import '/models/chat.dart';
 
-class ChatStompClient {
+AbstractStompClient createStompClient() => ChatStompClient();
+
+class ChatStompClient extends AbstractStompClient {
   static final ChatStompClient _instance = ChatStompClient._internal();
   factory ChatStompClient() => _instance;
   ChatStompClient._internal();
@@ -17,10 +20,12 @@ class ChatStompClient {
   StompClient? _client;
   final Map<String, void Function()> _subscriptions = {};
 
+  @override
   bool get isConnected => _client?.connected ?? false;
 
   // ── 연결 ────────────────────────────────────────────────────────────────────
 
+  @override
   void connect() {
     if (isConnected) return;
     final token = LoginManager().accessToken;
@@ -39,6 +44,7 @@ class ChatStompClient {
     log('🔌 STOMP 연결 시도: $_baseUrl$_wsPath');
   }
 
+  @override
   void disconnect() {
     _subscriptions.clear();
     _client?.deactivate();
@@ -54,6 +60,7 @@ class ChatStompClient {
 
   // 채팅방 메시지 수신 구독. 이미 구독 중이면 재구독.
   // 반환된 cancel 함수를 호출하거나 unsubscribeFromRoom()으로 해제.
+  @override
   void subscribeToRoom(String roomId, void Function(Chat message) onMessage) {
     _subscriptions[roomId]?.call();
 
@@ -78,6 +85,7 @@ class ChatStompClient {
     log('📩 채팅방 구독: $roomId');
   }
 
+  @override
   void unsubscribeFromRoom(String roomId) {
     _subscriptions[roomId]?.call();
     _subscriptions.remove(roomId);
@@ -86,6 +94,7 @@ class ChatStompClient {
 
   // ── 전송 ────────────────────────────────────────────────────────────────────
 
+  @override
   void sendMessage({
     required String roomId,
     required String senderId,

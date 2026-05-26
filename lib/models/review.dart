@@ -4,6 +4,8 @@ class Review {
   final String reviewText;
   final String writerId;
   String? revieweeId;
+  String? matchId;
+  String? reviewerNickname;
   final DateTime createdAt;
 
   Review({
@@ -23,7 +25,10 @@ class Review {
       createdAt: json['createdAt'] != null
           ? DateTime.parse(json['createdAt'] as String)
           : DateTime.now(),
-    );
+    )
+      ..revieweeId = json['revieweeId']?.toString()
+      ..matchId = (json['matchId'] ?? '').toString()
+      ..reviewerNickname = json['reviewerNickname'] as String?;
   }
 
   Map<String, dynamic> toJson() {

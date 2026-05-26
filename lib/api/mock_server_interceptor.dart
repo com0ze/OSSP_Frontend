@@ -47,14 +47,14 @@ class MockServerInterceptor extends Interceptor {
       reviewText: '정확한 시간에 반납해 주셨어요. 다음에도 이용할게요!',
       writerId: 'u0',
       createdAt: DateTime.now().subtract(const Duration(days: 3)),
-    )..revieweeId = 'u3',
+    )..revieweeId = 'u3'..matchId = 'm_b4',
     'rev_b4_by_u3': Review(
       id: 'rev_b4_by_u3',
       score: 4.5,
       reviewText: '물건을 소중히 다뤄주셨습니다. 깨끗하게 사용해 주셔서 감사해요.',
       writerId: 'u3',
       createdAt: DateTime.now().subtract(const Duration(days: 3)),
-    )..revieweeId = 'u0',
+    )..revieweeId = 'u0'..matchId = 'm_b4',
     // i_l2 대여 완료 후 양방향 리뷰 (u0↔u2, 사다리)
     'rev_l2_by_u0': Review(
       id: 'rev_l2_by_u0',
@@ -62,14 +62,14 @@ class MockServerInterceptor extends Interceptor {
       reviewText: '약속 시간을 잘 지켜주셨고 물건도 깨끗하게 반납해 주셨어요.',
       writerId: 'u0',
       createdAt: DateTime.now().subtract(const Duration(days: 7)),
-    )..revieweeId = 'u2',
+    )..revieweeId = 'u2'..matchId = 'm_l2',
     'rev_l2_by_u2': Review(
       id: 'rev_l2_by_u2',
       score: 5.0,
       reviewText: '빌려주신 분이 매우 친절하셨고 사다리 상태도 좋았습니다.',
       writerId: 'u2',
       createdAt: DateTime.now().subtract(const Duration(days: 7)),
-    )..revieweeId = 'u0',
+    )..revieweeId = 'u0'..matchId = 'm_l2',
   };
 
   final Map<String, Chatting> _chattings = {
@@ -487,7 +487,7 @@ class MockServerInterceptor extends Interceptor {
       reviewText: comments,
       writerId: reviewerId,
       createdAt: DateTime.now(),
-    )..revieweeId = revieweeId;
+    )..revieweeId = revieweeId..matchId = matchId;
     if (match != null) {
       final item = _rentalItems[match.rentalItemID];
       if (item != null) {
@@ -537,7 +537,11 @@ class MockServerInterceptor extends Interceptor {
   }
 
   Map<String, dynamic> _rentalItemToApiJson(RentalItem item) {
-    final match = item.matchedID != null ? _matches[item.matchedID] : null;
+    final hasMatch = item.rentalStatus == RentalStatus.matchConfirmed ||
+        item.rentalStatus == RentalStatus.inProgress ||
+        item.rentalStatus == RentalStatus.returned;
+    final match =
+        hasMatch && item.matchedID != null ? _matches[item.matchedID] : null;
     return {
       'requestId': item.id,
       'itemName': item.product.name,
@@ -615,7 +619,7 @@ class MockServerInterceptor extends Interceptor {
         .map(
           (review) => {
             'reviewId': review.id,
-            'reviewerId': review.writerId,
+            'matchId': review.matchId ?? '',
             'reviewerNickname': _users[review.writerId]?.name ?? '알 수 없음',
             'score': review.score,
             'comments': review.reviewText,
@@ -634,7 +638,7 @@ class MockServerInterceptor extends Interceptor {
     RequestOptions options,
     RequestInterceptorHandler handler,
   ) async {
-    await Future.delayed(const Duration(milliseconds: 300));
+    await Future.delayed(const Duration(milliseconds: 50));
 
     final path = options.path;
     final method = options.method;
@@ -1142,7 +1146,12 @@ class MockServerInterceptor extends Interceptor {
         Response(
           requestOptions: options,
           statusCode: 200,
-          data: <String, dynamic>{},
+          data: {
+            'status': 'OK',
+            'statusCode': 200,
+            'message': '리뷰가 성공적으로 등록되었습니다.',
+            'data': null,
+          },
         ),
       );
     }
@@ -1155,15 +1164,25 @@ class MockServerInterceptor extends Interceptor {
           .map(
             (review) => {
               'reviewId': review.id,
-              'reviewerId': _currentUserId,
-              'revieweeId': review.revieweeId,
+              'reviewerId': review.writerId,
+              'revieweeId': review.revieweeId ?? '',
               'score': review.score,
               'comments': review.reviewText,
+              'matchId': review.matchId ?? '',
             },
           )
           .toList();
       return handler.resolve(
-        Response(requestOptions: options, statusCode: 200, data: myReviews),
+        Response(
+          requestOptions: options,
+          statusCode: 200,
+          data: {
+            'status': 'OK',
+            'statusCode': 200,
+            'message': '자신이 작성한 리뷰 목록입니다.',
+            'data': myReviews,
+          },
+        ),
       );
     }
 

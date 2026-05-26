@@ -394,6 +394,63 @@
                     - `fromJson`에서 `requesterNickname` / `requesterName` 키로 파싱
                     - `copyWith`에 전파 추가
 
+        - ### commit: 채팅 화면 버그 수정 및 기능 보완
+            - #### author: Seo JeongHun
+            - #### date: 2026-05-26
+            - fix:
+                - **채팅 목록에서 Match 재구성** (`data_manager.dart`)
+                    - `chattingListScreenInitCache` 완료 후 `Chatting` + `RentalItem` 데이터를 조합하여 `_matches` 캐시를 채우도록 추가
+                    - `lenderID`는 `RentalItem.requesterID`와 현재 사용자 비교로 도출
+
+                - **채팅 진입 시 기존 메시지 미표시 버그 수정** (`chat_screen.dart`)
+                    - `_refreshMessages` 완료 후 DataManager에서 새 `Chatting` 객체를 재취득하지 않아 `chatting.chats`가 항상 빈 상태였던 문제 수정
+                    - `setState` 내에서 `dataManager.getChatting(...)` 재호출로 갱신
+
+                - **`activeStompClient` 임포트 누락 복구** (`chat_screen.dart`)
+                    - `stomp_client.dart` 직접 임포트로 회귀된 것을 `active_stomp_client.dart`로 복원
+                    - `ChatStompClient()` 직접 참조 4곳을 `activeStompClient`로 교체
+
+                - **상태 진행 버튼 되돌림 버그 수정** (`chat_screen.dart`)
+                    - `updateMatchStatus` 호출이 `await` 없이 실행되어 `_onDataChanged`가 캐시 구 상태를 읽어 `_currentStatus`를 되돌리는 문제 수정
+                    - `matchConfirmed → inProgress`, `inProgress → returned` 전환 시 `await updateMatchStatus` 후 `_refreshMessages` 호출 추가
+
+                - **다른 채팅방에서 리뷰 작성이 막히는 버그 수정** (`chat_screen.dart`)
+                    - `hasReviewed` 체크가 `revieweeId` 기반으로 동작해 같은 상대(김철수)와의 다른 거래에서도 리뷰가 차단되던 문제 수정
+                    - `r.revieweeId == _otherUser.id` → `r.matchId == widget.match.matchID` 로 거래 단위 체크로 변경
+
+                - **ⓘ 버튼 후 재진입 시 NullException 수정** (`data_manager.dart`)
+                    - `itemDetailScreenInitCache`에서 Match를 갱신할 때 `chattingID`를 누락하여 재진입 시 `widget.match.chattingID!`가 null이 되던 문제 수정
+                    - 기존 `_matches[matchID]?.chattingID` 값을 보존하도록 수정
+
+                - **채팅창 빠른 진입 시 상대방 이름 "알 수 없음" 표시 버그 수정** (`chat_screen.dart`)
+                    - `initState`에서 동기적으로 `_otherUser`를 설정하므로 캐시 미적재 시 fallback 표시되던 문제 수정
+                    - `addPostFrameCallback`과 `_refreshMessages` 모두에서 `chatScreenInitCache` 완료 후 `_otherUser`를 DataManager 캐시에서 재취득하도록 수정
+
+        - ### commit: API 스펙 정합성 수정 및 리뷰 모델 보완
+            - #### author: Seo JeongHun
+            - #### date: 2026-05-26
+            - fix:
+                - **Mock 서버 응답 포맷 api_spec.md 정합** (`mock_server_interceptor.dart`)
+                    - `_receivedReviewsFor` (5.3/5.4): 스펙에 없는 `reviewerId` 필드 제거
+                    - `GET /api/v1/reviews/my` (5.2): `matchId` 필드 추가, `{"status":"OK","statusCode":200,"message":"...","data":[...]}` 래퍼 적용
+                    - `POST /api/v1/reviews` (5.1): 빈 `{}` 반환에서 `{"status":"OK","statusCode":200,"message":"...","data":null}` 형식으로 수정
+                    - 기존 리뷰 데이터(`rev_b4_*`, `rev_l2_*`)에 `matchId` cascade 설정 추가
+                    - `serverCreateReview`에서 생성 리뷰에 `matchId` cascade 설정 추가
+
+                - **`Review` 모델 필드 및 파싱 보완** (`review.dart`)
+                    - `matchId` 필드 추가 및 `fromJson`에서 파싱
+                    - `revieweeId` 필드를 `fromJson`에서 JSON 파싱으로 처리 (5.2 응답의 `revieweeId` 직접 활용)
+                    - `reviewerNickname` 필드 추가 및 `fromJson`에서 파싱
+
+                - **리뷰 위젯 작성자 이름 미표시 버그 수정** (`review_widget_factory.dart`)
+                    - 5.3/5.4 응답에 `reviewerId` 미포함으로 `writerId`가 빈 문자열이 되어 이름이 표시되지 않던 문제 수정
+                    - `reviewerNickname → 캐시 유저명 → writerId` 순서로 fallback 적용
+
+            - feature:
+                - **`chatScreenInitCache`에 내가 쓴 리뷰 로드 추가** (`data_manager.dart`)
+                    - `GET /api/v1/reviews/my` 호출을 추가하여 `_reviews` 캐시에 내가 작성한 리뷰 적재
+                    - `hasReviewed` 체크(`matchId` 기반)가 실제로 동작하기 위한 데이터 공급
+
 
 - # feature/buildng
     - ## version: 1.1.0

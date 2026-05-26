@@ -1,5 +1,5 @@
 ﻿import 'package:flutter/material.dart';
-import '/chat/stomp_client.dart';
+import '/chat/active_stomp_client.dart';
 import '/extensions/rental_status_extension.dart';
 import '/extensions/theme_extension.dart';
 import '/managers/data_manager.dart';
@@ -48,16 +48,19 @@ class _ChatScreenState extends State<ChatScreen> {
 
     // ⭐️ 첫 프레임이 그려진 직후 비동기 처리를 수행하도록 예약합니다.
     WidgetsBinding.instance.addPostFrameCallback((_) async {
-      // 이 익명 함수 안에서는 마음껏 await를 사용할 수 있습니다!
       await dataManager.chatScreenInitCache(
         itemId: widget.rentalItem.id,
         matchId: widget.match.matchID,
         chattingId: widget.match.chattingID!,
       );
 
-      // 데이터 로드가 끝났으니 화면을 딱 한 번 새로고침합니다.
       if (mounted) {
-        setState(() {});
+        setState(() {
+          _otherUser = dataManager.getUser(otherUserId) ?? _otherUser;
+          chatting = dataManager.getChatting(widget.match.chattingID) ?? chatting;
+          _messages.clear();
+          _messages.addAll(chatting.chats);
+        });
       }
     });
     _otherUser =
@@ -77,14 +80,14 @@ class _ChatScreenState extends State<ChatScreen> {
 
     _loadMessages();
     dataManager.addListener(_onDataChanged);
-    ChatStompClient().connect();
-    ChatStompClient().subscribeToRoom(chatting.id, _onStompMessage);
+    activeStompClient.connect();
+    activeStompClient.subscribeToRoom(chatting.id, _onStompMessage);
     _refreshMessages();
   }
 
   @override
   void dispose() {
-    ChatStompClient().unsubscribeFromRoom(chatting.id);
+    activeStompClient.unsubscribeFromRoom(chatting.id);
     dataManager.removeListener(_onDataChanged);
     _scrollController.dispose();
     _messageController.dispose();
@@ -138,7 +141,13 @@ class _ChatScreenState extends State<ChatScreen> {
       chattingId: widget.match.chattingID!,
     );
     if (!mounted) return;
+    final currentUserId = loginManager.currentUser.id;
+    final otherUserId = widget.match.requesterID == currentUserId
+        ? widget.match.lenderID
+        : widget.match.requesterID;
     setState(() {
+      _otherUser = dataManager.getUser(otherUserId) ?? _otherUser;
+      chatting = dataManager.getChatting(widget.match.chattingID) ?? chatting;
       _messages.clear();
       _pendingMessages.clear();
       _messages.addAll(chatting.chats);
@@ -184,7 +193,7 @@ class _ChatScreenState extends State<ChatScreen> {
       }
     });
 
-    ChatStompClient().sendMessage(
+    activeStompClient.sendMessage(
       roomId: chatting.id,
       senderId: loginManager.currentUser.id,
       content: content,
@@ -200,16 +209,18 @@ class _ChatScreenState extends State<ChatScreen> {
         break;
       case RentalStatus.matchConfirmed:
         nextStatus = RentalStatus.inProgress;
-        dataManager.updateMatchStatus(widget.match.matchID, nextStatus);
+        await dataManager.updateMatchStatus(widget.match.matchID, nextStatus);
+        await _refreshMessages();
         break;
       case RentalStatus.inProgress:
         nextStatus = RentalStatus.returned;
-        dataManager.updateMatchStatus(widget.match.matchID, nextStatus);
+        await dataManager.updateMatchStatus(widget.match.matchID, nextStatus);
+        await _refreshMessages();
         break;
       case RentalStatus.returned:
         final hasReviewed = dataManager
             .getUserWriteReview(loginManager.currentUser.id)
-            .any((r) => r.revieweeId == _otherUser.id);
+            .any((r) => r.matchId == widget.match.matchID);
         if (hasReviewed) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(

@@ -21,7 +21,7 @@ class ReviewWidgetFactory extends WidgetFactory {
             Row(
               children: [
                 Text(
-                  DataManager().getUser(review.writerId)?.name ?? review.writerId,
+                  review.reviewerNickname ?? DataManager().getUser(review.writerId)?.name ?? review.writerId,
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 14,

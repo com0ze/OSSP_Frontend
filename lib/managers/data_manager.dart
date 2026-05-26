@@ -459,6 +459,15 @@ class DataManager extends ChangeNotifier {
             : opponent.id,
       );
 
+      // GET /api/v1/reviews/my — hasReviewed 체크를 위해 내가 쓴 리뷰 로드
+      final resMyReviews = await ApiClient().dio.get('/api/v1/reviews/my');
+      final List<dynamic> rawMyReviews =
+          resMyReviews.data['data'] as List<dynamic>;
+      final List<Review> myReviews = rawMyReviews
+          .map((json) => Review.fromJson(json as Map<String, dynamic>))
+          .toList();
+      _reviews.addEntries(myReviews.map((r) => MapEntry(r.id, r)));
+
       changeData();
     } catch (e) {
       log('❌ 메시지 로드 및 파싱 실패: $e');
@@ -498,6 +507,21 @@ class DataManager extends ChangeNotifier {
         rentalList.map((item) => MapEntry(item.id, item)),
       );
 
+      final String myId = loginManager.currentUser.id;
+      for (final chatting in chatttingList) {
+        if (chatting.matchId.isEmpty) continue;
+        final item = _rentalItems[chatting.requestId];
+        if (item == null) continue;
+        final isRequester = item.requesterID == myId;
+        _matches[chatting.matchId] = Match(
+          matchID: chatting.matchId,
+          rentalItemID: chatting.requestId,
+          requesterID: item.requesterID,
+          lenderID: isRequester ? chatting.opponentId : myId,
+          chattingID: chatting.id,
+        );
+      }
+
       changeData();
     } catch (e) {
       log('❌ 메시지 로드 및 파싱 실패: $e');
@@ -530,11 +554,13 @@ class DataManager extends ChangeNotifier {
       _users[requester.id] = requester;
 
       if (newItem.isMatched) {
+        final existingMatch = _matches[newItem.matchedID!];
         _matches[newItem.matchedID!] = Match(
           matchID: newItem.matchedID!,
           rentalItemID: newItem.id,
           requesterID: newItem.requesterID,
           lenderID: resItemData["providerId"],
+          chattingID: existingMatch?.chattingID,
         );
       }
 
