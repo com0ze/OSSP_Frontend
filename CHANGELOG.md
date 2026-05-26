@@ -396,3 +396,37 @@
                     - 앱 구동 시 발생하던 FCM 기기 토큰 동기화(Connection refused) 통신 에러 완벽 해결
                 - 불필요한 테스트 UI 제거
                     - 로그인 화면(login_screen.dart)에 존재하던 개발 테스트용 임시 상단 알림 띄우기 버튼 완전 삭제               
+- # feature/api_integration
+    - ## version: 1.2.0
+        - ### commit: Mock 서버 제거 및 실제 백엔드 API 전면 연동
+            - #### author: Lee JaeWon
+            - #### date: 2026-05-26
+            - feature:
+                - Mock 서버 인터셉터 완전 제거 및 실제 API 연동
+                    - api_client.dart의 MockServerInterceptor 제거, 실제 Dio 인스턴스만 사용하도록 변경
+                    - auth_interceptor.dart의 토큰 갱신 엔드포인트(/api/v1/auth/refresh), 요청 body(refreshToken), 응답 파싱(accessToken) 실제 명세에 맞게 수정
+                    - login_manager.dart 전면 재작성: /api/v1/auth/login, /api/v1/auth/signup, /api/v1/users/me 실제 엔드포인트 연결
+                    - api_manager.dart를 ApiClient.dio 프록시로 교체하여 FCM 토큰 PATCH 요청에도 JWT 자동 포함
+                - 전체 모델에 fromApi 팩토리 메서드 추가
+                    - User.fromApi(): userId→id, nickname→name, mannerScore→score 매핑
+                    - RentalItem.fromApi(): duration(대여 시간), providerID(대여자 ID), matchedID(matchId) 필드 추가 및 API 상태값(WAITING/MATCHED/IN_USE/COMPLETED/CANCELED) 내부 enum 변환
+                    - Match.fromApi(), Chatting.fromApi()(matchId/opponentId/opponentName 필드 추가), Chat.fromApi(), Review.fromApi() 추가
+                - data_manager.dart 실제 API 전면 교체
+                    - refreshCache()를 비동기(async)로 전환, 각 캐시 타입별 실제 API 호출로 교체
+                    - Match 객체를 API 직접 조회 없이 rentalItems + chattings(_matchIdToRoomId 맵)로부터 파생 생성하도록 설계
+                    - 사용자 조회를 /api/v1/users/{userId} 개별 조회 방식으로 변경
+                    - createMatchWithChatting(): POST /api/v1/requests/{id}/accept + POST /api/v1/chats 순차 호출
+                    - cancel/handover/complete/review 등 모든 뮤테이션 메서드를 실제 API 호출로 교체
+                    - fetchChatMessages(): GET /api/v1/chats/{roomId}/messages 실제 호출로 교체
+                    - HomeNavigation 진입 시 DataManager().initCache() 호출로 초기 데이터 일괄 로드
+                - 대여 요청 화면에 대여 시간(duration) 필드 추가
+                    - rental_request_screen.dart에 대여 시간(분) 입력 필드 및 유효성 검사 추가
+                    - API 요청 body에 duration 포함
+            - fix:
+                - Android Auto Backup으로 인한 오염 토큰 복원 문제 근본 해결
+                    - android/app/src/main/res/xml/backup_rules.xml 생성 (API 31+용)
+                    - android/app/src/main/res/xml/full_backup_content.xml 생성 (API 23~30용)
+                    - AndroidManifest.xml에 dataExtractionRules, fullBackupContent 속성 추가
+                    - flutter_secure_storage(FlutterSecureStorage SharedPreferences)를 Google Drive 자동 백업 대상에서 제외
+                - item_detail_screen.dart의 createMatchWithChatting() 호출부를 async/await로 전환
+            

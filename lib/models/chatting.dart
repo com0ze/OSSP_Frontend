@@ -2,10 +2,16 @@ import 'package:open_source_software/models/chat.dart';
 
 class Chatting {
   final String id;
+  final String? matchId;
+  final String? opponentId;
+  final String? opponentName;
   final List<Chat> _chats;
 
   Chatting({
     required this.id,
+    this.matchId,
+    this.opponentId,
+    this.opponentName,
     List<Chat>? chats,
   }) : _chats = chats ?? [];
 
@@ -37,6 +43,16 @@ class Chatting {
     );
   }
 
+  // GET /api/v1/chats 응답의 각 채팅방 항목
+  factory Chatting.fromApi(Map<String, dynamic> json) {
+    return Chatting(
+      id: json['roomId'].toString(),
+      matchId: json['matchId']?.toString(),
+      opponentId: json['opponentId']?.toString(),
+      opponentName: json['opponentName'] as String?,
+    );
+  }
+
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -46,10 +62,16 @@ class Chatting {
 
   Chatting copyWith({
     String? id,
+    String? matchId,
+    String? opponentId,
+    String? opponentName,
     List<Chat>? chats,
   }) {
     return Chatting(
       id: id ?? this.id,
+      matchId: matchId ?? this.matchId,
+      opponentId: opponentId ?? this.opponentId,
+      opponentName: opponentName ?? this.opponentName,
       chats: chats ?? List.from(_chats),
     );
   }

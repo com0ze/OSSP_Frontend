@@ -361,12 +361,12 @@ class ItemDetailScreen extends StatelessWidget {
     );
   }
 
-  void _onChatPressed(
+  Future<void> _onChatPressed(
     BuildContext context,
     RentalItem currentItem,
     Match? match,
     bool isRequester,
-  ) {
+  ) async {
     if (isRequester) {
       Navigator.push(
         context,
@@ -378,10 +378,11 @@ class ItemDetailScreen extends StatelessWidget {
     } else {
       final effectiveMatch =
           match ??
-          DataManager().createMatchWithChatting(
+          await DataManager().createMatchWithChatting(
             currentItem.id,
             LoginManager().currentUserOrGuest.id,
           );
+      if (!context.mounted) return;
       Navigator.push(
         context,
         MaterialPageRoute(

@@ -45,6 +45,16 @@ class User {
     );
   }
 
+  factory User.fromApi(Map<String, dynamic> json) {
+    return User(
+      id: json['userId'].toString(),
+      name: json['nickname'] as String? ?? '',
+      email: json['email'] as String? ?? '',
+      score: (json['mannerScore'] as num?)?.toDouble() ?? 0.0,
+      currentBuilding: json['currentBuilding'] as String?,
+    );
+  }
+
   Map<String, dynamic> toJson() {
     return {
       'id': id,

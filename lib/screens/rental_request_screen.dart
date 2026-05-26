@@ -18,6 +18,7 @@ class _RentalRequestScreenState extends State<RentalRequestScreen> {
   final _titleController = TextEditingController();
   final _itemNameController = TextEditingController();
   final _priceController = TextEditingController();
+  final _durationController = TextEditingController();
   final _preferencesController = TextEditingController();
   final _descriptionController = TextEditingController();
 
@@ -53,6 +54,7 @@ class _RentalRequestScreenState extends State<RentalRequestScreen> {
     _titleController.dispose();
     _itemNameController.dispose();
     _priceController.dispose();
+    _durationController.dispose();
     _preferencesController.dispose();
     _descriptionController.dispose();
     _placeMenuController.dispose();
@@ -116,6 +118,7 @@ class _RentalRequestScreenState extends State<RentalRequestScreen> {
         product: Product(name: _itemNameController.text, category: '기타'),
         placeID: _selectedPlaceId!,
         price: int.parse(_priceController.text),
+        duration: int.parse(_durationController.text),
         description: _descriptionController.text,
         preferences: _preferencesController.text,
         requesterID: currentUser.id,
@@ -139,6 +142,7 @@ class _RentalRequestScreenState extends State<RentalRequestScreen> {
       _titleController.clear();
       _itemNameController.clear();
       _priceController.clear();
+      _durationController.clear();
       _preferencesController.clear();
       _descriptionController.clear();
       _placeMenuController.clear();
@@ -268,6 +272,23 @@ class _RentalRequestScreenState extends State<RentalRequestScreen> {
               validator: (value) {
                 if (value == null || value.isEmpty) return '금액을 입력해주세요';
                 if (int.tryParse(value) == null) return '숫자만 입력해주세요';
+                return null;
+              },
+            ),
+            const SizedBox(height: 16),
+            TextFormField(
+              controller: _durationController,
+              keyboardType: TextInputType.number,
+              decoration: const InputDecoration(
+                labelText: '대여 시간 (분)',
+                hintText: '예: 60',
+                border: OutlineInputBorder(),
+                prefixIcon: Icon(Icons.timer),
+              ),
+              validator: (value) {
+                if (value == null || value.isEmpty) return '대여 시간을 입력해주세요';
+                final n = int.tryParse(value);
+                if (n == null || n <= 0) return '1 이상의 숫자를 입력해주세요';
                 return null;
               },
             ),

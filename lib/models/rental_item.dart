@@ -9,9 +9,11 @@ class RentalItem {
   final Product product;
   final String placeID;
   final int price;
+  final int duration; // 대여 시간 (분)
   final String description;
   final String preferences;
   final String requesterID;
+  final String? providerID; // 매칭된 대여자 ID
   final DateTime createdAt;
   final String? imageUrl;
   final List<String> matchIDs;
@@ -25,9 +27,11 @@ class RentalItem {
     required this.product,
     required this.placeID,
     required this.price,
+    this.duration = 60,
     required this.description,
     required this.preferences,
     required this.requesterID,
+    this.providerID,
     required this.createdAt,
     this.imageUrl,
     this.matchIDs = const [],
@@ -43,9 +47,11 @@ class RentalItem {
       product: Product.fromJson(json['product']),
       placeID: json['placeID'],
       price: json['price'],
+      duration: json['duration'] ?? 60,
       description: json['description'],
       preferences: json['preferences'],
       requesterID: json['requesterID'],
+      providerID: json['providerID'],
       createdAt: DateTime.parse(json['createdAt']),
       imageUrl: json['imageUrl'],
       matchIDs: (json['matchIDs'] as List<dynamic>?)?.cast<String>() ?? [],
@@ -57,6 +63,38 @@ class RentalItem {
     );
   }
 
+  factory RentalItem.fromApi(Map<String, dynamic> json) {
+    final statusStr = json['status'] as String? ?? 'WAITING';
+    final RentalStatus status = switch (statusStr) {
+      'MATCHED' => RentalStatus.matchConfirmed,
+      'IN_USE' => RentalStatus.inProgress,
+      'COMPLETED' => RentalStatus.returned,
+      'CANCELED' => RentalStatus.cancelled,
+      _ => RentalStatus.pending,
+    };
+    final isMatched =
+        statusStr != 'WAITING' && statusStr != 'CANCELED';
+    final itemName = json['itemName'] as String? ?? '';
+    return RentalItem(
+      id: json['requestId'].toString(),
+      title: itemName,
+      product: Product(name: itemName, category: ''),
+      placeID: json['buildingName'] as String? ?? '',
+      price: (json['rewardAmt'] as num?)?.toInt() ?? 0,
+      duration: (json['duration'] as num?)?.toInt() ?? 60,
+      description: json['memo'] as String? ?? '',
+      preferences: '',
+      requesterID: json['requesterId']?.toString() ?? '',
+      providerID: json['providerId']?.toString(),
+      matchedID: json['matchId']?.toString(), // DataManager Match 파생에 필요
+      createdAt: json['createdAt'] != null
+          ? DateTime.parse(json['createdAt'] as String)
+          : DateTime.now(),
+      isMatched: isMatched,
+      rentalStatus: status,
+    );
+  }
+
   Map<String, dynamic> toJson() {
     return {
       'id': id,
@@ -64,9 +102,11 @@ class RentalItem {
       'product': product.toJson(),
       'placeID': placeID,
       'price': price,
+      'duration': duration,
       'description': description,
       'preferences': preferences,
       'requesterID': requesterID,
+      'providerID': providerID,
       'createdAt': createdAt.toIso8601String(),
       'imageUrl': imageUrl,
       'matchIDs': matchIDs,
@@ -81,6 +121,7 @@ class RentalItem {
     bool? isMatched,
     String? matchedID,
     bool clearMatchedID = false,
+    String? providerID,
     RentalStatus? rentalStatus,
   }) {
     return RentalItem(
@@ -89,9 +130,11 @@ class RentalItem {
       product: product,
       placeID: placeID,
       price: price,
+      duration: duration,
       description: description,
       preferences: preferences,
       requesterID: requesterID,
+      providerID: providerID ?? this.providerID,
       createdAt: createdAt,
       imageUrl: imageUrl,
       matchIDs: matchIDs ?? this.matchIDs,

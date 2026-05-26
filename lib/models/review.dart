@@ -25,6 +25,21 @@ class Review {
     );
   }
 
+  // GET /api/v1/users/me/reviews 응답의 각 리뷰 항목
+  factory Review.fromApi(Map<String, dynamic> json) {
+    final reviewerId = json['reviewerId']?.toString() ?? '';
+    final reviewerName = json['reviewerNickname'] as String? ?? '';
+    return Review(
+      id: json['reviewId'].toString(),
+      score: (json['score'] as num?)?.toInt() ?? 0,
+      reviewText: json['content'] as String? ?? '',
+      writer: User(id: reviewerId, name: reviewerName, email: ''),
+      createdAt: json['createdAt'] != null
+          ? DateTime.parse(json['createdAt'] as String)
+          : DateTime.now(),
+    );
+  }
+
   Map<String, dynamic> toJson() {
     return {
       'id': id,

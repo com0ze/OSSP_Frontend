@@ -29,6 +29,17 @@ class Match {
     );
   }
 
+  // POST /api/v1/requests/{requestId}/accept 응답
+  factory Match.fromApi(Map<String, dynamic> json, {String chattingID = ''}) {
+    return Match(
+      matchID: json['matchId'].toString(),
+      rentalItemID: json['requestId'].toString(),
+      requesterID: json['requesterId']?.toString() ?? '',
+      lenderID: json['providerId'].toString(),
+      chattingID: chattingID,
+    );
+  }
+
   Map<String, dynamic> toJson() {
     return {
       'matchID': matchID,

@@ -25,6 +25,17 @@ class Chat {
     );
   }
 
+  // GET /api/v1/chats/{roomId}/messages 응답의 각 메시지 항목
+  factory Chat.fromApi(Map<String, dynamic> json) {
+    final senderId = json['senderId'].toString();
+    return Chat(
+      id: json['messageId']?.toString() ?? senderId,
+      sendUser: User(id: senderId, name: '', email: ''),
+      chatText: json['content'] as String,
+      sendTime: DateTime.parse(json['createdAt'] as String),
+    );
+  }
+
   Map<String, dynamic> toJson() {
     return {
       'id': id,
