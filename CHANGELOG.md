@@ -396,6 +396,7 @@
                     - 앱 구동 시 발생하던 FCM 기기 토큰 동기화(Connection refused) 통신 에러 완벽 해결
                 - 불필요한 테스트 UI 제거
                     - 로그인 화면(login_screen.dart)에 존재하던 개발 테스트용 임시 상단 알림 띄우기 버튼 완전 삭제               
+
 - # feature/api_integration
     - ## version: 1.2.0
         - ### commit: Mock 서버 제거 및 실제 백엔드 API 전면 연동
