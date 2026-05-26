@@ -374,6 +374,26 @@
                 - **임시 문서 정리**
                     - `data update.md`, `data_manager_calls.md`, `data_manager_design.md`, `data_manager_reference.md` 삭제
 
+        - ### commit: 버그 수정 및 모델 보완
+            - #### author: Seo JeongHun
+            - #### date: 2026-05-26
+            - fix:
+                - **`LoginManager.updateUser()` 무한 루프 수정** (`login_manager.dart`)
+                    - `updateUser()` 내부에서 `DataManager().updateMainUser()`를 다시 호출하는 구조로 인해 `GET /api/v1/users/me`가 무한 반복 호출되던 문제 수정
+                    - `updateUser()`는 세션 내 유저 객체 교체만 담당하도록 `DataManager().updateMainUser()` 호출 제거
+
+                - **Mock 서버 타입 에러 수정** (`mock_server_interceptor.dart`)
+                    - `queryParameters` 값이 `int`로 전달될 때 `int.tryParse()`에 `String`이 아닌 `int`가 전달되어 `TypeError`로 앱이 종료되던 문제 수정
+                        - `options.queryParameters['page'] ?? '0'` → `options.queryParameters['page']?.toString() ?? '0'` (702, 703, 1045, 1046번 줄)
+                    - `as String?` 강제 캐스팅으로 인한 `_CastError` 가능성 수정
+                        - `options.queryParameters['status'] as String?` → `?.toString()` (730, 764, 765번 줄)
+
+            - feature:
+                - **`RentalItem` 모델 `requesterName` 필드 추가** (`rental_item.dart`)
+                    - `requesterName` 필드 추가 (기본값 `''`)
+                    - `fromJson`에서 `requesterNickname` / `requesterName` 키로 파싱
+                    - `copyWith`에 전파 추가
+
 
 - # feature/buildng
     - ## version: 1.1.0

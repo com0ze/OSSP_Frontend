@@ -10,6 +10,7 @@ class RentalItem {
   final int price;
   final String description; // 백에서는 memo
   final String requesterID;
+  final String requesterName;
   final DateTime createdAt;
   final int duration; // 분 단위
   final List<String> matchIDs;
@@ -24,6 +25,7 @@ class RentalItem {
     required this.price,
     required this.description,
     required this.requesterID,
+    this.requesterName = '',
     required this.createdAt,
     this.duration = 3600,
     this.matchIDs = const [],
@@ -44,6 +46,8 @@ class RentalItem {
       duration: ((json['duration'] as num?)?.toInt() ?? 3600),
       description: (json['memo'] ?? json['description'] ?? '').toString(),
       requesterID: (json['requesterId'] ?? json['requesterID'] ?? '')
+          .toString(),
+      requesterName: (json['requesterNickname'] ?? json['requesterName'] ?? '')
           .toString(),
       createdAt: json['createdAt'] != null
           ? DateTime.parse(json['createdAt'] as String)
@@ -107,6 +111,7 @@ class RentalItem {
       price: price,
       description: description,
       requesterID: requesterID,
+      requesterName: requesterName,
       createdAt: createdAt,
       duration: duration ?? this.duration,
       matchIDs: matchIDs ?? this.matchIDs,

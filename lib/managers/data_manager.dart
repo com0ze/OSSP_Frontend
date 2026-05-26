@@ -416,9 +416,6 @@ class DataManager extends ChangeNotifier {
     Chatting? chatting = _chattings[chattingId];
     if (chatting == null) return;
 
-    // 메인 유저 최신화
-    updateMainUser();
-
     try {
       // 정보를 서버로 부터 요청
       // GET /api/v1/chats/{roomId}/messages
@@ -472,9 +469,6 @@ class DataManager extends ChangeNotifier {
   // chatting_list
   // 기본 정보 X
   Future<void> chattingListScreenInitCache() async {
-    // 메인 유저 최신화
-    updateMainUser();
-
     try {
       // 정보를 서버로 부터 요청
       // GET /api/v1/chats
@@ -515,9 +509,6 @@ class DataManager extends ChangeNotifier {
   // 기본 정보로 rentalItem 클래스 보유
   // 아이디만 알아도 동작하게 만듦
   Future<void> itemDetailScreenInitCache(String itemId) async {
-    // 메인 유저 최신화
-    updateMainUser();
-
     try {
       // 정보를 서버로 부터 요청
       // GET /api/v1/requests/{requestId}
@@ -561,9 +552,6 @@ class DataManager extends ChangeNotifier {
   // 기본 정보로 rentalItem 클래스 보유(물건 상세 정보 페이지에서 넘어감)
   // 아이디만 알아도 동작하게 만듦
   Future<void> otherUserProfileScreenInitCache(String userId) async {
-    // 메인 유저 최신화
-    updateMainUser();
-
     try {
       // 정보를 서버로 부터 요청
       // GET /api/v1/users/{userId}
@@ -610,7 +598,7 @@ class DataManager extends ChangeNotifier {
   // 굳이 캐쉬 클리어로 새로고침 할 필요 없음
   Future<void> userProfileScreenInitCache() async {
     // 메인 유저 최신화
-    updateMainUser();
+    await updateMainUser();
 
     try {
       // 정보를 서버로 부터 요청
@@ -663,9 +651,6 @@ class DataManager extends ChangeNotifier {
   // rental list screen
   // 기존에 알아야하는 정보 없음
   Future<void> rentalListScreenInitCache() async {
-    // 메인 유저 최신화
-    updateMainUser();
-
     try {
       // 정보를 서버로 부터 요청
       // GET /api/v1/requests/nearby
@@ -811,7 +796,8 @@ class DataManager extends ChangeNotifier {
     if (item.isMatched && item.matchedID != null) {
       final confirmedMatch = _matches[item.matchedID!];
       if (confirmedMatch != null) {
-        final isParticipant = confirmedMatch.lenderID == userId ||
+        final isParticipant =
+            confirmedMatch.lenderID == userId ||
             confirmedMatch.requesterID == userId;
         if (!isParticipant) return RentalStatus.otherUserMatched;
       }

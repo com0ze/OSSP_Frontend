@@ -51,7 +51,6 @@ class LoginManager {
     final s = _session;
     if (s == null) return;
     _session = s.copyWithUser(user);
-    DataManager().updateMainUser();
   }
 
   Future<void> updateDutyStatus(bool isOnDuty) async {

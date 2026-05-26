@@ -23,29 +23,6 @@ class RentalItemWidgetFactory extends WidgetFactory {
 
   @override
   Widget makeWidget(BuildContext context) {
-    final dataManager = DataManager();
-    final requester = dataManager.getUser(item.requesterID);
-    if (requester == null) {
-      return const SingleChildScrollView(
-        physics: AlwaysScrollableScrollPhysics(),
-        child: SizedBox(
-          height: 400,
-          child: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Icons.inbox, size: 64, color: Colors.grey),
-                SizedBox(height: 16),
-                Text(
-                  '요청하신 물건 정보가 없습니다',
-                  style: TextStyle(fontSize: 16, color: Colors.grey),
-                ),
-              ],
-            ),
-          ),
-        ),
-      );
-    }
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: InkWell(
@@ -117,17 +94,13 @@ class RentalItemWidgetFactory extends WidgetFactory {
                   CircleAvatar(
                     radius: 12,
                     child: Text(
-                      requester.name[0],
+                      item.requesterName[0],
                       style: const TextStyle(fontSize: 12),
                     ),
                   ),
                   const SizedBox(width: 6),
-                  Text(requester.name, style: const TextStyle(fontSize: 14)),
-                  const SizedBox(width: 8),
-                  Icon(Icons.star, size: 14, color: context.starColor),
-                  const SizedBox(width: 2),
                   Text(
-                    '${requester.score}점',
+                    item.requesterName,
                     style: const TextStyle(fontSize: 14),
                   ),
                 ],

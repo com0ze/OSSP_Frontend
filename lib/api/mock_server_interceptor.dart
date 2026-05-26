@@ -699,8 +699,8 @@ class MockServerInterceptor extends Interceptor {
     // ── 5.3 내가 받은 리뷰 목록 (/users/me 보다 먼저) ─────────────────────────
 
     if (method == 'GET' && path == '/api/v1/users/me/reviews') {
-      final page = int.tryParse(options.queryParameters['page'] ?? '0') ?? 0;
-      final size = int.tryParse(options.queryParameters['size'] ?? '20') ?? 20;
+      final page = int.tryParse(options.queryParameters['page']?.toString() ?? '0') ?? 0;
+      final size = int.tryParse(options.queryParameters['size']?.toString() ?? '20') ?? 20;
       final reviews = _receivedReviewsFor(_currentUserId);
       return handler.resolve(
         Response(
@@ -727,7 +727,7 @@ class MockServerInterceptor extends Interceptor {
     // ── 3.2 대여 요청 전체 목록 ───────────────────────────────────────────────
 
     if (method == 'GET' && path == '/api/v1/requests') {
-      final statusParam = options.queryParameters['status'] as String?;
+      final statusParam = options.queryParameters['status']?.toString();
       Iterable<RentalItem> items = _rentalItems.values;
       if (statusParam != null) {
         final target = _parseStatusParam(statusParam);
@@ -761,8 +761,8 @@ class MockServerInterceptor extends Interceptor {
     // ── 3.3 내 대여 요청 목록 ─────────────────────────────────────────────────
 
     if (method == 'GET' && path == '/api/v1/requests/me') {
-      final statusParam = options.queryParameters['status'] as String?;
-      final typeParam = options.queryParameters['type'] as String?;
+      final statusParam = options.queryParameters['status']?.toString();
+      final typeParam = options.queryParameters['type']?.toString();
 
       bool Function(RentalItem) filter;
       if (statusParam != null) {
@@ -1042,8 +1042,8 @@ class MockServerInterceptor extends Interceptor {
         path.startsWith('/api/v1/users/') &&
         path.endsWith('/reviews')) {
       final userId = _extractSegment(path, 4);
-      final page = int.tryParse(options.queryParameters['page'] ?? '0') ?? 0;
-      final size = int.tryParse(options.queryParameters['size'] ?? '20') ?? 20;
+      final page = int.tryParse(options.queryParameters['page']?.toString() ?? '0') ?? 0;
+      final size = int.tryParse(options.queryParameters['size']?.toString() ?? '20') ?? 20;
       if (_users[userId] == null) {
         return handler.reject(
           DioException(
