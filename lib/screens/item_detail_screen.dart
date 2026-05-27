@@ -18,10 +18,23 @@ class ItemDetailScreen extends StatefulWidget {
 }
 
 class _ItemDetailScreenState extends State<ItemDetailScreen> {
+  bool _isLoading = true;
+
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await DataManager().itemDetailScreenInitCache(widget.item.id);
+      if (mounted) setState(() => _isLoading = false);
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     DataManager dataManager = DataManager();
-    return Scaffold(
+    return Stack(
+      children: [
+        Scaffold(
       appBar: AppBar(title: const Text('물건 상세정보')),
       body: RefreshIndicator(
         onRefresh: () async {
@@ -34,7 +47,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
           listenable: dataManager,
           builder: (context, child) {
             final currentItem =
-                dataManager.rentalItems[widget.item.id] ?? widget.item;
+                dataManager.getCachedRentalItem(widget.item.id) ?? widget.item;
             final requester = dataManager.getUser(currentItem.requesterID);
             // 유저 정보 부재로 인한 이상 물건
             if (requester == null) {
@@ -280,13 +293,11 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
         builder: (context, _) {
           final currentUser = LoginManager().currentUser;
           final currentItem =
-              dataManager.rentalItems[widget.item.id] ?? widget.item;
+              dataManager.getCachedRentalItem(widget.item.id) ?? widget.item;
           final isRequester = currentItem.requesterID == currentUser.id;
 
           if (isRequester) {
-            final confirmedMatch = currentItem.matchedID != null
-                ? dataManager.matches[currentItem.matchedID!]
-                : null;
+            final confirmedMatch = dataManager.getMatch(currentItem.matchedID);
             // 아이템이 실제로 대여 전 상태일 때만 취소 버튼 표시
             final isPreRental =
                 currentItem.rentalStatus == RentalStatus.pending ||
@@ -319,6 +330,12 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
           }
         },
       ),
+        ),
+        if (_isLoading) ...[
+          const ModalBarrier(dismissible: false, color: Colors.black26),
+          const Center(child: CircularProgressIndicator()),
+        ],
+      ],
     );
   }
 
@@ -336,20 +353,16 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            if (showChat)
+            if (showChat && currentItem.rentalStatus != RentalStatus.cancelled)
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () =>
-                      // 취소된 경우 채팅하기 버튼 비활성화
-                      currentItem.rentalStatus == RentalStatus.cancelled
-                      ? null
-                      : _onChatPressed(
-                          context,
-                          currentItem,
-                          match,
-                          isRequester,
-                        ),
+                  onPressed: () => _onChatPressed(
+                    context,
+                    currentItem,
+                    match,
+                    isRequester,
+                  ),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: context.primaryColor,
                     foregroundColor: context.onPrimaryColor,
@@ -402,7 +415,6 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
     Match? match,
     bool isRequester,
   ) async {
-    print("------------");
     if (isRequester) {
       Navigator.push(
         context,
@@ -421,7 +433,6 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
           currentItem.id,
         );
       }
-      print(effectiveMatch);
       if (effectiveMatch == null) return;
       if (!context.mounted) return;
       Navigator.push(

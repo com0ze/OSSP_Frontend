@@ -31,6 +31,7 @@ class _ChatScreenState extends State<ChatScreen> {
   final LoginManager loginManager = LoginManager();
   final DataManager dataManager = DataManager();
   bool _isReadingPastMessages = false;
+  bool _isLoading = true;
   late RentalStatus _currentStatus;
   late User _otherUser;
   late Chatting chatting;
@@ -56,6 +57,7 @@ class _ChatScreenState extends State<ChatScreen> {
 
       if (mounted) {
         setState(() {
+          _isLoading = false;
           _otherUser = dataManager.getUser(otherUserId) ?? _otherUser;
           chatting = dataManager.getChatting(widget.match.chattingID) ?? chatting;
           _messages.clear();
@@ -76,7 +78,8 @@ class _ChatScreenState extends State<ChatScreen> {
         _releasePendingMessages();
       }
     });
-    chatting = DataManager().getChatting(widget.match.chattingID)!;
+    chatting = DataManager().getChatting(widget.match.chattingID) ??
+        Chatting(id: widget.match.chattingID ?? '');
 
     _loadMessages();
     dataManager.addListener(_onDataChanged);
@@ -304,7 +307,9 @@ class _ChatScreenState extends State<ChatScreen> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
+    return Stack(
+      children: [
+        Scaffold(
       appBar: AppBar(
         backgroundColor: context.primaryColor,
         foregroundColor: context.onPrimaryColor,
@@ -348,7 +353,7 @@ class _ChatScreenState extends State<ChatScreen> {
         builder: (context, child) {
           // 아이템이 다른 매치로 확정된 경우 버튼 비활성화
           final latestItem =
-              dataManager.rentalItems[widget.rentalItem.id] ??
+              dataManager.getCachedRentalItem(widget.rentalItem.id) ??
               widget.rentalItem;
           final isActiveParticipant =
               !latestItem.isMatched ||
@@ -530,6 +535,12 @@ class _ChatScreenState extends State<ChatScreen> {
           );
         },
       ),
+        ),
+        if (_isLoading) ...[
+          const ModalBarrier(dismissible: false, color: Colors.black26),
+          const Center(child: CircularProgressIndicator()),
+        ],
+      ],
     );
   }
 

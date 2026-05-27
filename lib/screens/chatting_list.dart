@@ -33,7 +33,7 @@ class _ChattingListScreenState extends State<ChattingListScreen> {
     return ListenableBuilder(
       listenable: dataManager,
       builder: (context, child) {
-        final chattings = dataManager.chattings.values.toList()
+        final chattings = dataManager.getAllChattings()
           ..sort((a, b) {
             final aTime = a.getLastMessageTime();
             final bTime = b.getLastMessageTime();
@@ -84,9 +84,9 @@ class _ChattingListScreenState extends State<ChattingListScreen> {
                     itemCount: chattings.length,
                     itemBuilder: (context, index) {
                       final chatting = chattings[index];
-                      final match = dataManager.matches[chatting.matchId];
+                      final match = dataManager.getMatch(chatting.matchId);
                       final rentalItem =
-                          dataManager.rentalItems[chatting.requestId];
+                          dataManager.getCachedRentalItem(chatting.requestId);
                       return ChattingRoomWidgetFactory(
                         productName: rentalItem?.product.name ?? "unknown",
                         status:

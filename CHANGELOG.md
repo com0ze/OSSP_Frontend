@@ -483,6 +483,34 @@
             - #### date: 2026-05-23
             - feature:
                 - 미구현인 채팅 알림 설정 기능을 명확히 표시하여 알림 토글 기능을 구조화함
+                
+        - ### commit: DataManager 리팩토링 및 UI 안정성 개선
+            - #### author: Seo JeongHun
+            - #### date: 2026-05-27
+            - fix:
+                - **DataManager 공개 getter 5개 제거** (`data_manager.dart`)
+                    - `users`, `reviews`, `chattings`, `matches`, `rentalItems` public getter 삭제
+                    - 각 화면에서 직접 맵에 접근하던 코드를 `getCachedRentalItem`, `getAllChattings`, `getMatch`, `getAvailableRentalItems`, `getBorrowedItems`, `getLentItems` 등 독립 함수로 교체
+                - **마이페이지 상대방 이름 항상 "매칭 대기 중" 표시 버그 수정** (`user_profile_screen.dart`)
+                    - `_users` 캐시 미적재로 인해 모든 거래에서 이름이 표시되지 않던 문제 수정
+                    - 빌린 물건: `chatting.opponentName` 사용, 빌려준 물건: `item.requesterName` 사용으로 캐시 의존 제거
+                    - `userProfileScreenInitCache`에서 `chattingListScreenInitCache`를 병렬 실행하도록 수정
+                - **취소된 거래 채팅하기 버튼 숨김** (`item_detail_screen.dart`)
+                    - 기존 비활성화(disabled) 처리에서 버튼 자체를 숨기도록 변경
+                - **chat_screen Chatting 강제 unwrap 크래시 수정** (`chat_screen.dart`)
+                    - `initState`에서 `getChatting()!` 강제 unwrap → 캐시 미적재 시 빈 `Chatting` 객체 fallback으로 교체
+            - feature:
+                - **물건 상세정보·채팅 화면 로딩 오버레이 추가** (`item_detail_screen.dart`, `chat_screen.dart`)
+                    - 화면 진입 시 서버 응답 대기 중 모든 상호작용을 차단하는 반투명 오버레이(`ModalBarrier` + `CircularProgressIndicator`) 추가
+                    - init 완료 후 오버레이 해제
+                - **취소 시나리오 테스트 데이터 추가** (`mock_server_interceptor.dart`)
+                    - 신규 유저 2명(u5 정수현, u6 홍길동) 추가
+                    - 매치 후 취소된 빌린 물건(i_bc1), 매치 후 취소된 빌려준 물건(i_lc1), 매치 전 취소된 빌린 물건(i_bc2) 추가
+                    - 취소된 매치(m_bc1, m_lc1)와 채팅(c_bc1, c_lc1) 데이터 유지
+                - **테스트 데이터 리뷰 점수 정수화** (`mock_server_interceptor.dart`)
+                    - 리뷰 점수를 1~5 정수 값으로 통일 (4.5 → 4.0)
+                    - 유저 점수를 수신한 리뷰 평균과 일치하도록 수정 (u0: 4.75 → 4.5)
+
 
 - # feature/buildng
     - ## version: 1.1.0

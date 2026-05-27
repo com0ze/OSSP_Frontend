@@ -367,12 +367,6 @@ class DataManager extends ChangeNotifier {
   final Map<String, Match> _matches = {};
   final Map<String, RentalItem> _rentalItems = {};
 
-  Map<String, User> get users => _users;
-  Map<String, Review> get reviews => _reviews;
-  Map<String, Chatting> get chattings => _chattings;
-  Map<String, Match> get matches => _matches;
-  Map<String, RentalItem> get rentalItems => _rentalItems;
-
   // 다른 화면에 진입 시 그 전에 저장했던 임시 정보 파기
   void clearCache() {
     _users.clear();
@@ -635,8 +629,11 @@ class DataManager extends ChangeNotifier {
   // 기존에 알아야하는 정보 없음
   // 굳이 캐쉬 클리어로 새로고침 할 필요 없음
   Future<void> userProfileScreenInitCache() async {
-    // 메인 유저 최신화
-    await updateMainUser();
+    // 메인 유저 최신화 + 채팅/매치 데이터 병렬 로드
+    await Future.wait([
+      updateMainUser(),
+      chattingListScreenInitCache(),
+    ]);
 
     try {
       // 정보를 서버로 부터 요청
@@ -761,6 +758,32 @@ class DataManager extends ChangeNotifier {
   User? getUser(String? userId) {
     if (userId == null) return null;
     return _users[userId];
+  }
+
+  RentalItem? getCachedRentalItem(String? id) {
+    if (id == null) return null;
+    return _rentalItems[id];
+  }
+
+  List<Chatting> getAllChattings() => _chattings.values.toList();
+
+  // TODO: 조건에 위치 조건 추가하기
+  List<RentalItem> getAvailableRentalItems(String currentUserId) => _rentalItems
+      .values
+      .where((i) => !i.isMatched && i.requesterID != currentUserId)
+      .toList();
+
+  List<RentalItem> getBorrowedItems(String userId) =>
+      _rentalItems.values.where((i) => i.requesterID == userId).toList();
+
+  List<RentalItem> getLentItems(String userId) {
+    final lentItemIds = _matches.values
+        .where((m) => m.lenderID == userId)
+        .map((m) => m.rentalItemID)
+        .toSet();
+    return _rentalItems.values
+        .where((i) => lentItemIds.contains(i.id))
+        .toList();
   }
 
   Future<Match?> createMatchWithChatting(String itemId) async {

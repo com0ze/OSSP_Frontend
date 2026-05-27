@@ -29,47 +29,61 @@ class MockServerInterceptor extends Interceptor {
 
   final Map<String, User> _users = {
     'guest': User(id: 'guest', name: 'Guest'),
-    'u0': User(id: 'u0', name: '김샘플', score: 4.75, rentalCount: 4),
+    'u0': User(id: 'u0', name: '김샘플', score: 4.5, rentalCount: 4),
     'u1': User(id: 'u1', name: '김철수', score: 4.2, rentalCount: 3),
     'u2': User(id: 'u2', name: '이영희', score: 4.0, rentalCount: 2),
     'u3': User(id: 'u3', name: '박민수', score: 5.0, rentalCount: 5),
     'u4': User(id: 'u4', name: '최유진', score: 3.9, rentalCount: 1),
+    'u5': User(id: 'u5', name: '정수현', score: 4.1, rentalCount: 2),
+    'u6': User(id: 'u6', name: '홍길동', score: 3.7, rentalCount: 1),
   };
 
-  // u0이 받은 리뷰: rev_b4_by_u3(4.5), rev_l2_by_u2(5.0) → avg=4.75
-  // u3이 받은 리뷰: rev_b4_by_u0(5.0) → score=5.0
-  // u2이 받은 리뷰: rev_l2_by_u0(4.0) → score=4.0
+  // u0이 받은 리뷰: rev_b4_by_u3(4), rev_l2_by_u2(5) → avg=4.5
+  // u3이 받은 리뷰: rev_b4_by_u0(5) → score=5.0
+  // u2이 받은 리뷰: rev_l2_by_u0(4) → score=4.0
   final Map<String, Review> _reviews = {
     // i_b4 대여 완료 후 양방향 리뷰 (u0↔u3, 자전거)
-    'rev_b4_by_u0': Review(
-      id: 'rev_b4_by_u0',
-      score: 5.0,
-      reviewText: '정확한 시간에 반납해 주셨어요. 다음에도 이용할게요!',
-      writerId: 'u0',
-      createdAt: DateTime.now().subtract(const Duration(days: 3)),
-    )..revieweeId = 'u3'..matchId = 'm_b4',
-    'rev_b4_by_u3': Review(
-      id: 'rev_b4_by_u3',
-      score: 4.5,
-      reviewText: '물건을 소중히 다뤄주셨습니다. 깨끗하게 사용해 주셔서 감사해요.',
-      writerId: 'u3',
-      createdAt: DateTime.now().subtract(const Duration(days: 3)),
-    )..revieweeId = 'u0'..matchId = 'm_b4',
+    'rev_b4_by_u0':
+        Review(
+            id: 'rev_b4_by_u0',
+            score: 5.0,
+            reviewText: '정확한 시간에 반납해 주셨어요. 다음에도 이용할게요!',
+            writerId: 'u0',
+            createdAt: DateTime.now().subtract(const Duration(days: 3)),
+          )
+          ..revieweeId = 'u3'
+          ..matchId = 'm_b4',
+    'rev_b4_by_u3':
+        Review(
+            id: 'rev_b4_by_u3',
+            score: 4.0,
+            reviewText: '물건을 소중히 다뤄주셨습니다. 깨끗하게 사용해 주셔서 감사해요.',
+            writerId: 'u3',
+            createdAt: DateTime.now().subtract(const Duration(days: 3)),
+          )
+          ..revieweeId = 'u0'
+          ..matchId = 'm_b4',
     // i_l2 대여 완료 후 양방향 리뷰 (u0↔u2, 사다리)
-    'rev_l2_by_u0': Review(
-      id: 'rev_l2_by_u0',
-      score: 4.0,
-      reviewText: '약속 시간을 잘 지켜주셨고 물건도 깨끗하게 반납해 주셨어요.',
-      writerId: 'u0',
-      createdAt: DateTime.now().subtract(const Duration(days: 7)),
-    )..revieweeId = 'u2'..matchId = 'm_l2',
-    'rev_l2_by_u2': Review(
-      id: 'rev_l2_by_u2',
-      score: 5.0,
-      reviewText: '빌려주신 분이 매우 친절하셨고 사다리 상태도 좋았습니다.',
-      writerId: 'u2',
-      createdAt: DateTime.now().subtract(const Duration(days: 7)),
-    )..revieweeId = 'u0'..matchId = 'm_l2',
+    'rev_l2_by_u0':
+        Review(
+            id: 'rev_l2_by_u0',
+            score: 4.0,
+            reviewText: '약속 시간을 잘 지켜주셨고 물건도 깨끗하게 반납해 주셨어요.',
+            writerId: 'u0',
+            createdAt: DateTime.now().subtract(const Duration(days: 7)),
+          )
+          ..revieweeId = 'u2'
+          ..matchId = 'm_l2',
+    'rev_l2_by_u2':
+        Review(
+            id: 'rev_l2_by_u2',
+            score: 5.0,
+            reviewText: '빌려주신 분이 매우 친절하셨고 사다리 상태도 좋았습니다.',
+            writerId: 'u2',
+            createdAt: DateTime.now().subtract(const Duration(days: 7)),
+          )
+          ..revieweeId = 'u0'
+          ..matchId = 'm_l2',
   };
 
   final Map<String, Chatting> _chattings = {
@@ -85,17 +99,23 @@ class MockServerInterceptor extends Interceptor {
         Chat(
           senderId: 'u0',
           content: '원흥관 앞에서 만나도 괜찮을까요?',
-          createdAt: DateTime.now().subtract(const Duration(hours: 4, minutes: 50)),
+          createdAt: DateTime.now().subtract(
+            const Duration(hours: 4, minutes: 50),
+          ),
         ),
         Chat(
           senderId: 'u1',
           content: '네 좋아요! 오늘 오후 3시 어떠세요?',
-          createdAt: DateTime.now().subtract(const Duration(hours: 4, minutes: 45)),
+          createdAt: DateTime.now().subtract(
+            const Duration(hours: 4, minutes: 45),
+          ),
         ),
         Chat(
           senderId: 'u0',
           content: '알겠습니다. 그 때 뵐게요!',
-          createdAt: DateTime.now().subtract(const Duration(hours: 4, minutes: 40)),
+          createdAt: DateTime.now().subtract(
+            const Duration(hours: 4, minutes: 40),
+          ),
         ),
       ],
     ),
@@ -132,7 +152,9 @@ class MockServerInterceptor extends Interceptor {
         Chat(
           senderId: 'u0',
           content: '감사합니다. 조심히 사용할게요.',
-          createdAt: DateTime.now().subtract(const Duration(days: 4, hours: 23, minutes: 50)),
+          createdAt: DateTime.now().subtract(
+            const Duration(days: 4, hours: 23, minutes: 50),
+          ),
         ),
         Chat(
           senderId: 'u3',
@@ -158,7 +180,9 @@ class MockServerInterceptor extends Interceptor {
         Chat(
           senderId: 'u0',
           content: '네 감사합니다!',
-          createdAt: DateTime.now().subtract(const Duration(days: 7, hours: 23, minutes: 30)),
+          createdAt: DateTime.now().subtract(
+            const Duration(days: 7, hours: 23, minutes: 30),
+          ),
         ),
         Chat(
           senderId: 'u4',
@@ -184,7 +208,9 @@ class MockServerInterceptor extends Interceptor {
         Chat(
           senderId: 'u1',
           content: '알겠습니다 감사해요!',
-          createdAt: DateTime.now().subtract(const Duration(days: 1, hours: 3, minutes: 50)),
+          createdAt: DateTime.now().subtract(
+            const Duration(days: 1, hours: 3, minutes: 50),
+          ),
         ),
       ],
     ),
@@ -201,6 +227,53 @@ class MockServerInterceptor extends Interceptor {
           senderId: 'u0',
           content: '소중히 다뤄주셔서 감사해요!',
           createdAt: DateTime.now().subtract(const Duration(days: 7, hours: 5)),
+        ),
+      ],
+    ),
+    // i_bc1: u0이 u5에게 킥보드 대여 신청 후 매치 취소
+    'c_bc1': Chatting(
+      id: 'c_bc1',
+      chats: [
+        Chat(
+          senderId: 'u5',
+          content: '킥보드 대여 수락했습니다!',
+          createdAt: DateTime.now().subtract(const Duration(days: 4, hours: 3)),
+        ),
+        Chat(
+          senderId: 'u0',
+          content: '감사합니다. 그런데 사정이 생겨서 취소해야 할 것 같아요.',
+          createdAt: DateTime.now().subtract(const Duration(days: 4, hours: 2)),
+        ),
+        Chat(
+          senderId: 'u5',
+          content: '아 그렇군요, 괜찮습니다!',
+          createdAt: DateTime.now().subtract(const Duration(days: 4, hours: 1)),
+        ),
+      ],
+    ),
+    // i_lc1: u6이 u0에게 텀블러 대여 신청 후 매치 취소
+    'c_lc1': Chatting(
+      id: 'c_lc1',
+      chats: [
+        Chat(
+          senderId: 'u6',
+          content: '텀블러 빌릴 수 있을까요?',
+          createdAt: DateTime.now().subtract(const Duration(days: 6, hours: 5)),
+        ),
+        Chat(
+          senderId: 'u0',
+          content: '네, 대여 수락했습니다!',
+          createdAt: DateTime.now().subtract(const Duration(days: 6, hours: 4)),
+        ),
+        Chat(
+          senderId: 'u6',
+          content: '죄송한데 갑자기 사정이 생겨서 취소해도 될까요?',
+          createdAt: DateTime.now().subtract(const Duration(days: 6, hours: 2)),
+        ),
+        Chat(
+          senderId: 'u0',
+          content: '네, 괜찮아요!',
+          createdAt: DateTime.now().subtract(const Duration(days: 6, hours: 1)),
         ),
       ],
     ),
@@ -250,6 +323,21 @@ class MockServerInterceptor extends Interceptor {
       requesterID: 'u2',
       lenderID: 'u0',
       chattingID: 'c_l2',
+    ),
+    // 취소된 매치 (매치 후 취소)
+    'm_bc1': const Match(
+      matchID: 'm_bc1',
+      rentalItemID: 'i_bc1',
+      requesterID: 'u0',
+      lenderID: 'u5',
+      chattingID: 'c_bc1',
+    ),
+    'm_lc1': const Match(
+      matchID: 'm_lc1',
+      rentalItemID: 'i_lc1',
+      requesterID: 'u6',
+      lenderID: 'u0',
+      chattingID: 'c_lc1',
     ),
   };
 
@@ -349,6 +437,46 @@ class MockServerInterceptor extends Interceptor {
       isMatched: true,
       matchedID: 'm_l2',
       rentalStatus: RentalStatus.returned,
+    ),
+    // ── 취소된 거래 ────────────────────────────────────────────────────────────
+    // 매치 후 취소 (u0 빌린 물건, u5가 대여자)
+    'i_bc1': RentalItem(
+      id: 'i_bc1',
+      product: Product(name: '킥보드', category: '이동수단'),
+      placeID: '신공학관',
+      price: 5000,
+      description: '캠퍼스 내 이동용으로 반나절 필요합니다',
+      requesterID: 'u0',
+      createdAt: DateTime.now().subtract(const Duration(days: 4, hours: 4)),
+      matchIDs: ['m_bc1'],
+      isMatched: false,
+      rentalStatus: RentalStatus.cancelled,
+    ),
+    // 매치 후 취소 (u6 빌린 물건, u0이 대여자)
+    'i_lc1': RentalItem(
+      id: 'i_lc1',
+      product: Product(name: '텀블러', category: '생활용품'),
+      placeID: '원흥관',
+      price: 2000,
+      description: '하루 동안 빌리고 싶습니다',
+      requesterID: 'u6',
+      requesterName: '홍길동',
+      createdAt: DateTime.now().subtract(const Duration(days: 6, hours: 6)),
+      matchIDs: ['m_lc1'],
+      isMatched: false,
+      rentalStatus: RentalStatus.cancelled,
+    ),
+    // 매치 전 취소 (u0 빌린 물건, 대여자 없음)
+    'i_bc2': RentalItem(
+      id: 'i_bc2',
+      product: Product(name: '우산', category: '생활용품'),
+      placeID: '만해광장',
+      price: 1000,
+      description: '비가 갑자기 와서 우산이 필요합니다',
+      requesterID: 'u0',
+      createdAt: DateTime.now().subtract(const Duration(days: 2, hours: 6)),
+      isMatched: false,
+      rentalStatus: RentalStatus.cancelled,
     ),
     // ── 주변 대여 요청 (nearby, u0이 아닌 사용자들) ─────────────────────────
     'i_n1': RentalItem(
@@ -481,13 +609,16 @@ class MockServerInterceptor extends Interceptor {
   }) {
     final match = _matches[matchId];
     final reviewId = 'review_${matchId}_$revieweeId';
-    _reviews[reviewId] = Review(
-      id: reviewId,
-      score: score,
-      reviewText: comments,
-      writerId: reviewerId,
-      createdAt: DateTime.now(),
-    )..revieweeId = revieweeId..matchId = matchId;
+    _reviews[reviewId] =
+        Review(
+            id: reviewId,
+            score: score,
+            reviewText: comments,
+            writerId: reviewerId,
+            createdAt: DateTime.now(),
+          )
+          ..revieweeId = revieweeId
+          ..matchId = matchId;
     if (match != null) {
       final item = _rentalItems[match.rentalItemID];
       if (item != null) {
@@ -537,11 +668,13 @@ class MockServerInterceptor extends Interceptor {
   }
 
   Map<String, dynamic> _rentalItemToApiJson(RentalItem item) {
-    final hasMatch = item.rentalStatus == RentalStatus.matchConfirmed ||
+    final hasMatch =
+        item.rentalStatus == RentalStatus.matchConfirmed ||
         item.rentalStatus == RentalStatus.inProgress ||
         item.rentalStatus == RentalStatus.returned;
-    final match =
-        hasMatch && item.matchedID != null ? _matches[item.matchedID] : null;
+    final match = hasMatch && item.matchedID != null
+        ? _matches[item.matchedID]
+        : null;
     return {
       'requestId': item.id,
       'itemName': item.product.name,
@@ -638,7 +771,7 @@ class MockServerInterceptor extends Interceptor {
     RequestOptions options,
     RequestInterceptorHandler handler,
   ) async {
-    await Future.delayed(const Duration(milliseconds: 50));
+    await Future.delayed(const Duration(milliseconds: 10));
 
     final path = options.path;
     final method = options.method;
@@ -703,8 +836,11 @@ class MockServerInterceptor extends Interceptor {
     // ── 5.3 내가 받은 리뷰 목록 (/users/me 보다 먼저) ─────────────────────────
 
     if (method == 'GET' && path == '/api/v1/users/me/reviews') {
-      final page = int.tryParse(options.queryParameters['page']?.toString() ?? '0') ?? 0;
-      final size = int.tryParse(options.queryParameters['size']?.toString() ?? '20') ?? 20;
+      final page =
+          int.tryParse(options.queryParameters['page']?.toString() ?? '0') ?? 0;
+      final size =
+          int.tryParse(options.queryParameters['size']?.toString() ?? '20') ??
+          20;
       final reviews = _receivedReviewsFor(_currentUserId);
       return handler.resolve(
         Response(
@@ -954,8 +1090,7 @@ class MockServerInterceptor extends Interceptor {
             ? match.requesterID
             : match.lenderID;
         final opponent = _users[opponentId];
-        final lastChat =
-            chatting.chats.isNotEmpty ? chatting.chats.last : null;
+        final lastChat = chatting.chats.isNotEmpty ? chatting.chats.last : null;
         result.add({
           'roomId': match.chattingID,
           'matchId': match.matchID,
@@ -963,7 +1098,8 @@ class MockServerInterceptor extends Interceptor {
           'opponentId': opponentId,
           'opponentName': opponent?.name ?? '알 수 없음',
           'lastMessage': lastChat?.content,
-          'updatedAt': lastChat?.createdAt.toIso8601String() ??
+          'updatedAt':
+              lastChat?.createdAt.toIso8601String() ??
               DateTime.now().toIso8601String(),
         });
       }
@@ -1046,8 +1182,11 @@ class MockServerInterceptor extends Interceptor {
         path.startsWith('/api/v1/users/') &&
         path.endsWith('/reviews')) {
       final userId = _extractSegment(path, 4);
-      final page = int.tryParse(options.queryParameters['page']?.toString() ?? '0') ?? 0;
-      final size = int.tryParse(options.queryParameters['size']?.toString() ?? '20') ?? 20;
+      final page =
+          int.tryParse(options.queryParameters['page']?.toString() ?? '0') ?? 0;
+      final size =
+          int.tryParse(options.queryParameters['size']?.toString() ?? '20') ??
+          20;
       if (_users[userId] == null) {
         return handler.reject(
           DioException(

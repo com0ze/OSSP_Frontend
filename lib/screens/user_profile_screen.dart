@@ -4,7 +4,6 @@ import '/extensions/theme_extension.dart';
 import '/managers/data_manager.dart';
 import '/managers/login_manager.dart';
 import '/models/rental_item.dart';
-import '/models/user.dart';
 import '/screens/item_detail_screen.dart';
 import '/screens/lender_profile_screen.dart';
 import '/screens/setting_screen.dart';
@@ -54,17 +53,8 @@ class _UserProfileScreenState extends State<UserProfileScreen>
         final freshUser =
             dataManager.getUser(_currentUserId) ?? loginManager.currentUser;
 
-        final borrowedItems = dataManager.rentalItems.values
-            .where((i) => i.requesterID == freshUser.id)
-            .toList();
-
-        final lentItemIds = dataManager.matches.values
-            .where((m) => m.lenderID == freshUser.id)
-            .map((m) => m.rentalItemID)
-            .toSet();
-        final lentItems = dataManager.rentalItems.values
-            .where((i) => lentItemIds.contains(i.id))
-            .toList();
+        final borrowedItems = dataManager.getBorrowedItems(freshUser.id);
+        final lentItems = dataManager.getLentItems(freshUser.id);
 
         return Scaffold(
           appBar: AppBar(
@@ -191,26 +181,27 @@ class _UserProfileScreenState extends State<UserProfileScreen>
       itemBuilder: (context, index) {
         final item = items[index];
 
-        final User? otherUser;
+        final String? otherName;
         if (isBorrowed) {
-          final confirmedMatch = item.matchedID != null
-              ? dataManager.matches[item.matchedID!]
-              : null;
-          otherUser = dataManager.getUser(confirmedMatch?.lenderID);
+          final chatting = dataManager
+              .getAllChattings()
+              .where((c) => c.requestId == item.id)
+              .firstOrNull;
+          otherName = chatting?.opponentName;
         } else {
-          otherUser = dataManager.getUser(item.requesterID);
+          otherName = item.requesterName.isNotEmpty ? item.requesterName : null;
         }
 
         final status = dataManager.getStatusForUserOnItem(
           item.id,
           _currentUserId,
         );
-        return _buildItemCard(item, otherUser, status);
+        return _buildItemCard(item, otherName, status);
       },
     );
   }
 
-  Widget _buildItemCard(RentalItem item, User? otherUser, RentalStatus status) {
+  Widget _buildItemCard(RentalItem item, String? otherName, RentalStatus status) {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: InkWell(
@@ -267,16 +258,16 @@ class _UserProfileScreenState extends State<UserProfileScreen>
               const SizedBox(height: 8),
               Row(
                 children: [
-                  if (otherUser != null) ...[
+                  if (otherName != null) ...[
                     CircleAvatar(
                       radius: 12,
                       child: Text(
-                        otherUser.name[0],
+                        otherName[0],
                         style: const TextStyle(fontSize: 12),
                       ),
                     ),
                     const SizedBox(width: 6),
-                    Text(otherUser.name),
+                    Text(otherName),
                   ] else
                     Text(
                       '매칭 대기 중',

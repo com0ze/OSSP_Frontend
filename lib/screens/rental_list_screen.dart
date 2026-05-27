@@ -34,13 +34,7 @@ class _RentalListScreenState extends State<RentalListScreen> {
       listenable: dataManager,
       builder: (context, child) {
         final currentUser = loginManager.currentUser;
-        // 데이터 필터링 안 해도 이미 원하는 데이터 만 있는 상황이나
-        // 혹시 모를 오류 방지를 위해서 남겨놓음
-        final rentalItems = dataManager.rentalItems.values
-            .where(
-              (item) => !item.isMatched && item.requesterID != currentUser.id,
-            )
-            .toList();
+        final rentalItems = dataManager.getAvailableRentalItems(currentUser.id);
         return Scaffold(
           appBar: AppBar(
             title: const Text('대여 가능한 물건'),
