@@ -11,7 +11,7 @@ class SettingScreen extends StatefulWidget {
 }
 
 class _SettingScreenState extends State<SettingScreen> {
-  bool _notificationsEnabled = false;
+  bool _chatNotificationsEnabled = false;
   late bool _isOnDuty;
 
   @override
@@ -70,12 +70,12 @@ class _SettingScreenState extends State<SettingScreen> {
               Icons.notifications_outlined,
               color: context.primaryColor,
             ),
-            title: const Text('알림 설정'),
-            subtitle: const Text('앱 알림을 켜거나 끕니다.'),
+            title: const Text('채팅 알림 설정'),
+            subtitle: const Text('채팅 알림을 켜거나 끕니다.'),
             trailing: Switch(
-              value: _notificationsEnabled,
+              value: _chatNotificationsEnabled,
               onChanged: (value) =>
-                  setState(() => _notificationsEnabled = value),
+                  setState(() => _chatNotificationsEnabled = value),
             ),
           ),
           const Divider(),
@@ -83,10 +83,7 @@ class _SettingScreenState extends State<SettingScreen> {
             leading: Icon(Icons.work_outline, color: context.primaryColor),
             title: const Text('당직 설정'),
             subtitle: const Text('당직 중일 때 주변 대여 요청 알림을 받습니다.'),
-            trailing: Switch(
-              value: _isOnDuty,
-              onChanged: _toggleDuty,
-            ),
+            trailing: Switch(value: _isOnDuty, onChanged: _toggleDuty),
           ),
         ],
       ),

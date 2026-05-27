@@ -477,6 +477,13 @@
                     - 요청자는 `confirmed != null`일 때만 버튼이 표시되므로 pending 비활성화 조건이 불필요
                     - `cancelled` 상태일 때만 비활성화하도록 변경
 
+    - ## version: 1.2.0
+        - ### commit: 알림 설정과 당직 설정 분리
+            - #### author: Seo JeongHun
+            - #### date: 2026-05-23
+            - feature:
+                - 미구현인 채팅 알림 설정 기능을 명확히 표시하여 알림 토글 기능을 구조화함
+
 - # feature/buildng
     - ## version: 1.1.0
         - ### commit: rental_item이 place사용하도록 구조 변경
