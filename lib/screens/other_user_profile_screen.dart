@@ -34,7 +34,7 @@ class _OtherUserProfileScreenState extends State<OtherUserProfileScreen> {
       listenable: dataManager,
       builder: (context, _) {
         // 캐시에서 최신 유저 정보 조회
-        final freshUser = dataManager.getUser(widget.user.id)!;
+        final freshUser = dataManager.getUser(widget.user.id) ?? widget.user;
         final reviews = DataManager().getUserReceivedReview(widget.user.id);
 
         return Scaffold(

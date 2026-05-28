@@ -20,12 +20,6 @@ class DataManager extends ChangeNotifier {
   // 앱 시작 시 캐시는 비어 있음
   DataManager._internal();
 
-  late final Future<void> _readyFuture;
-
-  // 초기 데이터 로딩이 완료될 때까지 대기하는 Future.
-  // 이미 완료된 경우 await 시 즉시 반환됩니다.
-  Future<void> get ready => _readyFuture;
-
   LoginManager loginManager = LoginManager();
 
   // ── 정적 데이터 (고정값, 서버 조회 불필요) ────────────────────────────────
@@ -409,70 +403,68 @@ class DataManager extends ChangeNotifier {
     required String matchId,
     required String itemId,
   }) async {
-    Chatting? chatting = _chattings[chattingId];
-    if (chatting == null) return;
-
     try {
-      // 정보를 서버로 부터 요청
       // GET /api/v1/chats/{roomId}/messages
       final resChats = await ApiClient().dio.get(
         '/api/v1/chats/$chattingId/messages',
       );
-
-      // chat클래스 리스트를 생성하고 채팅 클래스 생성
-      final List<dynamic> rawChatList =
-          ApiClient.extractData(resChats.data) as List<dynamic>;
-      final List<Chat> chatList = rawChatList
+      final chatList = (ApiClient.extractData(resChats.data) as List<dynamic>)
           .map((json) => Chat.fromJson(json as Map<String, dynamic>))
           .toList();
 
-      // 새로운 채팅을 캐쉬에 삽입
-      chatting = chatting.copyWith(chats: chatList);
-      _chattings[chatting.id] = chatting;
-
-      // 상대 유저 캐쉬에 삽입
-      final resOtherUser = await ApiClient().dio.get(
-        '/api/v1/users/${chatting.opponentId}',
-      );
-
-      final opponent = User.fromJson(
-        ApiClient.extractData(resOtherUser.data) as Map<String, dynamic>,
-      );
-      _users[opponent.id] = opponent;
+      // 캐시에 없으면 빈 Chatting 생성 후 메시지 삽입
+      final chatting = (_chattings[chattingId] ?? Chatting(id: chattingId))
+          .copyWith(chats: chatList);
+      _chattings[chattingId] = chatting;
 
       // GET /api/v1/requests/{requestId}
       final resItem = await ApiClient().dio.get('/api/v1/requests/$itemId');
-      final newItem = RentalItem.fromJson(
-        ApiClient.extractData(resItem.data) as Map<String, dynamic>,
-      );
-
-      // 더 자세한 정보로 업데이트
+      final itemData =
+          ApiClient.extractData(resItem.data) as Map<String, dynamic>;
+      final newItem = RentalItem.fromJson(itemData);
       _rentalItems[itemId] = newItem;
 
-      // 매치 추가
+      // 상대방 ID 도출: 아이템 응답에서 직접 파싱 (_chattings 의존 제거)
+      final myId = loginManager.currentUser.id;
+      final opponentId = newItem.requesterID == myId
+          ? (itemData['providerId'] as String? ?? chatting.opponentId)
+          : newItem.requesterID;
+
+      // 상대 유저 캐시에 삽입
+      if (opponentId.isNotEmpty) {
+        final resOtherUser = await ApiClient().dio.get(
+          '/api/v1/users/$opponentId',
+        );
+        final opponent = User.fromJson(
+          ApiClient.extractData(resOtherUser.data) as Map<String, dynamic>,
+        );
+        _users[opponent.id] = opponent;
+      }
+
+      // 매치 갱신
+      final lenderID = newItem.requesterID == myId
+          ? (itemData['providerId'] as String? ?? '')
+          : myId;
       _matches[matchId] = Match(
         matchID: matchId,
         rentalItemID: itemId,
         requesterID: newItem.requesterID,
+        lenderID: lenderID,
         chattingID: chattingId,
-        lenderID: newItem.requesterID == opponent.id
-            ? loginManager.currentUser.id
-            : opponent.id,
       );
 
       // GET /api/v1/reviews/my — hasReviewed 체크를 위해 내가 쓴 리뷰 로드
       final resMyReviews = await ApiClient().dio.get('/api/v1/reviews/my');
-      final List<dynamic> rawMyReviews =
-          resMyReviews.data['data'] as List<dynamic>;
-      final List<Review> myReviews = rawMyReviews
-          .map((json) => Review.fromJson(json as Map<String, dynamic>))
-          .toList();
-      _reviews.addEntries(myReviews.map((r) => MapEntry(r.id, r)));
+      final rawMyReviews = ApiClient.extractData(resMyReviews.data) as List<dynamic>;
+      _reviews.addEntries(
+        rawMyReviews
+            .map((json) => Review.fromJson(json as Map<String, dynamic>))
+            .map((r) => MapEntry(r.id, r)),
+      );
 
       changeData();
     } catch (e) {
       log('❌ 메시지 로드 및 파싱 실패: $e');
-      return; // 에러 발생
     }
   }
 
@@ -564,7 +556,7 @@ class DataManager extends ChangeNotifier {
           rentalItemID: newItem.id,
           requesterID: newItem.requesterID,
           lenderID: resItemData["providerId"],
-          chattingID: existingMatch?.chattingID,
+          chattingID: existingMatch?.chattingID ?? resItemData["roomId"] as String?,
         );
       }
 
@@ -629,28 +621,14 @@ class DataManager extends ChangeNotifier {
   // 기존에 알아야하는 정보 없음
   // 굳이 캐쉬 클리어로 새로고침 할 필요 없음
   Future<void> userProfileScreenInitCache() async {
-    // 메인 유저 최신화 + 채팅/매치 데이터 병렬 로드
+    // 메인 유저 최신화 + 채팅/매치/대여아이템 데이터 병렬 로드
+    // chattingListScreenInitCache 내부에서 /api/v1/requests/me 호출 포함
     await Future.wait([
       updateMainUser(),
       chattingListScreenInitCache(),
     ]);
 
     try {
-      // 정보를 서버로 부터 요청
-      // GET /api/v1/requests/me
-      final resRentals = await ApiClient().dio.get('/api/v1/requests/me');
-
-      // rental item 리스트를 생성 및 저장
-      final List<dynamic> rawRentalList =
-          ApiClient.extractData(resRentals.data) as List<dynamic>;
-      final List<RentalItem> rentalList = rawRentalList
-          .map((json) => RentalItem.fromJson(json as Map<String, dynamic>))
-          .toList();
-
-      _rentalItems.addEntries(
-        rentalList.map((item) => MapEntry(item.id, item)),
-      );
-
       // GET /api/v1/users/me/reviews
       final resReview = await ApiClient().dio.get(
         '/api/v1/users/me/reviews',
@@ -736,12 +714,10 @@ class DataManager extends ChangeNotifier {
         "duration": duration, // int 타입
         "memo": description,
       };
-      final res = await ApiClient().dio.post(
+      await ApiClient().dio.post(
         '/api/v1/requests',
         data: requestData,
       );
-
-      if (res.statusCode == 400) return;
 
       changeData();
     } catch (e) {
@@ -801,9 +777,6 @@ class DataManager extends ChangeNotifier {
       Map<String, dynamic> resMatchData =
           ApiClient.extractData(resMatch.data) as Map<String, dynamic>;
 
-      if (resMatch.statusCode == 404) throw Error();
-      if (resMatch.statusCode == 409) throw Error();
-
       // POST /api/v1/chats
       final Map<String, dynamic> requestDataChatting = {
         "matchId": resMatchData["matchId"],
@@ -833,21 +806,29 @@ class DataManager extends ChangeNotifier {
   }
 
   // 요청 취소 요청
-  Future<void> cancelMatch(String itemId) async {
+  Future<bool> cancelMatch(String itemId) async {
     try {
       // 정보를 서버에 전송
       // PATCH /api/v1/requests/{requestId}/cancel
-      final res = await ApiClient().dio.patch(
+      await ApiClient().dio.patch(
         '/api/v1/requests/$itemId/cancel',
       );
 
-      if (res.statusCode == 404) return;
-      if (res.statusCode == 409) return;
+      // 로컬 캐시도 즉시 취소 상태로 갱신
+      final item = _rentalItems[itemId];
+      if (item != null) {
+        _rentalItems[itemId] = item.copyWith(
+          isMatched: false,
+          clearMatchedID: true,
+          rentalStatus: RentalStatus.cancelled,
+        );
+      }
 
       changeData();
+      return true;
     } catch (e) {
       log('❌ 메시지 로드 및 파싱 실패: $e');
-      return; // 에러 발생
+      return false;
     }
   }
 
@@ -874,12 +855,20 @@ class DataManager extends ChangeNotifier {
   Future<void> updateMatchStatus(String matchId, RentalStatus newStatus) async {
     final rentalItemId = _matches[matchId]?.rentalItemID;
     if (rentalItemId == null) return;
-    final action = newStatus == RentalStatus.inProgress
-        ? 'handover'
-        : 'complete';
-    await ApiClient().dio.patch('/api/v1/requests/$rentalItemId/$action');
+    final action = newStatus == RentalStatus.inProgress ? 'handover' : 'complete';
+    try {
+      await ApiClient().dio.patch('/api/v1/requests/$rentalItemId/$action');
 
-    changeData();
+      // 로컬 캐시도 즉시 갱신
+      final item = _rentalItems[rentalItemId];
+      if (item != null) {
+        _rentalItems[rentalItemId] = item.copyWith(rentalStatus: newStatus);
+      }
+
+      changeData();
+    } catch (e) {
+      log('❌ 상태 업데이트 실패: $e');
+    }
   }
 
   Future<void> postReview({
@@ -895,13 +884,10 @@ class DataManager extends ChangeNotifier {
         "score": score,
         "comments": reviewText,
       };
-      final res = await ApiClient().dio.post(
+      await ApiClient().dio.post(
         '/api/v1/reviews',
         data: requestDataMatch,
       );
-
-      if (res.statusCode == 404) return;
-      if (res.statusCode == 409) return;
 
       changeData();
     } catch (e) {

@@ -94,13 +94,13 @@ class RentalItemWidgetFactory extends WidgetFactory {
                   CircleAvatar(
                     radius: 12,
                     child: Text(
-                      item.requesterName[0],
+                      item.requesterName.isNotEmpty ? item.requesterName[0] : '?',
                       style: const TextStyle(fontSize: 12),
                     ),
                   ),
                   const SizedBox(width: 6),
                   Text(
-                    item.requesterName,
+                    item.requesterName.isNotEmpty ? item.requesterName : '알 수 없음',
                     style: const TextStyle(fontSize: 14),
                   ),
                 ],

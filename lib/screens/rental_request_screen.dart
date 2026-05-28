@@ -31,14 +31,14 @@ class _RentalRequestScreenState extends State<RentalRequestScreen> {
     super.dispose();
   }
 
-  void _submitRequest() {
+  void _submitRequest() async {
     DataManager dataManager = DataManager();
     setState(
       () => _placeError = _selectedPlaceId == null ? '위치를 선택해주세요' : null,
     );
     if (_formKey.currentState!.validate() && _selectedPlaceId != null) {
       // 서버에 데이터 전송
-      dataManager.addRentalItem(
+      await dataManager.addRentalItem(
         product: Product(name: _itemNameController.text, category: "none"),
         placeId: _selectedPlaceId!,
         price: int.parse(_priceController.text),
@@ -46,6 +46,7 @@ class _RentalRequestScreenState extends State<RentalRequestScreen> {
         description: _descriptionController.text,
       );
 
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           duration: const Duration(milliseconds: 500),

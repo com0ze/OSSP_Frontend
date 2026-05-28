@@ -43,7 +43,7 @@ class ChattingRoomWidgetFactory extends WidgetFactory {
               CircleAvatar(
                 radius: 24,
                 child: Text(
-                  chatting.opponentName[0],
+                  chatting.opponentName.isNotEmpty ? chatting.opponentName[0] : '?',
                   style: const TextStyle(fontSize: 18),
                 ),
               ),

@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import 'auth_interceptor.dart';
 // ================================================================
 // [MOCK - 삭제 대상] 실제 서버 연결 시 아래 import를 삭제하세요.
@@ -20,13 +21,15 @@ class ApiClient {
         baseUrl: 'http://168.110.102.12:8080', // 또는 실제 도메인
         contentType: 'application/json',
         connectTimeout: const Duration(seconds: 5),
-        receiveTimeout: const Duration(seconds: 3),
+        receiveTimeout: const Duration(seconds: 10),
       ),
     );
 
     // 인터셉터 장착
     dio.interceptors.add(AuthInterceptor(dio));
-    dio.interceptors.add(LogInterceptor(responseBody: true, requestBody: true));
+    if (kDebugMode) {
+      dio.interceptors.add(LogInterceptor(responseBody: true, requestBody: true));
+    }
 
     // ================================================================
     // [MOCK - 삭제 대상] 실제 서버 연결 시 아래 줄과 mock_server_interceptor.dart 파일을 삭제하세요.

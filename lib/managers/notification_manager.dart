@@ -41,7 +41,7 @@ class NotificationManager extends AbstractNotificationManager {
     if (settings.authorizationStatus == AuthorizationStatus.authorized ||
         settings.authorizationStatus == AuthorizationStatus.provisional) {
       await _setupLocalNotifications();
-      _setupMessageHandlers();
+      await _setupMessageHandlers();
       _messaging.onTokenRefresh.listen(_syncTokenToServer);
     }
   }
@@ -84,10 +84,9 @@ class NotificationManager extends AbstractNotificationManager {
     );
   }
 
-  void _setupMessageHandlers() async {
+  Future<void> _setupMessageHandlers() async {
     final RemoteMessage? initialMessage = await _messaging.getInitialMessage();
     if (initialMessage != null) {
-      await DataManager().ready;
       _handleNotificationClick(initialMessage.data);
     }
 

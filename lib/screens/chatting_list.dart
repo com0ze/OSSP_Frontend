@@ -104,7 +104,7 @@ class _ChattingListScreenState extends State<ChattingListScreen> {
                             ),
                           );
                           // 다시 화면으로 돌아올 때 데이터 초기화
-                          await dataManager.rentalListScreenInitCache();
+                          await dataManager.chattingListScreenInitCache();
                           setState(() {});
                         },
                       ).makeWidget(context);

@@ -31,7 +31,7 @@ class ReviewWidgetFactory extends WidgetFactory {
                 ...List.generate(
                   5,
                   (index) => Icon(
-                    index < review.score ? Icons.star : Icons.star_border,
+                    index < review.score.toInt() ? Icons.star : Icons.star_border,
                     color: context.starColor,
                     size: 20,
                   ),

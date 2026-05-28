@@ -511,6 +511,42 @@
                     - 리뷰 점수를 1~5 정수 값으로 통일 (4.5 → 4.0)
                     - 유저 점수를 수신한 리뷰 평균과 일치하도록 수정 (u0: 4.75 → 4.5)
 
+        - ### commit: 전체 정적 코드 검토 및 버그 수정
+            - #### author: Seo JeongHun
+            - #### date: 2026-05-28
+            - fix:
+                - **크래시 수정 — 강제 언래핑 제거**
+                    - `other_user_profile_screen.dart`: `getUser()!` → `?? widget.user` 폴백 (첫 빌드 시 캐시 미적재로 NPE 크래시)
+                    - `chat_screen.dart`: `widget.match.chattingID!` 4곳 → `?? ''` (chattingID null 시 크래시)
+                    - `chatting_room_widget_factory.dart`: `opponentName[0]` → `isNotEmpty` 가드 + `'?'` 폴백
+                    - `rental_item_widget_factory.dart`: `requesterName[0]` → 동일 패턴 적용
+
+                - **로직 오류 수정**
+                    - `chatting_list.dart`: 채팅방에서 복귀 시 `rentalListScreenInitCache()` → `chattingListScreenInitCache()` (채팅 목록 미갱신 버그)
+                    - `item_detail_screen.dart`: 대여자 경로 `widget.item.matchedID` (초기 stale 값) → `currentItem.matchedID` (캐시 최신값)
+                    - `chat_screen.dart`: `pending → matchConfirmed` 로컬 상태만 변경하던 로직 → `_refreshMessages()` 호출로 서버 값 동기화
+                    - `chat_screen.dart`: `initState`에서 `chatScreenInitCache` 이중 호출 제거 (`_refreshMessages()` 중복 삭제)
+
+                - **에러 처리 개선**
+                    - `data_manager.dart`: `cancelMatch` 반환 타입 `void` → `bool` (성공 여부 전달)
+                    - `item_detail_screen.dart`: `cancelMatch` 실패 시 스낵바 표시 후 pop 차단 (실패해도 화면 닫히던 문제)
+                    - `data_manager.dart`: `updateMatchStatus` try/catch 추가 (DioException 미처리 누수 방지)
+
+                - **코드 정리**
+                    - `data_manager.dart`: `_readyFuture` 미초기화 `late final` 필드 제거
+                    - `data_manager.dart`: `chatScreenInitCache` 리뷰 파싱 `data['data']` 직접 접근 → `ApiClient.extractData()` 통일
+                    - `data_manager.dart`: Dio 성공 응답 후 도달 불가한 4xx 상태 검사 제거 (`addRentalItem`, `cancelMatch`, `postReview`, `createMatchWithChatting`)
+                    - `data_manager.dart`: `userProfileScreenInitCache`에서 `/api/v1/requests/me` 중복 호출 제거 (chattingListScreenInitCache 내부에서 이미 처리)
+
+                - **기타**
+                    - `rental_request_screen.dart`: `addRentalItem` await 누락으로 서버 응답 전에 성공 스낵바 표시되던 문제 수정
+                    - `review_widget_factory.dart`: `index < review.score` (double 비교) → `review.score.toInt()` (4.5점이 5개 별로 표시되던 오류)
+                    - `login_screen.dart`: 테스트용 알림 버튼 `kDebugMode` 블록으로 감싸 프로덕션 노출 방지
+
+                - **notification_manager 버그 수정**
+                    - `notification_manager.dart`: `_setupMessageHandlers` 반환 타입 `void` → `Future<void>` (await 불가로 onMessage·onMessageOpenedApp 리스너 미등록 레이스 컨디션)
+                    - `notification_manager.dart`: `await DataManager().ready` 제거 (`_readyFuture` 제거 후 컴파일 오류)
+
 
 - # feature/buildng
     - ## version: 1.1.0

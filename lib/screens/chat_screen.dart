@@ -52,7 +52,7 @@ class _ChatScreenState extends State<ChatScreen> {
       await dataManager.chatScreenInitCache(
         itemId: widget.rentalItem.id,
         matchId: widget.match.matchID,
-        chattingId: widget.match.chattingID!,
+        chattingId: widget.match.chattingID ?? '',
       );
 
       if (mounted) {
@@ -85,7 +85,6 @@ class _ChatScreenState extends State<ChatScreen> {
     dataManager.addListener(_onDataChanged);
     activeStompClient.connect();
     activeStompClient.subscribeToRoom(chatting.id, _onStompMessage);
-    _refreshMessages();
   }
 
   @override
@@ -208,8 +207,8 @@ class _ChatScreenState extends State<ChatScreen> {
 
     switch (_currentStatus) {
       case RentalStatus.pending:
-        nextStatus = RentalStatus.matchConfirmed;
-        break;
+        await _refreshMessages();
+        return;
       case RentalStatus.matchConfirmed:
         nextStatus = RentalStatus.inProgress;
         await dataManager.updateMatchStatus(widget.match.matchID, nextStatus);
@@ -250,7 +249,7 @@ class _ChatScreenState extends State<ChatScreen> {
         await dataManager.chatScreenInitCache(
           itemId: widget.rentalItem.id,
           matchId: widget.match.matchID,
-          chattingId: widget.match.chattingID!,
+          chattingId: widget.match.chattingID ?? '',
         );
 
         // 데이터 로드가 끝났으니 화면을 딱 한 번 새로고침합니다.
@@ -338,7 +337,7 @@ class _ChatScreenState extends State<ChatScreen> {
               await dataManager.chatScreenInitCache(
                 itemId: widget.rentalItem.id,
                 matchId: widget.match.matchID,
-                chattingId: widget.match.chattingID!,
+                chattingId: widget.match.chattingID ?? '',
               );
 
               if (mounted) {

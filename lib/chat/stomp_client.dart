@@ -19,6 +19,7 @@ class ChatStompClient extends AbstractStompClient {
 
   StompClient? _client;
   final Map<String, void Function()> _subscriptions = {};
+  final Map<String, void Function(Chat)> _pendingSubscriptions = {};
 
   @override
   bool get isConnected => _client?.connected ?? false;
@@ -47,6 +48,7 @@ class ChatStompClient extends AbstractStompClient {
   @override
   void disconnect() {
     _subscriptions.clear();
+    _pendingSubscriptions.clear();
     _client?.deactivate();
     _client = null;
     log('🔌 STOMP 연결 종료');
@@ -54,21 +56,30 @@ class ChatStompClient extends AbstractStompClient {
 
   void _onConnect(StompFrame frame) {
     log('✅ STOMP 연결 성공');
+    for (final entry in _pendingSubscriptions.entries) {
+      _doSubscribe(entry.key, entry.value);
+    }
+    _pendingSubscriptions.clear();
   }
 
   // ── 구독 ────────────────────────────────────────────────────────────────────
 
   // 채팅방 메시지 수신 구독. 이미 구독 중이면 재구독.
-  // 반환된 cancel 함수를 호출하거나 unsubscribeFromRoom()으로 해제.
+  // 연결 전 호출 시 pending으로 등록 후 연결 완료 시 자동 구독.
   @override
   void subscribeToRoom(String roomId, void Function(Chat message) onMessage) {
     _subscriptions[roomId]?.call();
 
     if (!isConnected) {
-      log('⚠️ STOMP 미연결 상태 — 구독 불가: $roomId');
+      _pendingSubscriptions[roomId] = onMessage;
+      log('⏳ STOMP 미연결 — 구독 예약: $roomId');
       return;
     }
 
+    _doSubscribe(roomId, onMessage);
+  }
+
+  void _doSubscribe(String roomId, void Function(Chat) onMessage) {
     final unsubscribe = _client!.subscribe(
       destination: '/topic/rooms/$roomId',
       callback: (frame) {
@@ -89,6 +100,7 @@ class ChatStompClient extends AbstractStompClient {
   void unsubscribeFromRoom(String roomId) {
     _subscriptions[roomId]?.call();
     _subscriptions.remove(roomId);
+    _pendingSubscriptions.remove(roomId);
     log('📩 채팅방 구독 해제: $roomId');
   }
 

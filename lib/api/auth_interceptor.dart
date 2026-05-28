@@ -54,7 +54,7 @@ class AuthInterceptor extends Interceptor {
   }
 
   Future<String> _doRefresh(String refreshToken) async {
-    final refreshDio = Dio(BaseOptions(baseUrl: 'https://api.domain.com'));
+    final refreshDio = Dio(BaseOptions(baseUrl: 'http://168.110.102.12:8080'));
     // ================================================================
     // [MOCK - 삭제 대상] 실제 서버 연결 시 아래 줄을 삭제하세요.
     refreshDio.interceptors.add(MockServerInterceptor());

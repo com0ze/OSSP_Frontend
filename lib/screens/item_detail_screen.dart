@@ -311,7 +311,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
               isRequester: true,
             );
           } else {
-            final match = dataManager.getMatch(widget.item.matchedID);
+            final match = dataManager.getMatch(currentItem.matchedID);
             // 이 대여자가 현재 확정된 대여자일 때만 취소 버튼 표시
             final isConfirmedLender =
                 match != null && currentItem.matchedID == match.matchID;
@@ -481,10 +481,17 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
     if (confirmed != true) return;
 
     // 3. '예'를 눌렀다면 서버에 매치 취소 요청을 보내고 완료될 때까지 기다립니다.
-    await DataManager().cancelMatch(currentItem.id);
+    final success = await DataManager().cancelMatch(currentItem.id);
 
     // 4. [중요] 비동기 작업(서버 통신)이 끝났으므로, 현재 화면의 context가 살아있는지 검사합니다.
     if (!context.mounted) return;
+
+    if (!success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('취소에 실패했습니다. 다시 시도해주세요.')),
+      );
+      return;
+    }
 
     // 5. 매치가 성공적으로 취소되었으므로, 현재 상세 화면을 닫고 부모창(목록)으로 돌아갑니다!
     // 이때 true를 던져주면 부모창에서 목록을 새로고침(setState)하기 좋습니다.
