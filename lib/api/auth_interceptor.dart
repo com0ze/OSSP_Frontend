@@ -1,10 +1,10 @@
 import 'package:dio/dio.dart';
 import '/managers/token_storage_manager.dart';
 import '/managers/login_manager.dart';
-// ================================================================
-// [MOCK - 삭제 대상] 실제 서버 연결 시 아래 import를 삭제하세요.
-import 'mock_server_interceptor.dart';
-// [MOCK - 삭제 끝] ================================================
+// // ================================================================
+// // [MOCK - 삭제 대상] 실제 서버 연결 시 아래 import를 삭제하세요.
+// import 'mock_server_interceptor.dart';
+// // [MOCK - 삭제 끝] ================================================
 
 class AuthInterceptor extends Interceptor {
   final Dio dio;
@@ -55,10 +55,10 @@ class AuthInterceptor extends Interceptor {
 
   Future<String> _doRefresh(String refreshToken) async {
     final refreshDio = Dio(BaseOptions(baseUrl: 'http://168.110.102.12:8080'));
-    // ================================================================
-    // [MOCK - 삭제 대상] 실제 서버 연결 시 아래 줄을 삭제하세요.
-    refreshDio.interceptors.add(MockServerInterceptor());
-    // [MOCK - 삭제 끝] ================================================
+    // // ================================================================
+    // // [MOCK - 삭제 대상] 실제 서버 연결 시 아래 줄을 삭제하세요.
+    // refreshDio.interceptors.add(MockServerInterceptor());
+    // // [MOCK - 삭제 끝] ================================================
     final res = await refreshDio.post(
       '/api/v1/auth/refresh',
       data: {'token': refreshToken},

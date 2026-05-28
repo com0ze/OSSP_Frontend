@@ -1,14 +1,8 @@
 import 'package:flutter/material.dart';
 import '/extensions/theme_extension.dart';
 import '/managers/data_manager.dart';
+import '/managers/location_manager.dart';
 import '/models/product.dart';
-import 'package:flutter/material.dart';
-import 'package:open_source_software/extensions/theme_extension.dart';
-import 'package:open_source_software/managers/data_manager.dart';
-import 'package:open_source_software/managers/location_manager.dart';
-import 'package:open_source_software/managers/login_manager.dart';
-import 'package:open_source_software/models/product.dart';
-import 'package:open_source_software/models/rental_item.dart';
 
 class RentalRequestScreen extends StatefulWidget {
   const RentalRequestScreen({super.key});
@@ -28,6 +22,16 @@ class _RentalRequestScreenState extends State<RentalRequestScreen> {
   String? _selectedPlaceId;
   String? _placeError;
   final _placeMenuController = TextEditingController();
+
+  @override
+  void initState() {
+    super.initState();
+    final currentBuilding = LocationManager().currentBuildingName;
+    if (currentBuilding != null) {
+      _selectedPlaceId = currentBuilding;
+      _placeMenuController.text = currentBuilding;
+    }
+  }
 
   @override
   void dispose() {
@@ -113,48 +117,53 @@ class _RentalRequestScreenState extends State<RentalRequestScreen> {
               },
             ),
             const SizedBox(height: 16),
-            DropdownMenu<String>(
-              expandedInsets: EdgeInsets.zero,
-              controller: _placeMenuController,
-              initialSelection: _selectedPlaceId,
-              label: const Text('위치'),
-              leadingIcon: const Icon(Icons.location_on),
-              hintText: '장소를 선택해주세요',
-              errorText: _placeError,
-              menuHeight: 260,
-              enableFilter: false,
-              requestFocusOnTap: false,
-              menuStyle: MenuStyle(
-                elevation: const WidgetStatePropertyAll(6),
-                shape: WidgetStatePropertyAll(
-                  RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                ),
-                padding: const WidgetStatePropertyAll(
-                  EdgeInsets.symmetric(vertical: 4),
-                ),
-              ),
-              dropdownMenuEntries: DataManager.places.map((place) {
-                final isSelected = _selectedPlaceId == place.id;
-                return DropdownMenuEntry(
-                  value: place.id,
-                  label: place.name,
-                  leadingIcon: isSelected
-                      ? Icon(Icons.check, size: 18, color: context.primaryColor)
-                      : const SizedBox(width: 18),
-                  style: MenuItemButton.styleFrom(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 16,
-                      vertical: 4,
+            ListenableBuilder(
+              listenable: LocationManager(),
+              builder: (context, _) {
+                return DropdownMenu<String>(
+                  expandedInsets: EdgeInsets.zero,
+                  controller: _placeMenuController,
+                  initialSelection: _selectedPlaceId,
+                  label: const Text('위치'),
+                  leadingIcon: const Icon(Icons.location_on),
+                  hintText: '장소를 선택해주세요',
+                  errorText: _placeError,
+                  menuHeight: 260,
+                  enableFilter: false,
+                  requestFocusOnTap: false,
+                  menuStyle: MenuStyle(
+                    elevation: const WidgetStatePropertyAll(6),
+                    shape: WidgetStatePropertyAll(
+                      RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(12),
+                      ),
+                    ),
+                    padding: const WidgetStatePropertyAll(
+                      EdgeInsets.symmetric(vertical: 4),
                     ),
                   ),
+                  dropdownMenuEntries: LocationManager().buildingNames.map((name) {
+                    final isSelected = _selectedPlaceId == name;
+                    return DropdownMenuEntry(
+                      value: name,
+                      label: name,
+                      leadingIcon: isSelected
+                          ? Icon(Icons.check, size: 18, color: context.primaryColor)
+                          : const SizedBox(width: 18),
+                      style: MenuItemButton.styleFrom(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 16,
+                          vertical: 4,
+                        ),
+                      ),
+                    );
+                  }).toList(),
+                  onSelected: (value) => setState(() {
+                    _selectedPlaceId = value;
+                    _placeError = null;
+                  }),
                 );
-              }).toList(),
-              onSelected: (value) => setState(() {
-                _selectedPlaceId = value;
-                _placeError = null;
-              }),
+              },
             ),
             const SizedBox(height: 16),
             TextFormField(

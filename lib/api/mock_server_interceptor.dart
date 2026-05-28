@@ -347,7 +347,7 @@ class MockServerInterceptor extends Interceptor {
     'i_b1': RentalItem(
       id: 'i_b1',
       product: Product(name: '전동 드릴', category: '공구'),
-      placeID: '신공학관',
+      buildingName:'신공학관',
       price: 10000,
       description: '가구 조립용으로 오늘 저녁까지 필요합니다',
       requesterID: 'u0',
@@ -357,7 +357,7 @@ class MockServerInterceptor extends Interceptor {
     'i_b2': RentalItem(
       id: 'i_b2',
       product: Product(name: '4인용 텐트', category: '캠핑 용품'),
-      placeID: '원흥관',
+      buildingName:'원흥관',
       price: 30000,
       description: '이번 주말 캠핑 가는데 텐트가 필요합니다',
       requesterID: 'u0',
@@ -371,7 +371,7 @@ class MockServerInterceptor extends Interceptor {
     'i_b3': RentalItem(
       id: 'i_b3',
       product: Product(name: '빔프로젝터', category: '전자기기'),
-      placeID: '만해광장',
+      buildingName:'만해광장',
       price: 20000,
       description: '팀 발표용으로 이틀 정도 필요합니다',
       requesterID: 'u0',
@@ -385,7 +385,7 @@ class MockServerInterceptor extends Interceptor {
     'i_b4': RentalItem(
       id: 'i_b4',
       product: Product(name: '자전거', category: '스포츠'),
-      placeID: '학림관',
+      buildingName:'학림관',
       price: 5000,
       description: '학교 안 단거리 이동용으로 하루 필요합니다',
       requesterID: 'u0',
@@ -399,7 +399,7 @@ class MockServerInterceptor extends Interceptor {
     'i_b5': RentalItem(
       id: 'i_b5',
       product: Product(name: '청소기', category: '생활용품'),
-      placeID: '정보문화관',
+      buildingName:'정보문화관',
       price: 8000,
       description: '방 청소용으로 반나절 필요합니다',
       requesterID: 'u0',
@@ -414,7 +414,7 @@ class MockServerInterceptor extends Interceptor {
     'i_l1': RentalItem(
       id: 'i_l1',
       product: Product(name: '미러리스 카메라', category: '전자기기'),
-      placeID: '신공학관',
+      buildingName:'신공학관',
       price: 25000,
       description: '여행 기념 사진 촬영용으로 이틀 빌리고 싶습니다',
       requesterID: 'u1',
@@ -428,7 +428,7 @@ class MockServerInterceptor extends Interceptor {
     'i_l2': RentalItem(
       id: 'i_l2',
       product: Product(name: '사다리', category: '공구'),
-      placeID: '원흥관',
+      buildingName:'원흥관',
       price: 3000,
       description: '전구 교체용으로 잠깐 필요합니다',
       requesterID: 'u2',
@@ -443,7 +443,7 @@ class MockServerInterceptor extends Interceptor {
     'i_bc1': RentalItem(
       id: 'i_bc1',
       product: Product(name: '킥보드', category: '이동수단'),
-      placeID: '신공학관',
+      buildingName:'신공학관',
       price: 5000,
       description: '캠퍼스 내 이동용으로 반나절 필요합니다',
       requesterID: 'u0',
@@ -456,7 +456,7 @@ class MockServerInterceptor extends Interceptor {
     'i_lc1': RentalItem(
       id: 'i_lc1',
       product: Product(name: '텀블러', category: '생활용품'),
-      placeID: '원흥관',
+      buildingName:'원흥관',
       price: 2000,
       description: '하루 동안 빌리고 싶습니다',
       requesterID: 'u6',
@@ -470,7 +470,7 @@ class MockServerInterceptor extends Interceptor {
     'i_bc2': RentalItem(
       id: 'i_bc2',
       product: Product(name: '우산', category: '생활용품'),
-      placeID: '만해광장',
+      buildingName:'만해광장',
       price: 1000,
       description: '비가 갑자기 와서 우산이 필요합니다',
       requesterID: 'u0',
@@ -482,7 +482,7 @@ class MockServerInterceptor extends Interceptor {
     'i_n1': RentalItem(
       id: 'i_n1',
       product: Product(name: '노트북 거치대', category: '전자기기'),
-      placeID: '신공학관',
+      buildingName:'신공학관',
       price: 5000,
       description: '재택근무할 때 사용할 노트북 거치대 하루 빌려주실 분 구합니다',
       requesterID: 'u3',
@@ -491,7 +491,7 @@ class MockServerInterceptor extends Interceptor {
     'i_n2': RentalItem(
       id: 'i_n2',
       product: Product(name: '자동차 점프 케이블', category: '자동차'),
-      placeID: '정보문화관',
+      buildingName:'정보문화관',
       price: 0,
       description: '배터리가 방전됐어요. 점프 케이블 잠깐만 빌려주실 분 계신가요?',
       requesterID: 'u4',
@@ -500,7 +500,7 @@ class MockServerInterceptor extends Interceptor {
     'i_n3': RentalItem(
       id: 'i_n3',
       product: Product(name: '캠핑 버너', category: '캠핑 용품'),
-      placeID: '만해광장',
+      buildingName:'만해광장',
       price: 15000,
       description: '이번 주 캠핑에서 사용할 버너를 구합니다. 3일 대여 원합니다',
       requesterID: 'u1',
@@ -678,7 +678,7 @@ class MockServerInterceptor extends Interceptor {
     return {
       'requestId': item.id,
       'itemName': item.product.name,
-      'buildingName': item.placeID,
+      'buildingName': item.buildingName,
       'rewardAmt': item.price,
       'duration': item.duration,
       'memo': item.description,
@@ -951,7 +951,7 @@ class MockServerInterceptor extends Interceptor {
           name: body['itemName'] as String? ?? '',
           category: '기타',
         ),
-        placeID: body['buildingName'] as String? ?? '',
+        buildingName:body['buildingName'] as String? ?? '',
         price: (body['rewardAmt'] as num? ?? 0).toInt(),
         duration: (body['duration'] as num? ?? 3600).toInt(),
         description: body['memo'] as String? ?? '',

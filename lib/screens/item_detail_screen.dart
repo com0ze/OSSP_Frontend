@@ -35,301 +35,305 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
     return Stack(
       children: [
         Scaffold(
-      appBar: AppBar(title: const Text('물건 상세정보')),
-      body: RefreshIndicator(
-        onRefresh: () async {
-          await Future.wait([
-            dataManager.itemDetailScreenInitCache(widget.item.id),
-          ]);
-          setState(() {});
-        },
-        child: ListenableBuilder(
-          listenable: dataManager,
-          builder: (context, child) {
-            final currentItem =
-                dataManager.getCachedRentalItem(widget.item.id) ?? widget.item;
-            final requester = dataManager.getUser(currentItem.requesterID);
-            // 유저 정보 부재로 인한 이상 물건
-            if (requester == null) {
-              return const SingleChildScrollView(
-                physics: AlwaysScrollableScrollPhysics(),
-                child: SizedBox(
-                  height: 400,
-                  child: Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Icons.inbox, size: 64, color: Colors.grey),
-                        SizedBox(height: 16),
-                        Text(
-                          '요청하신 물건 정보가 없습니다',
-                          style: TextStyle(fontSize: 16, color: Colors.grey),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              );
-            }
-
-            // // 확정된 매치에서 리뷰 조회
-            // 현재는 아이템 상세 정보 화면에서 리뷰 리턴이 백에 없음
-            // final currentMatch = currentItem.matchedID != null
-            //     ? dataManager.matches[currentItem.matchedID!]
-            //     : null;
-            // final requesterReview = currentMatch?.requesterReviewID != null
-            //     ? dataManager.getReviewById(currentMatch!.requesterReviewID!)
-            //     : null;
-            // final lenderReview = currentMatch?.lenderReviewID != null
-            //     ? dataManager.getReviewById(currentMatch!.lenderReviewID!)
-            //     : null;
-
-            final requesterReview = null;
-            final lenderReview = null;
-
-            return SingleChildScrollView(
-              physics: const AlwaysScrollableScrollPhysics(),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          currentItem.product.name,
-                          style: const TextStyle(
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          '${currentItem.price.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},')}원',
-                          style: TextStyle(
-                            fontSize: 28,
-                            fontWeight: FontWeight.bold,
-                            color: context.primaryColor,
-                          ),
-                        ),
-                        const SizedBox(height: 16),
-                        const Divider(),
-                        const SizedBox(height: 16),
-                        _InfoRow(
-                          icon: Icons.shopping_basket,
-                          label: '물건',
-                          value: currentItem.product.name,
-                        ),
-                        const SizedBox(height: 12),
-                        _InfoRow(
-                          icon: Icons.location_on,
-                          label: '위치',
-                          value:
-                              DataManager.placeById(
-                                currentItem.placeID,
-                              )?.name ??
-                              currentItem.placeID,
-                        ),
-                        const SizedBox(height: 12),
-                        _InfoRow(
-                          icon: Icons.timer_outlined,
-                          label: '대여 시간',
-                          value: _formatDuration(currentItem.duration),
-                        ),
-                        const SizedBox(height: 12),
-                        _InfoRow(
-                          icon: Icons.calendar_today,
-                          label: '등록일',
-                          value: _formatDate(currentItem.createdAt),
-                        ),
-                        const SizedBox(height: 16),
-                        const Divider(),
-                        const SizedBox(height: 16),
-                        const Text(
-                          '상세 설명',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          currentItem.description,
-                          style: const TextStyle(fontSize: 16, height: 1.5),
-                        ),
-                        const SizedBox(height: 16),
-                        const Divider(),
-                        const SizedBox(height: 16),
-                        const Text(
-                          '요청자 정보',
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        const SizedBox(height: 12),
-                        InkWell(
-                          onTap: () async {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) =>
-                                    OtherUserProfileScreen(user: requester),
+          appBar: AppBar(title: const Text('물건 상세정보')),
+          body: RefreshIndicator(
+            onRefresh: () async {
+              await Future.wait([
+                dataManager.itemDetailScreenInitCache(widget.item.id),
+              ]);
+              setState(() {});
+            },
+            child: ListenableBuilder(
+              listenable: dataManager,
+              builder: (context, child) {
+                final currentItem =
+                    dataManager.getCachedRentalItem(widget.item.id) ??
+                    widget.item;
+                final requester = dataManager.getUser(currentItem.requesterID);
+                // 유저 정보 부재로 인한 이상 물건
+                if (requester == null) {
+                  return const SingleChildScrollView(
+                    physics: AlwaysScrollableScrollPhysics(),
+                    child: SizedBox(
+                      height: 400,
+                      child: Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Icon(Icons.inbox, size: 64, color: Colors.grey),
+                            SizedBox(height: 16),
+                            Text(
+                              '요청하신 물건 정보가 없습니다',
+                              style: TextStyle(
+                                fontSize: 16,
+                                color: Colors.grey,
                               ),
-                            );
-                            await DataManager().itemDetailScreenInitCache(
-                              widget.item.id,
-                            );
-                            setState(() {});
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              border: Border.all(
-                                color: context.onSurfaceVariantColor,
-                              ),
-                              borderRadius: BorderRadius.circular(12),
                             ),
-                            child: Row(
-                              children: [
-                                CircleAvatar(
-                                  radius: 30,
-                                  child: Text(
-                                    requester.name[0],
-                                    style: const TextStyle(fontSize: 24),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                }
+
+                // // 확정된 매치에서 리뷰 조회
+                // 현재는 아이템 상세 정보 화면에서 리뷰 리턴이 백에 없음
+                // final currentMatch = currentItem.matchedID != null
+                //     ? dataManager.matches[currentItem.matchedID!]
+                //     : null;
+                // final requesterReview = currentMatch?.requesterReviewID != null
+                //     ? dataManager.getReviewById(currentMatch!.requesterReviewID!)
+                //     : null;
+                // final lenderReview = currentMatch?.lenderReviewID != null
+                //     ? dataManager.getReviewById(currentMatch!.lenderReviewID!)
+                //     : null;
+
+                final requesterReview = null;
+                final lenderReview = null;
+
+                return SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Padding(
+                        padding: const EdgeInsets.all(16.0),
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              currentItem.product.name,
+                              style: const TextStyle(
+                                fontSize: 24,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              '${currentItem.price.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (m) => '${m[1]},')}원',
+                              style: TextStyle(
+                                fontSize: 28,
+                                fontWeight: FontWeight.bold,
+                                color: context.primaryColor,
+                              ),
+                            ),
+                            const SizedBox(height: 16),
+                            const Divider(),
+                            const SizedBox(height: 16),
+                            _InfoRow(
+                              icon: Icons.shopping_basket,
+                              label: '물건',
+                              value: currentItem.product.name,
+                            ),
+                            const SizedBox(height: 12),
+                            _InfoRow(
+                              icon: Icons.location_on,
+                              label: '위치',
+                              value: currentItem.buildingName,
+                            ),
+                            const SizedBox(height: 12),
+                            _InfoRow(
+                              icon: Icons.timer_outlined,
+                              label: '대여 시간',
+                              value: _formatDuration(currentItem.duration),
+                            ),
+                            const SizedBox(height: 12),
+                            _InfoRow(
+                              icon: Icons.calendar_today,
+                              label: '등록일',
+                              value: _formatDate(currentItem.createdAt),
+                            ),
+                            const SizedBox(height: 16),
+                            const Divider(),
+                            const SizedBox(height: 16),
+                            const Text(
+                              '상세 설명',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 8),
+                            Text(
+                              currentItem.description,
+                              style: const TextStyle(fontSize: 16, height: 1.5),
+                            ),
+                            const SizedBox(height: 16),
+                            const Divider(),
+                            const SizedBox(height: 16),
+                            const Text(
+                              '요청자 정보',
+                              style: TextStyle(
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 12),
+                            InkWell(
+                              onTap: () async {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        OtherUserProfileScreen(user: requester),
                                   ),
+                                );
+                                await DataManager().itemDetailScreenInitCache(
+                                  widget.item.id,
+                                );
+                                setState(() {});
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.all(16),
+                                decoration: BoxDecoration(
+                                  border: Border.all(
+                                    color: context.onSurfaceVariantColor,
+                                  ),
+                                  borderRadius: BorderRadius.circular(12),
                                 ),
-                                const SizedBox(width: 16),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.start,
-                                    children: [
-                                      Text(
-                                        requester.name,
-                                        style: const TextStyle(
-                                          fontSize: 18,
-                                          fontWeight: FontWeight.bold,
-                                        ),
+                                child: Row(
+                                  children: [
+                                    CircleAvatar(
+                                      radius: 30,
+                                      child: Text(
+                                        requester.name[0],
+                                        style: const TextStyle(fontSize: 24),
                                       ),
-                                      const SizedBox(height: 4),
-                                      Row(
+                                    ),
+                                    const SizedBox(width: 16),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment:
+                                            CrossAxisAlignment.start,
                                         children: [
-                                          Icon(
-                                            Icons.star,
-                                            size: 16,
-                                            color: context.starColor,
-                                          ),
-                                          const SizedBox(width: 4),
                                           Text(
-                                            '${requester.score}점',
+                                            requester.name,
                                             style: const TextStyle(
-                                              fontSize: 14,
+                                              fontSize: 18,
+                                              fontWeight: FontWeight.bold,
                                             ),
                                           ),
-                                          const SizedBox(width: 12),
-                                          Text(
-                                            '거래 ${requester.rentalCount}건',
-                                            style: TextStyle(
-                                              fontSize: 14,
-                                              color:
-                                                  context.onSurfaceVariantColor,
-                                            ),
+                                          const SizedBox(height: 4),
+                                          Row(
+                                            children: [
+                                              Icon(
+                                                Icons.star,
+                                                size: 16,
+                                                color: context.starColor,
+                                              ),
+                                              const SizedBox(width: 4),
+                                              Text(
+                                                '${requester.score}점',
+                                                style: const TextStyle(
+                                                  fontSize: 14,
+                                                ),
+                                              ),
+                                              const SizedBox(width: 12),
+                                              Text(
+                                                '거래 ${requester.rentalCount}건',
+                                                style: TextStyle(
+                                                  fontSize: 14,
+                                                  color: context
+                                                      .onSurfaceVariantColor,
+                                                ),
+                                              ),
+                                            ],
                                           ),
                                         ],
                                       ),
-                                    ],
-                                  ),
+                                    ),
+                                    const Icon(Icons.chevron_right),
+                                  ],
                                 ),
-                                const Icon(Icons.chevron_right),
-                              ],
+                              ),
                             ),
-                          ),
+                            if (requesterReview != null) ...[
+                              const SizedBox(height: 12),
+                              const Divider(),
+                              const SizedBox(height: 12),
+                              const Text(
+                                '요청자 리뷰',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              ReviewWidgetFactory(
+                                review: requesterReview,
+                              ).makeWidget(context),
+                            ],
+                            if (lenderReview != null) ...[
+                              const SizedBox(height: 12),
+                              const Divider(),
+                              const SizedBox(height: 12),
+                              const Text(
+                                '대여자 리뷰',
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 12),
+                              ReviewWidgetFactory(
+                                review: lenderReview,
+                              ).makeWidget(context),
+                            ],
+                          ],
                         ),
-                        if (requesterReview != null) ...[
-                          const SizedBox(height: 12),
-                          const Divider(),
-                          const SizedBox(height: 12),
-                          const Text(
-                            '요청자 리뷰',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          ReviewWidgetFactory(
-                            review: requesterReview,
-                          ).makeWidget(context),
-                        ],
-                        if (lenderReview != null) ...[
-                          const SizedBox(height: 12),
-                          const Divider(),
-                          const SizedBox(height: 12),
-                          const Text(
-                            '대여자 리뷰',
-                            style: TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 12),
-                          ReviewWidgetFactory(
-                            review: lenderReview,
-                          ).makeWidget(context),
-                        ],
-                      ],
-                    ),
+                      ),
+                    ],
                   ),
-                ],
-              ),
-            );
-          },
-        ),
-      ),
-      bottomNavigationBar: ListenableBuilder(
-        listenable: dataManager,
-        builder: (context, _) {
-          final currentUser = LoginManager().currentUser;
-          final currentItem =
-              dataManager.getCachedRentalItem(widget.item.id) ?? widget.item;
-          final isRequester = currentItem.requesterID == currentUser.id;
+                );
+              },
+            ),
+          ),
+          bottomNavigationBar: ListenableBuilder(
+            listenable: dataManager,
+            builder: (context, _) {
+              final currentUser = LoginManager().currentUser;
+              final currentItem =
+                  dataManager.getCachedRentalItem(widget.item.id) ??
+                  widget.item;
+              final isRequester = currentItem.requesterID == currentUser.id;
 
-          if (isRequester) {
-            final confirmedMatch = dataManager.getMatch(currentItem.matchedID);
-            // 아이템이 실제로 대여 전 상태일 때만 취소 버튼 표시
-            final isPreRental =
-                currentItem.rentalStatus == RentalStatus.pending ||
-                currentItem.rentalStatus == RentalStatus.matchConfirmed;
-            return _buildBottomBar(
-              context,
-              currentItem: currentItem,
-              match: confirmedMatch,
-              showChat: confirmedMatch != null,
-              showCancel: isPreRental,
-              isRequester: true,
-            );
-          } else {
-            final match = dataManager.getMatch(currentItem.matchedID);
-            // 이 대여자가 현재 확정된 대여자일 때만 취소 버튼 표시
-            final isConfirmedLender =
-                match != null && currentItem.matchedID == match.matchID;
-            final isPreRental =
-                isConfirmedLender &&
-                (currentItem.rentalStatus == RentalStatus.pending ||
-                    currentItem.rentalStatus == RentalStatus.matchConfirmed);
-            return _buildBottomBar(
-              context,
-              currentItem: currentItem,
-              match: match,
-              showChat: true,
-              showCancel: isPreRental,
-              isRequester: false,
-            );
-          }
-        },
-      ),
+              if (isRequester) {
+                final confirmedMatch = dataManager.getMatch(
+                  currentItem.matchedID,
+                );
+                // 아이템이 실제로 대여 전 상태일 때만 취소 버튼 표시
+                final isPreRental =
+                    currentItem.rentalStatus == RentalStatus.pending ||
+                    currentItem.rentalStatus == RentalStatus.matchConfirmed;
+                return _buildBottomBar(
+                  context,
+                  currentItem: currentItem,
+                  match: confirmedMatch,
+                  showChat: confirmedMatch != null,
+                  showCancel: isPreRental,
+                  isRequester: true,
+                );
+              } else {
+                final match = dataManager.getMatch(currentItem.matchedID);
+                // 이 대여자가 현재 확정된 대여자일 때만 취소 버튼 표시
+                final isConfirmedLender =
+                    match != null && currentItem.matchedID == match.matchID;
+                final isPreRental =
+                    isConfirmedLender &&
+                    (currentItem.rentalStatus == RentalStatus.pending ||
+                        currentItem.rentalStatus ==
+                            RentalStatus.matchConfirmed);
+                return _buildBottomBar(
+                  context,
+                  currentItem: currentItem,
+                  match: match,
+                  showChat: true,
+                  showCancel: isPreRental,
+                  isRequester: false,
+                );
+              }
+            },
+          ),
         ),
         if (_isLoading) ...[
           const ModalBarrier(dismissible: false, color: Colors.black26),
@@ -357,12 +361,8 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
               SizedBox(
                 width: double.infinity,
                 child: ElevatedButton(
-                  onPressed: () => _onChatPressed(
-                    context,
-                    currentItem,
-                    match,
-                    isRequester,
-                  ),
+                  onPressed: () =>
+                      _onChatPressed(context, currentItem, match, isRequester),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: context.primaryColor,
                     foregroundColor: context.onPrimaryColor,
@@ -487,9 +487,9 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
     if (!context.mounted) return;
 
     if (!success) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('취소에 실패했습니다. 다시 시도해주세요.')),
-      );
+      ScaffoldMessenger.of(
+        context,
+      ).showSnackBar(const SnackBar(content: Text('취소에 실패했습니다. 다시 시도해주세요.')));
       return;
     }
 

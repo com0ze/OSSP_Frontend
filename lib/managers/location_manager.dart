@@ -5,6 +5,7 @@ import 'package:flutter/services.dart' show rootBundle;
 import 'package:geolocator/geolocator.dart';
 import 'package:maps_toolkit/maps_toolkit.dart';
 import 'package:open_source_software/models/campus_building.dart';
+import 'package:open_source_software/api/api_client.dart';
 
 /// 캠퍼스 건물 단위 위치를 관리하는 매니저 (싱글톤 + ChangeNotifier).
 ///
@@ -62,6 +63,9 @@ class LocationManager extends ChangeNotifier {
   /// 초기화 완료 여부.
   bool get isInitialized => _isInitialized;
 
+  /// 로드된 모든 건물 이름 목록. initialize() 완료 전이면 빈 리스트.
+  List<String> get buildingNames => _buildings.map((b) => b.name).toList();
+
   /// 건물이 바뀐 순간 호출되는 콜백.
   ///
   /// 화면 등 외부에서 추가 동작이 필요할 때 등록한다.
@@ -99,8 +103,7 @@ class LocationManager extends ChangeNotifier {
   Future<void> _loadBuildings() async {
     try {
       final String raw = await rootBundle.loadString(_geoJsonAssetPath);
-      final Map<String, dynamic> json =
-          jsonDecode(raw) as Map<String, dynamic>;
+      final Map<String, dynamic> json = jsonDecode(raw) as Map<String, dynamic>;
       final List<dynamic> features = json['features'] as List<dynamic>;
 
       _buildings.clear();
@@ -141,8 +144,9 @@ class LocationManager extends ChangeNotifier {
       distanceFilter: 5,
     );
 
-    _positionSub = Geolocator.getPositionStream(locationSettings: settings)
-        .listen(_onPositionUpdate);
+    _positionSub = Geolocator.getPositionStream(
+      locationSettings: settings,
+    ).listen(_onPositionUpdate);
   }
 
   /// 권한 허용 후 외부에서 추적을 재시도할 때 사용.
@@ -234,18 +238,16 @@ class LocationManager extends ChangeNotifier {
 
     // ── 백엔드 연결 시 아래 주석을 해제하세요 ──────────────────
     //
-    // try {
-    //   await ApiClient.dio.patch(
-    //     '/users/location',
-    //     data: {'currentBuilding': buildingName},
-    //   );
-    //   debugPrint('[Location] 서버 위치 갱신 성공 → $buildingName');
-    // } catch (e) {
-    //   debugPrint('[Location] 서버 위치 갱신 실패: $e');
-    // }
-    //
-    // ※ ApiClient 를 쓰려면 파일 상단에 아래 import 추가:
-    //   import 'package:open_source_software/api/api_client.dart';
+    try {
+      await ApiClient().dio.patch(
+        '/users/location',
+        data: {'currentBuilding': buildingName},
+      );
+      debugPrint('[Location] 서버 위치 갱신 성공 → $buildingName');
+    } catch (e) {
+      debugPrint('[Location] 서버 위치 갱신 실패: $e');
+    }
+
     // ─────────────────────────────────────────────────────
   }
 

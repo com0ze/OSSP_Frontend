@@ -6,7 +6,7 @@ export '/models/rental_status.dart';
 class RentalItem {
   final String id;
   final Product product;
-  final String placeID;
+  final String buildingName;
   final int price;
   final String description; // 백에서는 memo
   final String requesterID;
@@ -21,7 +21,7 @@ class RentalItem {
   RentalItem({
     required this.id,
     required this.product,
-    required this.placeID,
+    required this.buildingName,
     required this.price,
     required this.description,
     required this.requesterID,
@@ -41,7 +41,7 @@ class RentalItem {
       product: itemName != null
           ? Product(name: itemName, category: '기타')
           : Product.fromJson(json['product'] as Map<String, dynamic>),
-      placeID: (json['buildingName'] ?? json['placeID'] ?? '').toString(),
+      buildingName: (json['buildingName'] ?? '').toString(),
       price: ((json['rewardAmt'] ?? json['price'] ?? 0) as num).toInt(),
       duration: ((json['duration'] as num?)?.toInt() ?? 3600),
       description: (json['memo'] ?? json['description'] ?? '').toString(),
@@ -88,7 +88,7 @@ class RentalItem {
   Map<String, dynamic> toJson() {
     return {
       'itemName': product.name,
-      'buildingName': placeID,
+      'buildingName': buildingName,
       'rewardAmt': price,
       'duration': duration,
       'memo': description,
@@ -107,7 +107,7 @@ class RentalItem {
     return RentalItem(
       id: id,
       product: product,
-      placeID: placeID,
+      buildingName: buildingName,
       price: price,
       description: description,
       requesterID: requesterID,

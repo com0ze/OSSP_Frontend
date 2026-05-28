@@ -1,6 +1,5 @@
 ﻿import 'package:flutter/material.dart';
 import '/extensions/theme_extension.dart';
-import '/managers/data_manager.dart';
 import '/models/rental_item.dart';
 import '/widgets/widget_factory.dart';
 
@@ -67,9 +66,7 @@ class RentalItemWidgetFactory extends WidgetFactory {
                     color: context.primaryColor,
                   ),
                   const SizedBox(width: 4),
-                  Text(
-                    DataManager.placeById(item.placeID)?.name ?? item.placeID,
-                  ),
+                  Text(item.buildingName),
                   const Spacer(),
                   Text(
                     '${item.price.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}원',
@@ -94,13 +91,17 @@ class RentalItemWidgetFactory extends WidgetFactory {
                   CircleAvatar(
                     radius: 12,
                     child: Text(
-                      item.requesterName.isNotEmpty ? item.requesterName[0] : '?',
+                      item.requesterName.isNotEmpty
+                          ? item.requesterName[0]
+                          : '?',
                       style: const TextStyle(fontSize: 12),
                     ),
                   ),
                   const SizedBox(width: 6),
                   Text(
-                    item.requesterName.isNotEmpty ? item.requesterName : '알 수 없음',
+                    item.requesterName.isNotEmpty
+                        ? item.requesterName
+                        : '알 수 없음',
                     style: const TextStyle(fontSize: 14),
                   ),
                 ],

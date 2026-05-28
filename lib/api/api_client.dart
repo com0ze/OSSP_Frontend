@@ -1,10 +1,10 @@
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
 import 'auth_interceptor.dart';
-// ================================================================
-// [MOCK - 삭제 대상] 실제 서버 연결 시 아래 import를 삭제하세요.
-import 'mock_server_interceptor.dart';
-// [MOCK - 삭제 끝] ================================================
+// // ================================================================
+// // [MOCK - 삭제 대상] 실제 서버 연결 시 아래 import를 삭제하세요.
+// import 'mock_server_interceptor.dart';
+// // [MOCK - 삭제 끝] ================================================
 
 class ApiClient {
   // 1. 싱글톤 패턴 뼈대
@@ -28,13 +28,15 @@ class ApiClient {
     // 인터셉터 장착
     dio.interceptors.add(AuthInterceptor(dio));
     if (kDebugMode) {
-      dio.interceptors.add(LogInterceptor(responseBody: true, requestBody: true));
+      dio.interceptors.add(
+        LogInterceptor(responseBody: true, requestBody: true),
+      );
     }
 
-    // ================================================================
-    // [MOCK - 삭제 대상] 실제 서버 연결 시 아래 줄과 mock_server_interceptor.dart 파일을 삭제하세요.
-    dio.interceptors.add(MockServerInterceptor());
-    // [MOCK - 삭제 끝] ================================================
+    // // ================================================================
+    // // [MOCK - 삭제 대상] 실제 서버 연결 시 아래 줄과 mock_server_interceptor.dart 파일을 삭제하세요.
+    // dio.interceptors.add(MockServerInterceptor());
+    // // [MOCK - 삭제 끝] ================================================
   }
 
   // 실서버 응답 wrapper {"status":..., "message":..., "data":{...}} 를 벗겨냄.
