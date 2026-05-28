@@ -1,7 +1,14 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import '/extensions/theme_extension.dart';
 import '/managers/data_manager.dart';
 import '/models/product.dart';
+import 'package:flutter/material.dart';
+import 'package:open_source_software/extensions/theme_extension.dart';
+import 'package:open_source_software/managers/data_manager.dart';
+import 'package:open_source_software/managers/location_manager.dart';
+import 'package:open_source_software/managers/login_manager.dart';
+import 'package:open_source_software/models/product.dart';
+import 'package:open_source_software/models/rental_item.dart';
 
 class RentalRequestScreen extends StatefulWidget {
   const RentalRequestScreen({super.key});
@@ -13,6 +20,7 @@ class RentalRequestScreen extends StatefulWidget {
 class _RentalRequestScreenState extends State<RentalRequestScreen> {
   final _formKey = GlobalKey<FormState>();
   final _itemNameController = TextEditingController();
+  final _locationController = TextEditingController();
   final _priceController = TextEditingController();
   final _durationController = TextEditingController();
   final _descriptionController = TextEditingController();
@@ -26,6 +34,7 @@ class _RentalRequestScreenState extends State<RentalRequestScreen> {
     _itemNameController.dispose();
     _priceController.dispose();
     _durationController.dispose();
+    _locationController.dispose();
     _descriptionController.dispose();
     _placeMenuController.dispose();
     super.dispose();
