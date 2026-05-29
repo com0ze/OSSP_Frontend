@@ -15,11 +15,14 @@ import '/screens/home_navigation.dart';
 // 앱이 백그라운드/종료 상태일 때 FCM 메시지를 수신하는 top-level 핸들러.
 // isolate가 분리되어 실행되므로 반드시 top-level 함수여야 하며,
 // Firebase를 다시 초기화해야 합니다.
+// 백그라운드/종료 상태에서 FCM 데이터 메시지를 수신하는 top-level 핸들러.
+// notification 필드가 있는 메시지는 OS가 자동으로 알림을 표시한다.
+// 이 핸들러는 별도 isolate에서 실행되므로 싱글톤/플랫폼 채널 사용 불가.
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   await Firebase.initializeApp();
-  // 데이터 전용 메시지는 여기서 처리합니다.
-  // notification 필드가 있는 메시지는 OS가 자동으로 알림 표시를 처리합니다.
+  // notification이 항상 포함되므로 OS가 알림 표시를 담당한다.
+  // 추후 뱃지 카운트 업데이트 등 순수 Dart 처리가 필요하면 여기에 추가한다.
 }
 
 void main() async {
@@ -30,12 +33,15 @@ void main() async {
     FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
   }
   await activeNotificationManager.initialize();
-  activeNotificationManager.updateDeviceTokenToServer();
 
   ApiClient();
   DataManager();
 
   await LoginManager().initAutoLogin();
+
+  if (LoginManager().isLoggedIn) {
+    activeNotificationManager.updateDeviceTokenToServer();
+  }
 
   LoginManager.setForceLogoutHandler((message) async {
     navigatorKey.currentState?.pushAndRemoveUntil(
@@ -52,6 +58,11 @@ void main() async {
   });
 
   runApp(const MyApp());
+
+  // runApp 이후 첫 프레임에서 처리: navigator와 로그인이 모두 준비된 상태
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+    activeNotificationManager.handleInitialMessage();
+  });
 }
 
 class MyApp extends StatelessWidget {

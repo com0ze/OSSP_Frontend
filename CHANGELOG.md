@@ -49,6 +49,15 @@
             - #### date: 2026-05-24
             - feature: 
                 - 브랜치 통합
+    
+    - ## version: 1.2.0
+        - ### commit: 브랜치 통합
+            - #### author: Seo JeongHun, Lee JaeWon
+            - #### date: 2026-05-29
+            - feature: 
+                - 브랜치 통합
+                - api 버그 수정
+                - 일부 위젯 수정
                 
 - # feature/notification
     - ## version: 1.0.1
@@ -584,6 +593,7 @@
                     - home_navigation.dart를 StatefulWidget으로 전환, initState에서 LocationManager 초기화 (로그인 후 메인 화면 진입 시점에 위치 권한 요청)
                     - rental_request_screen.dart의 현재 위치 버튼이 LocationManager가 판별한 건물명을 입력칸에 자동 입력하도록 변경
                     - 건물 미판별 시 직접 입력 안내 스낵바 표시, 위치 입력 필드 라벨/힌트를 건물명 기준으로 수정
+
 - # feature/buildng
     - ## version: 1.1.0
         - ### commit: rental_item이 place사용하도록 구조 변경

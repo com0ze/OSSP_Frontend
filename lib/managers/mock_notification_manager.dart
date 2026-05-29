@@ -20,6 +20,9 @@ class MockNotificationManager extends AbstractNotificationManager {
   }
 
   @override
+  Future<void> handleInitialMessage() async {}
+
+  @override
   Future<void> showNotification({
     required int id,
     required String title,

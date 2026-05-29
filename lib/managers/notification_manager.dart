@@ -1,5 +1,6 @@
 import 'dart:convert';
 import 'dart:developer';
+import 'package:dio/dio.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart'
     show TargetPlatform, defaultTargetPlatform;
@@ -9,6 +10,7 @@ import '/app_keys.dart';
 import '/managers/abstract_notification_manager.dart';
 import '/managers/mock_notification_manager.dart';
 import '/managers/data_manager.dart';
+import '/managers/login_manager.dart';
 import '/api/api_client.dart';
 import '/screens/item_detail_screen.dart';
 
@@ -48,6 +50,7 @@ class NotificationManager extends AbstractNotificationManager {
 
   @override
   Future<void> updateDeviceTokenToServer() async {
+    if (!LoginManager().isLoggedIn) return;
     if (defaultTargetPlatform == TargetPlatform.iOS) {
       await _messaging.getAPNSToken();
     }
@@ -58,10 +61,16 @@ class NotificationManager extends AbstractNotificationManager {
   }
 
   Future<void> _syncTokenToServer(String token) async {
+    if (!LoginManager().isLoggedIn) return;
+    log(token);
+    log(LoginManager().accessToken);
     try {
       await _apiClient.dio.patch(
         '/api/v1/users/me/device-token',
-        data: {'deviceToken': token},
+        data: {'fcmToken': token},
+        options: Options(
+          headers: {'Authorization': 'Bearer ${LoginManager().accessToken}'},
+        ),
       );
       log('✅ 서버에 기기 토큰 갱신 성공');
     } catch (e) {
@@ -84,12 +93,17 @@ class NotificationManager extends AbstractNotificationManager {
     );
   }
 
-  Future<void> _setupMessageHandlers() async {
+  // 종료 상태에서 알림 클릭으로 앱 실행 시 처리.
+  // navigator와 로그인이 준비된 뒤(runApp 첫 프레임)에 호출해야 한다.
+  @override
+  Future<void> handleInitialMessage() async {
     final RemoteMessage? initialMessage = await _messaging.getInitialMessage();
     if (initialMessage != null) {
-      _handleNotificationClick(initialMessage.data);
+      await _handleNotificationClick(initialMessage.data);
     }
+  }
 
+  Future<void> _setupMessageHandlers() async {
     FirebaseMessaging.onMessage.listen((message) {
       if (message.notification == null) return;
       final type = message.data['type'] as String?;

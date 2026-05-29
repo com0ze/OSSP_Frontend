@@ -18,6 +18,33 @@ import 'package:open_source_software/api/api_client.dart';
 ///  6. 건물 전환 시 서버에 위치를 전송 (현재는 연결 지점만 마련, 8단계 갈래1)
 ///
 /// 기존 TestDataManager 와 동일하게 싱글톤 + ChangeNotifier 패턴을 따른다.
+
+class BuildingNameTransfer {
+  static const Map<String, String> _koreanToCode = {
+    '정보문화관': 'INFO_CULTURE',
+    '원흥관': 'WONHEUNG',
+    '만해광장': 'MANHAE_PLAZA',
+    '학림관': 'HAKRIM',
+    '금강관': 'GEUMGANG',
+    '본관': 'MAIN_BUILDING',
+    '팔정도': 'PALJEONGDO',
+    '신공학관': 'SHINGONG',
+    '중앙도서관': 'CENTRAL_LIBRARY',
+    '명진관': 'MYUNGJIN',
+    '과학관': 'SCIENCE',
+    '대운동장': 'MAIN_STADIUM',
+    '조소관': 'SCULPTURE',
+    '법학관': 'LAW_SCHOOL',
+    '혜화관': 'HYEHWA',
+    '사회과학관': 'SOCIAL_SCIENCE',
+    '문화관': 'CULTURE',
+  };
+
+  /// 한글 건물명 → 영어 코드 (예: '정보문화관' → 'INFO_CULTURE').
+  /// 매핑에 없는 값은 원본 문자열을 그대로 반환.
+  static String toCode(String korean) => _koreanToCode[korean] ?? korean;
+}
+
 class LocationManager extends ChangeNotifier {
   // ── 싱글톤 ──────────────────────────────────────────────
   static final LocationManager _instance = LocationManager._internal();
@@ -240,8 +267,8 @@ class LocationManager extends ChangeNotifier {
     //
     try {
       await ApiClient().dio.patch(
-        '/users/location',
-        data: {'currentBuilding': buildingName},
+        '/api/v1/users/location',
+        data: {'currentBuilding': BuildingNameTransfer.toCode(buildingName)},
       );
       debugPrint('[Location] 서버 위치 갱신 성공 → $buildingName');
     } catch (e) {

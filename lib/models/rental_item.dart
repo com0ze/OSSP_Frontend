@@ -57,7 +57,7 @@ class RentalItem {
           (json['matchId'] != null ? [(json['matchId']).toString()] : []),
       isMatched:
           json['matchId'] != null || (json['isMatched'] as bool? ?? false),
-      matchedID: (json['matchId'] ?? json['matchedID']) as String?,
+      matchedID: (json['matchId'] != null ? (json['matchId']).toString() : ""),
       rentalStatus: _parseStatus(json['status'] ?? json['rentalStatus']),
     );
   }

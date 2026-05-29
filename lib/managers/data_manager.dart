@@ -259,7 +259,6 @@ class DataManager extends ChangeNotifier {
       // GET /api/v1/users/me/reviews
       final resReview = await ApiClient().dio.get(
         '/api/v1/users/$userId/reviews',
-        queryParameters: {'page': 0, 'size': 100}, // 일단 많이 가지고 오기
       );
 
       // 1. 최상위 중괄호 {} 전체를 Map<String, dynamic>으로 확실하게 인식시킵니다.
@@ -298,10 +297,7 @@ class DataManager extends ChangeNotifier {
 
     try {
       // GET /api/v1/users/me/reviews
-      final resReview = await ApiClient().dio.get(
-        '/api/v1/users/me/reviews',
-        queryParameters: {'page': 0, 'size': 100}, // 일단 많이 가지고 오기
-      );
+      final resReview = await ApiClient().dio.get('/api/v1/users/me/reviews');
 
       // 1. 최상위 중괄호 {} 전체를 Map<String, dynamic>으로 확실하게 인식시킵니다.
       final Map<String, dynamic> rootResponse =
