@@ -4,6 +4,8 @@ import '/managers/data_manager.dart';
 import '/managers/login_manager.dart';
 import '/models/rental_item.dart';
 import '/screens/item_detail_screen.dart';
+import '/managers/location_manager.dart';
+import '/widgets/location_refresh_button.dart';
 import '/widgets/rental_item_widget_factory.dart';
 
 class RentalListScreen extends StatefulWidget {
@@ -16,16 +18,37 @@ class RentalListScreen extends StatefulWidget {
 class _RentalListScreenState extends State<RentalListScreen> {
   final DataManager dataManager = DataManager();
   final LoginManager loginManager = LoginManager();
+  String? _lastBuilding;
 
   @override
   void initState() {
     super.initState();
+    _lastBuilding = LocationManager().currentBuildingName;
+    LocationManager().addListener(_onLocationChanged);
 
     // ⭐️ 화면 렌더링 프레임이 끝난 직후(화면이 안전하게 켜진 직후) 딱 한 번 비동기 함수를 실행함
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       await DataManager().rentalListScreenInitCache(); // 비동기 초기화 실행
       setState(() {}); // 데이터 가져온 후 화면 딱 한 번만 갱신
     });
+  }
+
+  void _onLocationChanged() {
+    final newBuilding = LocationManager().currentBuildingName;
+    if (newBuilding == _lastBuilding) return;
+    _lastBuilding = newBuilding;
+    _refetch();
+  }
+
+  Future<void> _refetch() async {
+    await DataManager().rentalListScreenInitCache();
+    if (mounted) setState(() {});
+  }
+
+  @override
+  void dispose() {
+    LocationManager().removeListener(_onLocationChanged);
+    super.dispose();
   }
 
   @override
@@ -37,10 +60,11 @@ class _RentalListScreenState extends State<RentalListScreen> {
         final rentalItems = dataManager.getAvailableRentalItems(currentUser.id);
         return Scaffold(
           appBar: AppBar(
-            title: const Text('대여 가능한 물건'),
+            title: const Text('대여 목록'),
             centerTitle: true,
             backgroundColor: context.primaryColor,
             foregroundColor: context.onPrimaryColor,
+            actions: const [LocationRefreshButton(), SizedBox(width: 8)],
           ),
           body: RefreshIndicator(
             onRefresh: () async {

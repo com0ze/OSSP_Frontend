@@ -28,7 +28,10 @@ class _HomeNavigationState extends State<HomeNavigation> {
 
     // 로그인 후 메인 화면에 진입한 시점에 위치 추적을 시작한다.
     // (앱 시작 시점이 아니라 이 시점에 권한을 요청해야 사용자 맥락에 자연스럽다)
-    LocationManager().initialize();
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await LocationManager().initialize();
+      if (mounted) setState(() {});
+    });
   }
 
   @override

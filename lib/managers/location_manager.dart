@@ -143,6 +143,7 @@ class LocationManager extends ChangeNotifier {
     } catch (e) {
       debugPrint('[Location] GeoJSON 로드 실패: $e');
     }
+    notifyListeners();
   }
 
   /// 위치 서비스 활성화 및 권한을 확인한다. (geolocator 표준 절차)
@@ -181,6 +182,23 @@ class LocationManager extends ChangeNotifier {
     if (_positionSub != null) return; // 이미 추적 중
     final bool permitted = await _ensurePermission();
     if (permitted) _startTracking();
+  }
+
+  /// 현재 GPS 위치를 즉시 조회해 건물을 확정하고 서버에 전송한다.
+  /// Dwell Time 없이 바로 확정하므로 수동 새로고침에 적합하다.
+  Future<void> refreshLocation() async {
+    try {
+      final position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+        ),
+      );
+      final point = LatLng(position.latitude, position.longitude);
+      final detected = _detectBuilding(point);
+      await _confirmBuildingChange(detected);
+    } catch (e) {
+      debugPrint('[Location] 수동 위치 갱신 실패: $e');
+    }
   }
 
   /// 새 GPS 좌표가 들어올 때마다 호출된다.
@@ -230,18 +248,18 @@ class LocationManager extends ChangeNotifier {
   }
 
   /// 건물 전환을 확정하고 외부에 알린다.
-  void _confirmBuildingChange(CampusBuilding? newBuilding) {
+  Future<void> _confirmBuildingChange(CampusBuilding? newBuilding) async {
     _currentBuilding = newBuilding;
     _candidateBuilding = null;
     _candidateSince = null;
 
     debugPrint('[Location] 건물 전환 확정 → ${newBuilding?.name ?? "건물 밖"}');
 
+    // 서버에 위치 전송 완료 후 UI 갱신 — 목록 요청이 새 위치 기준으로 처리되도록 순서 보장
+    await _sendLocationToServer(newBuilding?.name);
+
     // UI 자동 갱신 (ListenableBuilder 등이 반응)
     notifyListeners();
-
-    // 서버에 위치 전송 (8단계)
-    _sendLocationToServer(newBuilding?.name);
 
     // 외부 콜백 (화면 등에서 추가 동작이 필요할 때)
     onBuildingChanged?.call(newBuilding?.name);

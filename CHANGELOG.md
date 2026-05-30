@@ -703,6 +703,37 @@
                     - 두께 2, 색상 grey, 너비 50의 세로 구분선 적용
                 
                 - 내 정보 탭에서 마이페이지로 이름 변경
+                
+        - ### commit: 대여 요청 화면 2단계 UI 개편 및 위치 새로고침 버튼 추가
+            - #### author: Seo JeongHun
+            - #### date: 2026-05-30
+            - feature:
+                - **대여 요청 화면 2단계 UI 구현** (`rental_request_screen.dart`)
+                    - 1단계: 로고 + 앱이름 + 검색창 + 자주 찾는 물건 그리드 표시
+                    - 2단계: 검색창 엔터 또는 추천 물건 탭 시 전환, 위치·금액·시간·설명 입력 폼 표시
+                    - 물건 입력창을 모두 지우면 1단계로 자동 복귀
+                    - `AnimatedContainer` + `OverflowBox` + `AnimatedOpacity`로 로고 영역 부드럽게 접힘
+                    - `AnimatedCrossFade`로 그리드 ↔ 폼 전환 시 크기·불투명도 동시 애니메이션
+                    - 모든 입력 필드 둥근 테두리 스타일 통일 (`_roundedDecoration` 헬퍼)
+                    - 이미지 로고로 전환 가능한 구조 (`_useAssetLogo` 상수)
+
+                - **위치 새로고침 버튼 추가** (`widgets/location_refresh_button.dart` 신규)
+                    - 지도핀 아이콘 + 현재 건물명 + 새로고침 아이콘으로 구성
+                    - `IconTheme.of(context).color`로 색상 자동 상속 (AppBar 배경색에 자동 대응)
+                    - 새로고침 중 `CircularProgressIndicator` 표시
+                    - 대여 요청 화면 및 대여 목록 화면 AppBar에 추가
+
+                - **LocationManager 개선** (`location_manager.dart`)
+                    - `_loadBuildings()` 완료 후 `notifyListeners()` 추가 (드롭다운 즉시 반영)
+                    - `refreshLocation()` 공개 메서드 추가 (Dwell Time 없이 즉시 건물 확정)
+                    - `_confirmBuildingChange()` async 전환: `_sendLocationToServer()` 완료 후 `notifyListeners()` 호출하여 위치 저장 → 목록 갱신 순서 보장
+
+                - **대여 목록 화면 위치 연동** (`rental_list_screen.dart`)
+                    - `LocationManager` 리스너 추가: 건물이 실제로 바뀔 때만 서버에서 목록 재요청
+                    - `_lastBuilding` 비교로 불필요한 중복 요청 방지
+
+                - **홈 네비게이션 초기화 순서 개선** (`home_navigation.dart`)
+                    - `initState`에서 `addPostFrameCallback`으로 `LocationManager.initialize()` 호출
 
 - # feature/data_structure
     - ## version: 1.1.0
