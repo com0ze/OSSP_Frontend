@@ -33,6 +33,13 @@ class Chatting {
     _chats.sort((a, b) => a.createdAt.compareTo(b.createdAt));
   }
 
+  void replaceChats(List<Chat> newChats) {
+    _chats
+      ..clear()
+      ..addAll(newChats)
+      ..sort((a, b) => a.createdAt.compareTo(b.createdAt));
+  }
+
   // 실제 메시지가 로드된 경우 마지막 Chat, 없으면 null
   Chat? getLastChat() => _chats.isEmpty ? null : _chats.last;
 

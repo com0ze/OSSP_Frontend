@@ -2,7 +2,7 @@ class Review {
   final String id;
   final double score;
   final String reviewText;
-  final String writerId;
+  String writerId;
   String? revieweeId;
   String? matchId;
   String? reviewerNickname;

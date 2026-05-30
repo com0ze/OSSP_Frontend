@@ -578,6 +578,29 @@
                     - 기존: 24시간 기준 오늘/이전 분기 → 개선: 날짜 기준 오늘/다른 날 분기
                     - 오늘: `HH:mm`, 다른 날: `M/d HH:mm` 형식으로 날짜와 시간 함께 표시
 
+        - ### commit: 마이페이지 리뷰 로드 및 DataManager 개선
+            - #### author: Seo JeongHun
+            - #### date: 2026-05-30
+            - fix:
+                - **마이페이지 작성한 리뷰 탭 미표시 수정** (`data_manager.dart`, `review.dart`)
+                    - `userProfileScreenInitCache`에서 `GET /api/v1/reviews/my` 미호출로 작성한 리뷰가 항상 비어있던 문제 수정
+                    - 서버 응답에 `writerId` 필드가 없어 `getUserWriteReview` 필터가 동작하지 않던 문제 수정
+                    - 받은 리뷰(`revieweeId`)와 동일하게 작성한 리뷰 파싱 시 `..writerId = userId` cascade 설정
+                    - `chatScreenInitCache`의 `/api/v1/reviews/my` 파싱에도 `..writerId = myId` 추가
+                    - `Review.writerId` `final` → mutable로 변경 (cascade 설정 허용)
+
+                - **API 응답 직접 접근 제거** (`data_manager.dart`)
+                    - `otherUserProfileScreenInitCache`, `userProfileScreenInitCache`에서 `rootResponse['data']` 직접 접근 → `ApiClient.extractData()` 통일
+
+            - feature:
+                - **`Chatting.replaceChats()` 추가** (`chatting.dart`)
+                    - 기존 `copyWith(chats: chatList)` 대신 내부 리스트를 교체하는 `replaceChats()` 메서드 추가
+                    - 새 객체 생성 없이 clear → addAll → sort 처리로 오버헤드 감소
+                    - `chatScreenInitCache`에서 `copyWith` → `replaceChats()` 교체
+
+                - **`createMatchWithChatting` 파싱 개선** (`data_manager.dart`)
+                    - `Chatting.fromJson(...).copyWith(requestId: itemId)` → `fromJson` 전 맵에 `requestId` 주입으로 `copyWith` 제거
+
 
 - # feature/location
     - ## version: 1.1.0

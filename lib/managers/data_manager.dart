@@ -81,9 +81,9 @@ class DataManager extends ChangeNotifier {
           .map((json) => Chat.fromJson(json as Map<String, dynamic>))
           .toList();
 
-      // 캐시에 없으면 빈 Chatting 생성 후 메시지 삽입
-      final chatting = (_chattings[chattingId] ?? Chatting(id: chattingId))
-          .copyWith(chats: chatList);
+      // 캐시에 없으면 빈 Chatting 생성 후 메시지 교체
+      final chatting = _chattings[chattingId] ?? Chatting(id: chattingId);
+      chatting.replaceChats(chatList);
       _chattings[chattingId] = chatting;
 
       // GET /api/v1/requests/{requestId}
@@ -128,7 +128,11 @@ class DataManager extends ChangeNotifier {
           ApiClient.extractData(resMyReviews.data) as List<dynamic>;
       _reviews.addEntries(
         rawMyReviews
-            .map((json) => Review.fromJson(json as Map<String, dynamic>))
+            .map(
+              (json) =>
+                  Review.fromJson(json as Map<String, dynamic>)
+                    ..writerId = myId,
+            )
             .map((r) => MapEntry(r.id, r)),
       );
 
@@ -261,14 +265,8 @@ class DataManager extends ChangeNotifier {
         '/api/v1/users/$userId/reviews',
       );
 
-      // 1. 최상위 중괄호 {} 전체를 Map<String, dynamic>으로 확실하게 인식시킵니다.
-      final Map<String, dynamic> rootResponse =
-          resReview.data as Map<String, dynamic>;
-
-      // 리뷰 리스트를 생성 및 저장
-      //// 2. rootResponse['data']를 거쳐서 그 안의 진짜 'content' 배열을 꺼내야 합니다!
       final List<dynamic> rawReviewList =
-          rootResponse['data']['content'] as List<dynamic>;
+          ApiClient.extractData(resReview.data) as List<dynamic>;
 
       final List<Review> reviewList = rawReviewList
           .map(
@@ -299,25 +297,31 @@ class DataManager extends ChangeNotifier {
       // GET /api/v1/users/me/reviews
       final resReview = await ApiClient().dio.get('/api/v1/users/me/reviews');
 
-      // 1. 최상위 중괄호 {} 전체를 Map<String, dynamic>으로 확실하게 인식시킵니다.
-      final Map<String, dynamic> rootResponse =
-          resReview.data as Map<String, dynamic>;
-
-      // 리뷰 리스트를 생성 및 저장
-      //// 2. rootResponse['data']를 거쳐서 그 안의 진짜 'content' 배열을 꺼내야 합니다!
-      final List<dynamic> rawReviewList =
-          rootResponse['data']['content'] as List<dynamic>;
-
       final String userId = loginManager.currentUser.id;
-      final List<Review> reviewList = rawReviewList
+
+      final List<dynamic> rawReceivedReviews =
+          ApiClient.extractData(resReview.data) as List<dynamic>;
+      final receivedReviews = rawReceivedReviews
           .map(
             (json) =>
                 Review.fromJson(json as Map<String, dynamic>)
                   ..revieweeId = userId,
           )
           .toList();
+      _reviews.addEntries(receivedReviews.map((r) => MapEntry(r.id, r)));
 
-      _reviews.addEntries(reviewList.map((item) => MapEntry(item.id, item)));
+      // GET /api/v1/reviews/my — 내가 작성한 리뷰
+      final resMyReviews = await ApiClient().dio.get('/api/v1/reviews/my');
+      final List<dynamic> rawWrittenReviews =
+          ApiClient.extractData(resMyReviews.data) as List<dynamic>;
+      final writtenReviews = rawWrittenReviews
+          .map(
+            (json) =>
+                Review.fromJson(json as Map<String, dynamic>)
+                  ..writerId = userId,
+          )
+          .toList();
+      _reviews.addEntries(writtenReviews.map((r) => MapEntry(r.id, r)));
 
       changeData();
     } catch (e) {
@@ -449,12 +453,11 @@ class DataManager extends ChangeNotifier {
         '/api/v1/chats',
         data: requestDataChatting,
       );
-      Map<String, dynamic> resChattingData =
+      final Map<String, dynamic> resChattingData =
           ApiClient.extractData(resChatting.data) as Map<String, dynamic>;
+      resChattingData['requestId'] = itemId;
 
-      Chatting chatting = Chatting.fromJson(
-        resChattingData,
-      ).copyWith(requestId: itemId);
+      Chatting chatting = Chatting.fromJson(resChattingData);
       Match match = Match.fromJson(resMatchData);
 
       _chattings[chatting.id] = chatting;
