@@ -11,8 +11,6 @@ class UserInfoHeader extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final double screenWidth = MediaQuery.of(context).size.width;
-
     return Container(
       padding: const EdgeInsets.all(24),
       child: Row(
@@ -44,7 +42,14 @@ class UserInfoHeader extends StatelessWidget {
               ],
             ],
           ),
-          SizedBox(width: screenWidth * 0.10),
+          SizedBox(
+            height: 100,
+            child: const VerticalDivider(
+              thickness: 2,
+              color: Colors.grey,
+              width: 50,
+            ),
+          ),
           Align(
             alignment: Alignment.centerRight,
             child: _StatItem(

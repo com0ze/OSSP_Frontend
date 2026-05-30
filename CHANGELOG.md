@@ -635,6 +635,30 @@
                 - 테마 모드 매니저에 스토리지 저장 사용
                 - 어플 실행 시 스토리지에 저장된 값 불러와 사용함
 
+        - ### commit: 마이페이지 탭 필터 및 구분선 개선
+            - #### author: Seo JeongHun
+            - #### date: 2026-05-30
+            - feature:
+                - **마이페이지 탭 내 세그먼트 필터 추가** (`user_profile_screen.dart`)
+                    - 빌린 물건·빌려준 물건 탭: "진행 중" / "거래 완료" `SegmentedButton` 추가
+                        - 진행 중: `pending`, `matchConfirmed`, `inProgress` 상태 항목만 표시
+                        - 거래 완료: `returned`, `cancelled` 상태 항목만 표시
+                        - 탭별 독립 상태 관리 (`_borrowedInProgress`, `_lentInProgress`)
+                    - 리뷰 탭: "받은 리뷰" / "작성한 리뷰" `SegmentedButton` 추가
+                        - 받은 리뷰: `getUserReceivedReview` 사용
+                        - 작성한 리뷰: `getUserWriteReview` 사용
+                    - 세그먼트 버튼 우측 정렬 (`Align(Alignment.centerRight)`)
+                    - 고정 너비(`SizedBox(width: 250)`)로 선택 시 레이아웃 변동 방지
+                    - 빈 화면 메시지를 탭·필터 조합에 따라 4가지로 분기
+                        - 예: "진행 중인 빌린 물건이 없습니다", "완료된 빌려준 물건이 없습니다"
+                    - "받은 리뷰" 탭명 → "리뷰"로 변경
+
+                - **유저 정보 헤더 구분선 개선** (`lender_profile_screen.dart`)
+                    - 반응형 `SizedBox(width: screenWidth * 0.10)` → 고정 높이 `VerticalDivider`로 교체
+                    - 두께 2, 색상 grey, 너비 50의 세로 구분선 적용
+                
+                - 내 정보 탭에서 마이페이지로 이름 변경
+
 - # feature/data_structure
     - ## version: 1.1.0
         - ### commit: 데이터 매니저 통합

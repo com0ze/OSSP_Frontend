@@ -22,6 +22,10 @@ class _UserProfileScreenState extends State<UserProfileScreen>
   final LoginManager loginManager = LoginManager();
   final DataManager dataManager = DataManager();
 
+  bool _borrowedInProgress = true;
+  bool _lentInProgress = true;
+  bool _showReceivedReviews = true;
+
   String get _currentUserId => loginManager.currentUser.id;
 
   @override
@@ -97,7 +101,7 @@ class _UserProfileScreenState extends State<UserProfileScreen>
                 tabs: const [
                   Tab(text: '빌린 물건'),
                   Tab(text: '빌려준 물건'),
-                  Tab(text: '받은 리뷰'),
+                  Tab(text: '리뷰'),
                 ],
               ),
               Expanded(
@@ -118,90 +122,170 @@ class _UserProfileScreenState extends State<UserProfileScreen>
   }
 
   Widget _buildReviews() {
-    final reviews = dataManager.getUserReceivedReview(_currentUserId);
+    final reviews = _showReceivedReviews
+        ? dataManager.getUserReceivedReview(_currentUserId)
+        : dataManager.getUserWriteReview(_currentUserId);
 
-    if (reviews.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              Icons.rate_review,
-              size: 64,
-              color: context.onSurfaceVariantColor,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              '아직 리뷰가 없습니다',
-              style: TextStyle(
-                fontSize: 16,
-                color: context.onSurfaceVariantColor,
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+          child: Align(
+            alignment: Alignment.centerRight,
+            child: SizedBox(
+              width: 250,
+              child: SegmentedButton<bool>(
+                segments: const [
+                  ButtonSegment(value: true, label: Text('받은 리뷰')),
+                  ButtonSegment(value: false, label: Text('작성한 리뷰')),
+                ],
+                selected: {_showReceivedReviews},
+                onSelectionChanged: (val) =>
+                    setState(() => _showReceivedReviews = val.first),
               ),
             ),
-          ],
+          ),
         ),
-      );
-    }
-
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: reviews.length,
-      itemBuilder: (context, index) =>
-          ReviewWidgetFactory(review: reviews[index]).makeWidget(context),
+        if (reviews.isEmpty)
+          Expanded(
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    Icons.rate_review,
+                    size: 64,
+                    color: context.onSurfaceVariantColor,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    _showReceivedReviews ? '받은 리뷰가 없습니다' : '작성한 리뷰가 없습니다',
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: context.onSurfaceVariantColor,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          )
+        else
+          Expanded(
+            child: ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: reviews.length,
+              itemBuilder: (context, index) => ReviewWidgetFactory(
+                review: reviews[index],
+              ).makeWidget(context),
+            ),
+          ),
+      ],
     );
   }
 
   Widget _buildItemList(List<RentalItem> items, {required bool isBorrowed}) {
-    if (items.isEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Icon(
-              isBorrowed ? Icons.inbox : Icons.folder_open,
-              size: 64,
-              color: context.onSurfaceVariantColor,
-            ),
-            const SizedBox(height: 16),
-            Text(
-              isBorrowed ? '빌린 물건이 없습니다' : '빌려준 물건이 없습니다',
-              style: TextStyle(
-                fontSize: 16,
-                color: context.onSurfaceVariantColor,
+    final inProgress = isBorrowed ? _borrowedInProgress : _lentInProgress;
+
+    final filteredItems = items.where((item) {
+      final status = dataManager.getStatusForUserOnItem(
+        item.id,
+        _currentUserId,
+      );
+      final isActive =
+          status == RentalStatus.pending ||
+          status == RentalStatus.matchConfirmed ||
+          status == RentalStatus.inProgress;
+      return inProgress ? isActive : !isActive;
+    }).toList();
+
+    return Column(
+      children: [
+        Padding(
+          padding: const EdgeInsets.fromLTRB(16, 12, 16, 4),
+          child: Align(
+            alignment: Alignment.centerRight,
+            child: SizedBox(
+              width: 250,
+              child: SegmentedButton<bool>(
+                segments: const [
+                  ButtonSegment(value: true, label: Text('진행 중')),
+                  ButtonSegment(value: false, label: Text('거래 완료')),
+                ],
+                selected: {inProgress},
+                onSelectionChanged: (val) => setState(() {
+                  if (isBorrowed) {
+                    _borrowedInProgress = val.first;
+                  } else {
+                    _lentInProgress = val.first;
+                  }
+                }),
               ),
             ),
-          ],
+          ),
         ),
-      );
-    }
+        if (filteredItems.isEmpty)
+          Expanded(
+            child: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(
+                    isBorrowed ? Icons.inbox : Icons.folder_open,
+                    size: 64,
+                    color: context.onSurfaceVariantColor,
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    inProgress
+                        ? (isBorrowed ? '진행 중인 빌린 물건이 없습니다' : '진행 중인 빌려준 물건이 없습니다')
+                        : (isBorrowed ? '완료된 빌린 물건이 없습니다' : '완료된 빌려준 물건이 없습니다'),
+                    style: TextStyle(
+                      fontSize: 16,
+                      color: context.onSurfaceVariantColor,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          )
+        else
+          Expanded(
+            child: ListView.builder(
+              padding: const EdgeInsets.all(16),
+              itemCount: filteredItems.length,
+              itemBuilder: (context, index) {
+                final item = filteredItems[index];
 
-    return ListView.builder(
-      padding: const EdgeInsets.all(16),
-      itemCount: items.length,
-      itemBuilder: (context, index) {
-        final item = items[index];
+                final String? otherName;
+                if (isBorrowed) {
+                  final chatting = dataManager
+                      .getAllChattings()
+                      .where((c) => c.requestId == item.id)
+                      .firstOrNull;
+                  otherName = chatting?.opponentName;
+                } else {
+                  otherName = item.requesterName.isNotEmpty
+                      ? item.requesterName
+                      : null;
+                }
 
-        final String? otherName;
-        if (isBorrowed) {
-          final chatting = dataManager
-              .getAllChattings()
-              .where((c) => c.requestId == item.id)
-              .firstOrNull;
-          otherName = chatting?.opponentName;
-        } else {
-          otherName = item.requesterName.isNotEmpty ? item.requesterName : null;
-        }
-
-        final status = dataManager.getStatusForUserOnItem(
-          item.id,
-          _currentUserId,
-        );
-        return _buildItemCard(item, otherName, status);
-      },
+                final status = dataManager.getStatusForUserOnItem(
+                  item.id,
+                  _currentUserId,
+                );
+                return _buildItemCard(item, otherName, status);
+              },
+            ),
+          ),
+      ],
     );
   }
 
-  Widget _buildItemCard(RentalItem item, String? otherName, RentalStatus status) {
+  Widget _buildItemCard(
+    RentalItem item,
+    String? otherName,
+    RentalStatus status,
+  ) {
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: InkWell(

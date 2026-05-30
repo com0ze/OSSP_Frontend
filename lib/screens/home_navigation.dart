@@ -62,7 +62,7 @@ class _HomeNavigationState extends State<HomeNavigation> {
           BottomNavigationBarItem(
             icon: Icon(Icons.person_outline),
             activeIcon: Icon(Icons.person),
-            label: '내 정보',
+            label: '마이페이지',
           ),
         ],
       ),
