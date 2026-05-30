@@ -20,10 +20,10 @@ class ChattingRoomWidgetFactory extends WidgetFactory {
 
   String _formatTime(DateTime time) {
     final now = DateTime.now();
-    if (now.difference(time).inDays == 0) {
-      return '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
-    }
-    return '${time.month}/${time.day}';
+    final hhmm = '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
+    final isToday = now.year == time.year && now.month == time.month && now.day == time.day;
+    if (isToday) return hhmm;
+    return '${time.month}/${time.day} $hhmm';
   }
 
   @override

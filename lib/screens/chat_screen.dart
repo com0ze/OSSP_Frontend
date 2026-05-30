@@ -59,7 +59,8 @@ class _ChatScreenState extends State<ChatScreen> {
         setState(() {
           _isLoading = false;
           _otherUser = dataManager.getUser(otherUserId) ?? _otherUser;
-          chatting = dataManager.getChatting(widget.match.chattingID) ?? chatting;
+          chatting =
+              dataManager.getChatting(widget.match.chattingID) ?? chatting;
           _messages.clear();
           _messages.addAll(chatting.chats);
         });
@@ -78,7 +79,8 @@ class _ChatScreenState extends State<ChatScreen> {
         _releasePendingMessages();
       }
     });
-    chatting = DataManager().getChatting(widget.match.chattingID) ??
+    chatting =
+        DataManager().getChatting(widget.match.chattingID) ??
         Chatting(id: widget.match.chattingID ?? '');
 
     _loadMessages();
@@ -309,231 +311,247 @@ class _ChatScreenState extends State<ChatScreen> {
     return Stack(
       children: [
         Scaffold(
-      appBar: AppBar(
-        backgroundColor: context.primaryColor,
-        foregroundColor: context.onPrimaryColor,
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(_otherUser.name),
-            Text(
-              widget.rentalItem.product.name,
-              style: const TextStyle(fontSize: 12),
+          appBar: AppBar(
+            backgroundColor: context.primaryColor,
+            foregroundColor: context.onPrimaryColor,
+            title: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(_otherUser.name),
+                Text(
+                  widget.rentalItem.product.name,
+                  style: const TextStyle(fontSize: 12),
+                ),
+              ],
             ),
-          ],
-        ),
-        actions: [
-          IconButton(
-            icon: const Icon(Icons.info_outline),
-            tooltip: '물건 상세정보',
-            onPressed: () async {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) =>
-                      ItemDetailScreen(item: widget.rentalItem),
-                ),
-              );
-              await dataManager.chatScreenInitCache(
-                itemId: widget.rentalItem.id,
-                matchId: widget.match.matchID,
-                chattingId: widget.match.chattingID ?? '',
-              );
-
-              if (mounted) {
-                setState(() {});
-              }
-            },
-          ),
-        ],
-      ),
-      body: ListenableBuilder(
-        listenable: dataManager,
-        builder: (context, child) {
-          // 아이템이 다른 매치로 확정된 경우 버튼 비활성화
-          final latestItem =
-              dataManager.getCachedRentalItem(widget.rentalItem.id) ??
-              widget.rentalItem;
-          final isActiveParticipant =
-              !latestItem.isMatched ||
-              latestItem.matchedID == widget.match.matchID;
-
-          return Column(
-            children: [
-              Container(
-                padding: const EdgeInsets.all(12),
-                color: _currentStatus.color.withValues(alpha: 0.1),
-                child: Row(
-                  children: [
-                    Icon(_getStatusIcon(), color: _currentStatus.color),
-                    const SizedBox(width: 8),
-                    Text(
-                      '현재 상태: ${_currentStatus.text}',
-                      style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color: _currentStatus.color,
-                      ),
+            actions: [
+              IconButton(
+                icon: const Icon(Icons.info_outline),
+                tooltip: '물건 상세정보',
+                onPressed: () async {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) =>
+                          ItemDetailScreen(item: widget.rentalItem),
                     ),
-                    if (!isActiveParticipant) ...[
-                      const Spacer(),
-                      Text(
-                        '다른 대여자와 매칭됨',
-                        style: TextStyle(
-                          fontSize: 12,
-                          color: context.onSurfaceVariantColor,
-                        ),
-                      ),
-                    ],
-                  ],
-                ),
+                  );
+                  await dataManager.chatScreenInitCache(
+                    itemId: widget.rentalItem.id,
+                    matchId: widget.match.matchID,
+                    chattingId: widget.match.chattingID ?? '',
+                  );
+
+                  if (mounted) {
+                    setState(() {});
+                  }
+                },
               ),
-              Expanded(
-                child: Stack(
-                  children: [
-                    LayoutBuilder(
-                      builder: (context, constraints) => RefreshIndicator(
-                        onRefresh: _refreshMessages,
-                        child: _messages.isEmpty
-                            ? SingleChildScrollView(
-                                physics: const AlwaysScrollableScrollPhysics(),
-                                child: SizedBox(
-                                  height: constraints.maxHeight,
-                                  child: Center(
-                                    child: Column(
-                                      mainAxisAlignment:
-                                          MainAxisAlignment.center,
-                                      children: [
-                                        Icon(
-                                          Icons.chat_bubble_outline,
-                                          size: 64,
-                                          color: Colors.grey,
-                                        ),
-                                        const SizedBox(height: 16),
-                                        const Text(
-                                          '아직 메시지가 없습니다',
-                                          style: TextStyle(
-                                            fontSize: 16,
-                                            color: Colors.grey,
-                                          ),
-                                        ),
-                                      ],
-                                    ),
-                                  ),
-                                ),
-                              )
-                            : ListView.builder(
-                                controller: _scrollController,
-                                shrinkWrap: true,
-                                reverse: true,
-                                physics: const AlwaysScrollableScrollPhysics(),
-                                padding: const EdgeInsets.all(16),
-                                itemCount: _messages.length,
-                                itemBuilder: (context, index) {
-                                  final message =
-                                      _messages[_messages.length - 1 - index];
-                                  return ChatWidgetFactory(
-                                    message: message,
-                                    currentUserId: loginManager.currentUser.id,
-                                  ).makeWidget(context);
-                                },
-                              ),
-                      ),
-                    ),
-                    if (_pendingMessages.isNotEmpty)
-                      Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Align(
-                          alignment: Alignment.bottomCenter,
-                          child: FloatingActionButton.extended(
-                            onPressed: () {
-                              _releasePendingMessages();
-                              WidgetsBinding.instance.addPostFrameCallback((_) {
-                                if (_scrollController.hasClients) {
-                                  _scrollController.animateTo(
-                                    0.0,
-                                    duration: const Duration(milliseconds: 500),
-                                    curve: Curves.easeOut,
-                                  );
-                                }
-                              });
-                            },
-                            label: Text('${_pendingMessages.length}개의 새 메시지'),
-                            icon: const Icon(Icons.arrow_downward),
+            ],
+          ),
+          body: ListenableBuilder(
+            listenable: dataManager,
+            builder: (context, child) {
+              // 아이템이 다른 매치로 확정된 경우 버튼 비활성화
+              final latestItem =
+                  dataManager.getCachedRentalItem(widget.rentalItem.id) ??
+                  widget.rentalItem;
+              final isActiveParticipant =
+                  !latestItem.isMatched ||
+                  latestItem.matchedID == widget.match.matchID;
+
+              return Column(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    color: _currentStatus.color.withValues(alpha: 0.1),
+                    child: Row(
+                      children: [
+                        Icon(_getStatusIcon(), color: _currentStatus.color),
+                        const SizedBox(width: 8),
+                        Text(
+                          '현재 상태: ${_currentStatus.text}',
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color: _currentStatus.color,
                           ),
                         ),
-                      ),
-                  ],
-                ),
-              ),
-              SafeArea(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: context.surfaceColor,
-                        boxShadow: [
-                          BoxShadow(
-                            color: Colors.black.withValues(alpha: 0.1),
-                            blurRadius: 4,
-                            offset: const Offset(0, -2),
+                        if (!isActiveParticipant) ...[
+                          const Spacer(),
+                          Text(
+                            '다른 대여자와 매칭됨',
+                            style: TextStyle(
+                              fontSize: 12,
+                              color: context.onSurfaceVariantColor,
+                            ),
                           ),
                         ],
-                      ),
-                      child: SizedBox(
-                        width: double.infinity,
-                        child: ElevatedButton.icon(
-                          onPressed: isActiveParticipant
-                              ? _updateRentalStatus
-                              : null,
-                          icon: Icon(_getNextStatusIcon()),
-                          label: Text(_currentStatus.nextButtonText),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: isActiveParticipant
-                                ? _getNextStatusColor()
-                                : Colors.grey,
-                            foregroundColor: context.onSurfaceColor,
-                            padding: const EdgeInsets.symmetric(vertical: 12),
+                      ],
+                    ),
+                  ),
+                  Expanded(
+                    child: Stack(
+                      children: [
+                        LayoutBuilder(
+                          builder: (context, constraints) => RefreshIndicator(
+                            onRefresh: _refreshMessages,
+                            child: _messages.isEmpty
+                                ? SingleChildScrollView(
+                                    physics:
+                                        const AlwaysScrollableScrollPhysics(),
+                                    child: SizedBox(
+                                      height: constraints.maxHeight,
+                                      child: Center(
+                                        child: Column(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            Icon(
+                                              Icons.chat_bubble_outline,
+                                              size: 64,
+                                              color: Colors.grey,
+                                            ),
+                                            const SizedBox(height: 16),
+                                            const Text(
+                                              '아직 메시지가 없습니다',
+                                              style: TextStyle(
+                                                fontSize: 16,
+                                                color: Colors.grey,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    ),
+                                  )
+                                : ListView.builder(
+                                    controller: _scrollController,
+                                    shrinkWrap: true,
+                                    reverse: true,
+                                    physics:
+                                        const AlwaysScrollableScrollPhysics(),
+                                    padding: const EdgeInsets.all(16),
+                                    itemCount: _messages.length,
+                                    itemBuilder: (context, index) {
+                                      final message =
+                                          _messages[_messages.length -
+                                              1 -
+                                              index];
+                                      return ChatWidgetFactory(
+                                        message: message,
+                                        currentUserId:
+                                            loginManager.currentUser.id,
+                                      ).makeWidget(context);
+                                    },
+                                  ),
                           ),
                         ),
-                      ),
+                        if (_pendingMessages.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.all(8.0),
+                            child: Align(
+                              alignment: Alignment.bottomCenter,
+                              child: FloatingActionButton.extended(
+                                onPressed: () {
+                                  _releasePendingMessages();
+                                  WidgetsBinding.instance.addPostFrameCallback((
+                                    _,
+                                  ) {
+                                    if (_scrollController.hasClients) {
+                                      _scrollController.animateTo(
+                                        0.0,
+                                        duration: const Duration(
+                                          milliseconds: 500,
+                                        ),
+                                        curve: Curves.easeOut,
+                                      );
+                                    }
+                                  });
+                                },
+                                label: Text(
+                                  '${_pendingMessages.length}개의 새 메시지',
+                                ),
+                                icon: const Icon(Icons.arrow_downward),
+                              ),
+                            ),
+                          ),
+                      ],
                     ),
-                    Container(
-                      padding: const EdgeInsets.all(12),
-                      child: Row(
-                        children: [
-                          Expanded(
-                            child: TextField(
-                              controller: _messageController,
-                              decoration: const InputDecoration(
-                                hintText: '메시지를 입력하세요',
-                                border: OutlineInputBorder(),
-                                contentPadding: EdgeInsets.symmetric(
-                                  horizontal: 16,
+                  ),
+                  SafeArea(
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: context.surfaceColor,
+                            boxShadow: [
+                              BoxShadow(
+                                color: Colors.black.withValues(alpha: 0.1),
+                                blurRadius: 4,
+                                offset: const Offset(0, -2),
+                              ),
+                            ],
+                          ),
+                          child: SizedBox(
+                            width: double.infinity,
+                            child: ElevatedButton.icon(
+                              onPressed: isActiveParticipant
+                                  ? _updateRentalStatus
+                                  : null,
+                              icon: Icon(_getNextStatusIcon()),
+                              label: Text(_currentStatus.nextButtonText),
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: isActiveParticipant
+                                    ? _getNextStatusColor()
+                                    : Colors.grey,
+                                foregroundColor: context.onSurfaceColor,
+                                padding: const EdgeInsets.symmetric(
                                   vertical: 12,
                                 ),
                               ),
-                              onSubmitted: (_) => _sendMessage(),
                             ),
                           ),
-                          const SizedBox(width: 8),
-                          IconButton(
-                            onPressed: _sendMessage,
-                            icon: const Icon(Icons.send),
-                            color: context.primaryColor,
-                            iconSize: 28,
+                        ),
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          child: Row(
+                            children: [
+                              Expanded(
+                                child: TextField(
+                                  controller: _messageController,
+                                  minLines: 1,
+                                  maxLines: 5,
+                                  keyboardType: TextInputType.multiline,
+                                  textInputAction: TextInputAction.newline,
+                                  decoration: const InputDecoration(
+                                    hintText: '메시지를 입력하세요',
+                                    border: OutlineInputBorder(),
+                                    contentPadding: EdgeInsets.symmetric(
+                                      horizontal: 16,
+                                      vertical: 12,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              IconButton(
+                                onPressed: _sendMessage,
+                                icon: const Icon(Icons.send),
+                                color: context.primaryColor,
+                                iconSize: 28,
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
+                        ),
+                      ],
                     ),
-                  ],
-                ),
-              ),
-            ],
-          );
-        },
-      ),
+                  ),
+                ],
+              );
+            },
+          ),
         ),
         if (_isLoading) ...[
           const ModalBarrier(dismissible: false, color: Colors.black26),

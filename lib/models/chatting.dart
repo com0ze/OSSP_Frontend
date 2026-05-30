@@ -19,13 +19,19 @@ class Chatting {
     this.lastMessage,
     this.updatedAt,
     List<Chat>? chats,
-  }) : _chats = chats ?? [];
+  }) : _chats = (chats ?? [])..sort((a, b) => a.createdAt.compareTo(b.createdAt));
 
   List<Chat> get chats => List.unmodifiable(_chats);
 
-  void addChat(Chat chat) => _chats.add(chat);
+  void addChat(Chat chat) {
+    _chats.add(chat);
+    _chats.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+  }
 
-  void addChats(List<Chat> newChats) => _chats.addAll(newChats);
+  void addChats(List<Chat> newChats) {
+    _chats.addAll(newChats);
+    _chats.sort((a, b) => a.createdAt.compareTo(b.createdAt));
+  }
 
   // 실제 메시지가 로드된 경우 마지막 Chat, 없으면 null
   Chat? getLastChat() => _chats.isEmpty ? null : _chats.last;

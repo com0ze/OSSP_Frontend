@@ -85,8 +85,9 @@ class _ChattingListScreenState extends State<ChattingListScreen> {
                     itemBuilder: (context, index) {
                       final chatting = chattings[index];
                       final match = dataManager.getMatch(chatting.matchId);
-                      final rentalItem =
-                          dataManager.getCachedRentalItem(chatting.requestId);
+                      final rentalItem = dataManager.getCachedRentalItem(
+                        chatting.requestId,
+                      );
                       return ChattingRoomWidgetFactory(
                         productName: rentalItem?.product.name ?? "unknown",
                         status:
@@ -94,7 +95,7 @@ class _ChattingListScreenState extends State<ChattingListScreen> {
                         chatting: chatting,
                         onTap: () async {
                           if (match == null || rentalItem == null) return;
-                          Navigator.push(
+                          await Navigator.push(
                             context,
                             MaterialPageRoute(
                               builder: (context) => ChatScreen(

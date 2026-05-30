@@ -556,6 +556,28 @@
                     - `notification_manager.dart`: `_setupMessageHandlers` 반환 타입 `void` → `Future<void>` (await 불가로 onMessage·onMessageOpenedApp 리스너 미등록 레이스 컨디션)
                     - `notification_manager.dart`: `await DataManager().ready` 제거 (`_readyFuture` 제거 후 컴파일 오류)
 
+        - ### commit: 채팅 버그 수정 및 UX 개선
+            - #### author: Seo JeongHun
+            - #### date: 2026-05-30
+            - fix:
+                - **채팅 메시지 순서 뒤섞임 수정** (`chatting.dart`)
+                    - `Chatting` 생성자·`addChat`·`addChats`에서 `_chats`를 `createdAt` 오름차순으로 정렬
+                    - `getLastMessageText()` / `getLastMessageTime()`의 `_chats.last`가 항상 실제 최신 메시지를 가리키도록 보장
+                    - 채팅 목록 화면의 마지막 메시지 문구가 간헐적으로 바뀌던 문제 해결
+
+                - **채팅방 진입 시 동시 API 경쟁 조건 수정** (`chatting_list.dart`)
+                    - `Navigator.push` 미 await으로 `chattingListScreenInitCache`가 채팅방 진입 중에 즉시 실행되어 `_chattings`를 덮어쓰던 문제 수정
+                    - `await Navigator.push(...)` 후 `chattingListScreenInitCache` 실행으로 변경 (채팅방에서 돌아올 때만 목록 갱신)
+
+            - feature:
+                - **채팅 입력창 줄바꿈 지원** (`chat_screen.dart`)
+                    - 엔터 키 입력 시 제출 → 줄바꿈으로 동작 변경 (`TextInputAction.newline`)
+                    - 최소 1줄, 최대 5줄까지 자동 확장 후 내부 스크롤 (`minLines: 1`, `maxLines: 5`)
+
+                - **채팅 목록 시간 표시 형식 개선** (`chatting_room_widget_factory.dart`)
+                    - 기존: 24시간 기준 오늘/이전 분기 → 개선: 날짜 기준 오늘/다른 날 분기
+                    - 오늘: `HH:mm`, 다른 날: `M/d HH:mm` 형식으로 날짜와 시간 함께 표시
+
 
 - # feature/location
     - ## version: 1.1.0
