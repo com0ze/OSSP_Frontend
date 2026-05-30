@@ -628,6 +628,13 @@
                 - 유저 화면 점수 하트 아이콘으로 변경
                 - 물건 거래 횟수 삭제
 
+        - ### commit: 테마 모드 영구 저장
+            - #### author: Seo JeongHun
+            - #### date: 2026-05-30
+            - feature:
+                - 테마 모드 매니저에 스토리지 저장 사용
+                - 어플 실행 시 스토리지에 저장된 값 불러와 사용함
+
 - # feature/data_structure
     - ## version: 1.1.0
         - ### commit: 데이터 매니저 통합

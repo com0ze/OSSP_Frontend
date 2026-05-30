@@ -38,6 +38,7 @@ void main() async {
   DataManager();
 
   await LoginManager().initAutoLogin();
+  await ThemeModeManager().load();
 
   if (LoginManager().isLoggedIn) {
     activeNotificationManager.updateDeviceTokenToServer();
