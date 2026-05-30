@@ -620,6 +620,14 @@
                 - main.dart 스낵바 속도 조절
                 - 상단바에 색 넣음
 
+    - ## version: 1.2.0
+        - ### commit: 유저 화면 디자인 개편
+            - #### author: Seo JeongHun
+            - #### date: 2026-05-30
+            - feature:
+                - 유저 화면 점수 하트 아이콘으로 변경
+                - 물건 거래 횟수 삭제
+
 - # feature/data_structure
     - ## version: 1.1.0
         - ### commit: 데이터 매니저 통합
