@@ -1,9 +1,11 @@
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
-import 'package:open_source_software/extensions/theme_extension.dart';
-import 'package:open_source_software/managers/active_notification_manager.dart';
-import 'package:open_source_software/managers/login_manager.dart';
-import 'package:open_source_software/screens/home_navigation.dart';
-import 'package:open_source_software/screens/signin_screen.dart';
+import 'package:flutter_svg/flutter_svg.dart';
+import '/extensions/theme_extension.dart';
+import '/managers/active_notification_manager.dart';
+import '/managers/login_manager.dart';
+import '/screens/home_navigation.dart';
+import '/screens/signup_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -68,11 +70,15 @@ class _LoginScreenState extends State<LoginScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Icon(
-                    Icons.shopping_bag,
-                    size: 80,
-                    color: context.primaryColor,
-                  ), // TODO:: 앱 아이콘으로 변경
+                  SvgPicture.asset(
+                    'assets/villit_logo.svg',
+                    width: 160,
+                    height: 160,
+                    colorFilter: ColorFilter.mode(
+                      context.primaryColor,
+                      BlendMode.srcIn,
+                    ),
+                  ),
                   const SizedBox(height: 24),
                   const Text(
                     '빌릿 Villit',
@@ -160,7 +166,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => const SigninScreen(),
+                          builder: (context) => const SignUpScreen(),
                         ),
                       );
                     },
@@ -169,25 +175,27 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     child: const Text('회원가입'),
                   ),
-                  // const SizedBox(height: 32),
-                  // ElevatedButton(
-                  //   style: ElevatedButton.styleFrom(
-                  //     backgroundColor: Colors.blue,
-                  //   ),
-                  //    onPressed: () async {
-                  //     await activeNotificationManager.showNotification(
-                  //       id: 1,
-                  //       title: '🚨 긴급 대여 요청',
-                  //       body: '근처에서 보조배터리 대여 요청이 들어왔습니다. 핀을 확인해주세요!',
-                  //       payload:
-                  //           '{"type": "RENTAL_REQUEST", "requestId": "123"}',
-                  //     );
-                  //   },
-                  //   child: const Text(
-                  //     '진짜 폰 상단 알림 띄우기',
-                  //     style: TextStyle(color: Colors.white),
-                  //   ),
-                  // ),
+                  if (kDebugMode) ...[
+                    const SizedBox(height: 32),
+                    ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: Colors.blue,
+                      ),
+                      onPressed: () async {
+                        await activeNotificationManager.showNotification(
+                          id: 1,
+                          title: '🚨 긴급 대여 요청',
+                          body: '근처에서 보조배터리 대여 요청이 들어왔습니다. 핀을 확인해주세요!',
+                          payload:
+                              '{"type": "RENTAL_REQUEST", "requestId": "123"}',
+                        );
+                      },
+                      child: const Text(
+                        '진짜 폰 상단 알림 띄우기',
+                        style: TextStyle(color: Colors.white),
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),

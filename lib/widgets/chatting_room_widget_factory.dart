@@ -1,44 +1,35 @@
-﻿import 'package:flutter/material.dart';
-import 'package:open_source_software/extensions/rental_status_extension.dart';
-import 'package:open_source_software/extensions/theme_extension.dart';
-import 'package:open_source_software/managers/login_manager.dart';
-import 'package:open_source_software/managers/data_manager.dart';
-import 'package:open_source_software/models/chat.dart';
-import 'package:open_source_software/models/match.dart';
-import 'package:open_source_software/widgets/widget_factory.dart';
+import 'package:flutter/material.dart';
+import '/extensions/rental_status_extension.dart';
+import '/extensions/theme_extension.dart';
+import '/models/chatting.dart';
+import '/models/rental_item.dart';
+import '/widgets/widget_factory.dart';
 
 class ChattingRoomWidgetFactory extends WidgetFactory {
-  final Match match;
+  final Chatting chatting;
   final VoidCallback onTap;
+  final String productName;
+  final RentalStatus status;
 
-  ChattingRoomWidgetFactory({required this.match, required this.onTap});
+  ChattingRoomWidgetFactory({
+    required this.chatting,
+    required this.onTap,
+    required this.productName,
+    required this.status,
+  });
 
   String _formatTime(DateTime time) {
     final now = DateTime.now();
-    if (now.difference(time).inDays == 0) {
-      return '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
-    }
-    return '${time.month}/${time.day}';
+    final hhmm = '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
+    final isToday = now.year == time.year && now.month == time.month && now.day == time.day;
+    if (isToday) return hhmm;
+    return '${time.month}/${time.day} $hhmm';
   }
 
   @override
   Widget makeWidget(BuildContext context) {
-    final dataManager = DataManager();
-    final loginManager = LoginManager();
-
-    final currentUserId = loginManager.currentUserOrGuest.id;
-    final otherUserId = match.requesterID == currentUserId
-        ? match.lenderID
-        : match.requesterID;
-    final otherUser = dataManager.getUserById(otherUserId);
-    final item = dataManager.rentalItems[match.rentalItemID];
-    final Chat? lastChat = dataManager
-        .getChattingById(match.chattingID)
-        ?.getLastChat();
-    final status = dataManager.getStatusForUserOnItem(
-      match.rentalItemID,
-      currentUserId,
-    );
+    final lastMessageText = chatting.getLastMessageText();
+    final lastMessageTime = chatting.getLastMessageTime();
 
     return Card(
       margin: const EdgeInsets.only(bottom: 8),
@@ -52,7 +43,7 @@ class ChattingRoomWidgetFactory extends WidgetFactory {
               CircleAvatar(
                 radius: 24,
                 child: Text(
-                  otherUser.name[0],
+                  chatting.opponentName.isNotEmpty ? chatting.opponentName[0] : '?',
                   style: const TextStyle(fontSize: 18),
                 ),
               ),
@@ -64,7 +55,7 @@ class ChattingRoomWidgetFactory extends WidgetFactory {
                     Row(
                       children: [
                         Text(
-                          otherUser.name,
+                          chatting.opponentName,
                           style: const TextStyle(
                             fontSize: 15,
                             fontWeight: FontWeight.bold,
@@ -72,7 +63,7 @@ class ChattingRoomWidgetFactory extends WidgetFactory {
                         ),
                         const SizedBox(width: 6),
                         Text(
-                          item?.product.name ?? '',
+                          productName,
                           style: TextStyle(
                             fontSize: 12,
                             color: context.onSurfaceVariantColor,
@@ -82,10 +73,10 @@ class ChattingRoomWidgetFactory extends WidgetFactory {
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      lastChat?.chatText ?? '아직 메시지가 없습니다',
+                      lastMessageText ?? '아직 메시지가 없습니다',
                       style: TextStyle(
                         fontSize: 13,
-                        color: lastChat != null
+                        color: lastMessageText != null
                             ? context.onSurfaceColor
                             : context.onSurfaceVariantColor,
                       ),
@@ -99,9 +90,9 @@ class ChattingRoomWidgetFactory extends WidgetFactory {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  if (lastChat != null)
+                  if (lastMessageTime != null)
                     Text(
-                      _formatTime(lastChat.sendTime),
+                      _formatTime(lastMessageTime),
                       style: TextStyle(
                         fontSize: 11,
                         color: context.onSurfaceVariantColor,

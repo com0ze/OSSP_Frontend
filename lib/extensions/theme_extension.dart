@@ -15,6 +15,7 @@ extension ThemeExtension on BuildContext {
   Color get tertiaryColor => Theme.of(this).colorScheme.tertiary;
   Color get onTertiaryColor => Theme.of(this).colorScheme.onTertiary;
 
+  Color get heartColor => Colors.red;
   Color get starColor => Colors.amber;
   Color get errorColor => Theme.of(this).colorScheme.error;
   Color get onErrorColor => Theme.of(this).colorScheme.onError;

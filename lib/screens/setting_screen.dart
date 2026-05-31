@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:open_source_software/extensions/theme_extension.dart';
-import 'package:open_source_software/managers/login_manager.dart';
-import 'package:open_source_software/managers/theme_mode_manager.dart';
+import '/extensions/theme_extension.dart';
+import '/managers/login_manager.dart';
+import '/managers/theme_mode_manager.dart';
 
 class SettingScreen extends StatefulWidget {
   const SettingScreen({super.key});
@@ -11,7 +11,12 @@ class SettingScreen extends StatefulWidget {
 }
 
 class _SettingScreenState extends State<SettingScreen> {
-  bool _notificationsEnabled = false;
+  bool _chatNotificationsEnabled = false;
+
+  @override
+  void initState() {
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -49,12 +54,16 @@ class _SettingScreenState extends State<SettingScreen> {
           ),
           const Divider(),
           ListTile(
-            leading: Icon(Icons.notifications_outlined, color: context.primaryColor),
-            title: const Text('알림 설정'),
-            subtitle: const Text('앱 알림을 켜거나 끕니다.'),
+            leading: Icon(
+              Icons.notifications_outlined,
+              color: context.primaryColor,
+            ),
+            title: const Text('채팅 알림 설정'),
+            subtitle: const Text('채팅 알림을 켜거나 끕니다.'),
             trailing: Switch(
-              value: _notificationsEnabled,
-              onChanged: (value) => setState(() => _notificationsEnabled = value),
+              value: _chatNotificationsEnabled,
+              onChanged: (value) =>
+                  setState(() => _chatNotificationsEnabled = value),
             ),
           ),
         ],

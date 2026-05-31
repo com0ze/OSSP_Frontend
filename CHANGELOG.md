@@ -49,6 +49,15 @@
             - #### date: 2026-05-24
             - feature: 
                 - 브랜치 통합
+    
+    - ## version: 1.2.0
+        - ### commit: 브랜치 통합
+            - #### author: Seo JeongHun, Lee JaeWon
+            - #### date: 2026-05-29
+            - feature: 
+                - 브랜치 통합
+                - api 버그 수정
+                - 일부 위젯 수정
                 
 - # feature/notification
     - ## version: 1.0.1
@@ -309,6 +318,333 @@
                 - `item_detail_screen.dart` 중복 `DataManager` 지역 변수 제거
                     - `_onChatPressed`, `_onCancelPressed` 내부의 `DataManager dataManager = TestDataManager()` 중복 선언 제거
 
+        - ### commit: api 관리자 통합
+            - #### author: Seo JeongHun
+            - #### date: 2026-05-24
+            - feature:
+                - 브랜치 통합으로 인한 api관리자 중복 제거
+
+        - ### commit: api 통신 방식 변경
+            - #### author: Seo JeongHun
+            - #### date: 2026-05-24
+            - feature:
+                - import 주소 단순화
+                - 각 클래스 별 TTL 도입
+                - mock서버에서 클론뜨는 게 아니라 실제로 통신하는 것 처럼 구현
+
+        - ### commit: 데이터 매니저 교체
+            - #### author: Seo JeongHun
+            - #### date: 2026-05-25
+            - feature:
+                - **STOMP 실시간 채팅 클라이언트 구현** (`lib/chat/stomp_client.dart` 신규)
+                    - WebSocket + STOMP 프로토콜 기반 `ChatStompClient` 클래스 추가
+                    - STOMP 프레임 수동 파싱 (CONNECT / SUBSCRIBE / SEND / DISCONNECT)
+                    - 채널 구독·해제 및 메시지 발행 기능 구현
+                    - `chat_screen.dart`에 연동하여 실시간 메시지 송수신 적용
+
+                - **DataManager 완전 교체 및 API 정합성 확보** (`data_manager.dart`)
+                    - `getUserReceivedReview(userId)` 메서드 추가: `revieweeId` 기반으로 받은 리뷰 필터링
+                    - `getUserWriteReview(userId)` 메서드 추가: `writerId` 기반으로 작성한 리뷰 필터링
+                    - `getStatusForUserOnItem(itemId, userId)` 시그니처 변경: async 제거 → 동기 2-인자 메서드로 단순화
+                    - 취소 API 메서드 수정: `dio.post` → `dio.patch` (`/api/v1/requests/{id}/cancel`)
+                    - `userProfileScreenInitCache` / `otherUserProfileScreenInitCache`: 리뷰 로드 시 `..revieweeId = userId` cascade 설정 추가
+                    - `data_manager_new.dart`, `temp_data_manager.dart` 임시 파일 삭제 후 단일 `DataManager`로 통합
+
+                - **모델 구조 변경**
+                    - `review.dart`: `User writer` → `String writerId` 교체, `String? revieweeId` 필드 추가 (직렬화 시 cascade로 설정)
+                    - `user.dart`: `email` 필드 제거 (`MainUser`에만 유지), `rentalHistory: List<String>` → `rentalCount: int` 로 교체
+                    - `chatting.dart`: `matchId`, `requestId`, `opponentId`, `opponentName`, `lastMessage`, `updatedAt` 필드 추가
+                    - `match.dart`: 백엔드 미지원으로 `requesterReviewID`, `lenderReviewID` 필드 제거
+                    - `chat.dart`, `rental_item.dart`, `main_user.dart`: API 스펙에 맞게 `fromJson` 키 매핑 정비
+
+                - **LoginManager 리팩토링** (`login_manager.dart`)
+                    - 내부 `_Session` 클래스 도입으로 user + accessToken 원자적 관리
+                    - `currentUser` / `accessToken` 접근자를 null 대신 `StateError` 발생 방식으로 명확화
+                    - 불필요한 메서드 제거 및 코드 간소화
+
+                - **화면 및 위젯 DataManager 연동**
+                    - `chat_screen.dart`: `getStatusForUserOnItem`으로 상태 구독, `getUserWriteReview`로 리뷰 작성 여부 확인, STOMP 클라이언트 연동
+                    - `user_profile_screen.dart`: `userProfileScreenInitCache` / `getUserReceivedReview` 사용하도록 재작성
+                    - `review_widget_factory.dart`: `review.writer.name` → `DataManager().getUser(review.writerId)?.name`으로 교체
+                    - `chatting_room_widget_factory.dart`, `rental_item_widget_factory.dart`, `chat_widget_factory.dart`: DataManager 기반 데이터 조회로 전환
+                    - `chatting_list.dart`, `item_detail_screen.dart`, `rental_request_screen.dart`, `review_screen.dart`, `lender_profile_screen.dart`: API 변경 사항 반영
+                    - `setting_screen.dart` 신규 추가
+
+                - **Mock 서버 재구성** (`mock_server_interceptor.dart`)
+                    - 취소 엔드포인트: `POST` → `PATCH` 수정
+                    - 리뷰 목록 응답에 `{'data': ...}` 래핑 추가 (Spring Page 형식 정합)
+                    - `_recalculateScore`, `_receivedReviewsFor` 함수를 `revieweeId` 필드 기반으로 재작성
+                    - `requesterReviewID`, `lenderReviewID` 관련 코드 전면 제거
+                    - 테스트 데이터 전면 재구성: 산발적 ID 체계(`'0'`, `'b1'`, `'reviewer1'` 등) → 일관된 `u0`~`u4` / `i_b1`~`i_n3` 체계로 교체
+                        - u0(김샘플) 기준 빌린 물건 5건(pending·matchConfirmed·inProgress·returned×2), 빌려준 물건 2건, 주변 아이템 3건
+                        - 각 매치에 실제 대화 흐름이 있는 채팅 메시지 포함
+                        - 완료된 거래(i_b4, i_l2)에 한해 양방향 리뷰 데이터 포함, i_b5는 리뷰 미작성 상태로 유지
+
+                - **임시 문서 정리**
+                    - `data update.md`, `data_manager_calls.md`, `data_manager_design.md`, `data_manager_reference.md` 삭제
+
+        - ### commit: 버그 수정 및 모델 보완
+            - #### author: Seo JeongHun
+            - #### date: 2026-05-26
+            - fix:
+                - **`LoginManager.updateUser()` 무한 루프 수정** (`login_manager.dart`)
+                    - `updateUser()` 내부에서 `DataManager().updateMainUser()`를 다시 호출하는 구조로 인해 `GET /api/v1/users/me`가 무한 반복 호출되던 문제 수정
+                    - `updateUser()`는 세션 내 유저 객체 교체만 담당하도록 `DataManager().updateMainUser()` 호출 제거
+
+                - **Mock 서버 타입 에러 수정** (`mock_server_interceptor.dart`)
+                    - `queryParameters` 값이 `int`로 전달될 때 `int.tryParse()`에 `String`이 아닌 `int`가 전달되어 `TypeError`로 앱이 종료되던 문제 수정
+                        - `options.queryParameters['page'] ?? '0'` → `options.queryParameters['page']?.toString() ?? '0'` (702, 703, 1045, 1046번 줄)
+                    - `as String?` 강제 캐스팅으로 인한 `_CastError` 가능성 수정
+                        - `options.queryParameters['status'] as String?` → `?.toString()` (730, 764, 765번 줄)
+
+            - feature:
+                - **`RentalItem` 모델 `requesterName` 필드 추가** (`rental_item.dart`)
+                    - `requesterName` 필드 추가 (기본값 `''`)
+                    - `fromJson`에서 `requesterNickname` / `requesterName` 키로 파싱
+                    - `copyWith`에 전파 추가
+
+        - ### commit: 채팅 화면 버그 수정 및 기능 보완
+            - #### author: Seo JeongHun
+            - #### date: 2026-05-26
+            - fix:
+                - **채팅 목록에서 Match 재구성** (`data_manager.dart`)
+                    - `chattingListScreenInitCache` 완료 후 `Chatting` + `RentalItem` 데이터를 조합하여 `_matches` 캐시를 채우도록 추가
+                    - `lenderID`는 `RentalItem.requesterID`와 현재 사용자 비교로 도출
+
+                - **채팅 진입 시 기존 메시지 미표시 버그 수정** (`chat_screen.dart`)
+                    - `_refreshMessages` 완료 후 DataManager에서 새 `Chatting` 객체를 재취득하지 않아 `chatting.chats`가 항상 빈 상태였던 문제 수정
+                    - `setState` 내에서 `dataManager.getChatting(...)` 재호출로 갱신
+
+                - **`activeStompClient` 임포트 누락 복구** (`chat_screen.dart`)
+                    - `stomp_client.dart` 직접 임포트로 회귀된 것을 `active_stomp_client.dart`로 복원
+                    - `ChatStompClient()` 직접 참조 4곳을 `activeStompClient`로 교체
+
+                - **상태 진행 버튼 되돌림 버그 수정** (`chat_screen.dart`)
+                    - `updateMatchStatus` 호출이 `await` 없이 실행되어 `_onDataChanged`가 캐시 구 상태를 읽어 `_currentStatus`를 되돌리는 문제 수정
+                    - `matchConfirmed → inProgress`, `inProgress → returned` 전환 시 `await updateMatchStatus` 후 `_refreshMessages` 호출 추가
+
+                - **다른 채팅방에서 리뷰 작성이 막히는 버그 수정** (`chat_screen.dart`)
+                    - `hasReviewed` 체크가 `revieweeId` 기반으로 동작해 같은 상대(김철수)와의 다른 거래에서도 리뷰가 차단되던 문제 수정
+                    - `r.revieweeId == _otherUser.id` → `r.matchId == widget.match.matchID` 로 거래 단위 체크로 변경
+
+                - **ⓘ 버튼 후 재진입 시 NullException 수정** (`data_manager.dart`)
+                    - `itemDetailScreenInitCache`에서 Match를 갱신할 때 `chattingID`를 누락하여 재진입 시 `widget.match.chattingID!`가 null이 되던 문제 수정
+                    - 기존 `_matches[matchID]?.chattingID` 값을 보존하도록 수정
+
+                - **채팅창 빠른 진입 시 상대방 이름 "알 수 없음" 표시 버그 수정** (`chat_screen.dart`)
+                    - `initState`에서 동기적으로 `_otherUser`를 설정하므로 캐시 미적재 시 fallback 표시되던 문제 수정
+                    - `addPostFrameCallback`과 `_refreshMessages` 모두에서 `chatScreenInitCache` 완료 후 `_otherUser`를 DataManager 캐시에서 재취득하도록 수정
+
+        - ### commit: API 스펙 정합성 수정 및 리뷰 모델 보완
+            - #### author: Seo JeongHun
+            - #### date: 2026-05-26
+            - fix:
+                - **Mock 서버 응답 포맷 api_spec.md 정합** (`mock_server_interceptor.dart`)
+                    - `_receivedReviewsFor` (5.3/5.4): 스펙에 없는 `reviewerId` 필드 제거
+                    - `GET /api/v1/reviews/my` (5.2): `matchId` 필드 추가, `{"status":"OK","statusCode":200,"message":"...","data":[...]}` 래퍼 적용
+                    - `POST /api/v1/reviews` (5.1): 빈 `{}` 반환에서 `{"status":"OK","statusCode":200,"message":"...","data":null}` 형식으로 수정
+                    - 기존 리뷰 데이터(`rev_b4_*`, `rev_l2_*`)에 `matchId` cascade 설정 추가
+                    - `serverCreateReview`에서 생성 리뷰에 `matchId` cascade 설정 추가
+
+                - **`Review` 모델 필드 및 파싱 보완** (`review.dart`)
+                    - `matchId` 필드 추가 및 `fromJson`에서 파싱
+                    - `revieweeId` 필드를 `fromJson`에서 JSON 파싱으로 처리 (5.2 응답의 `revieweeId` 직접 활용)
+                    - `reviewerNickname` 필드 추가 및 `fromJson`에서 파싱
+
+                - **리뷰 위젯 작성자 이름 미표시 버그 수정** (`review_widget_factory.dart`)
+                    - 5.3/5.4 응답에 `reviewerId` 미포함으로 `writerId`가 빈 문자열이 되어 이름이 표시되지 않던 문제 수정
+                    - `reviewerNickname → 캐시 유저명 → writerId` 순서로 fallback 적용
+
+            - feature:
+                - **`chatScreenInitCache`에 내가 쓴 리뷰 로드 추가** (`data_manager.dart`)
+                    - `GET /api/v1/reviews/my` 호출을 추가하여 `_reviews` 캐시에 내가 작성한 리뷰 적재
+                    - `hasReviewed` 체크(`matchId` 기반)가 실제로 동작하기 위한 데이터 공급
+
+        - ### commit: 실서버 응답 wrapper 파싱 전면 적용
+            - #### author: Seo JeongHun
+            - #### date: 2026-05-26
+            - fix:
+                - **`ApiClient.extractData()` 헬퍼 추가** (`api_client.dart`)
+                    - 실서버 응답 `{"status":int,"message":"...","data":{...}}` wrapper를 자동으로 벗겨냄
+                    - `status` 또는 `message` 키가 있고 `data` 키가 존재할 때만 unwrap, 그 외(mock 서버 직접 응답 등)는 그대로 반환
+
+                - **전체 API 파싱 지점에 `extractData` 적용** (`login_manager.dart`, `data_manager.dart`)
+                    - `initAutoLogin`: `/api/v1/users/me` 응답 → `MainUser.fromJson` 파싱 시 적용
+                    - `login`: `/api/v1/auth/login` 응답 → `accessToken` / `refreshToken` 추출 시 적용
+                    - `updateMainUser`: `/api/v1/users/me` 응답 → `MainUser.fromJson` 파싱 시 적용
+                    - `chatScreenInitCache`: 채팅 메시지 목록, 상대방 유저, 아이템 3개 파싱 지점 적용
+                    - `chattingListScreenInitCache`: 채팅 목록, 대여 아이템 목록 파싱 지점 적용
+                    - `itemDetailScreenInitCache`: 아이템, 요청자 유저 파싱 지점 적용
+                    - `otherUserProfileScreenInitCache`: 유저 파싱 지점 적용
+                    - `userProfileScreenInitCache`: 대여 아이템 목록 파싱 지점 적용
+                    - `rentalListScreenInitCache`: 주변 아이템 목록 파싱 지점 적용
+                    - `createMatchWithChatting`: 매치, 채팅방 파싱 지점 2곳 적용
+                    - 리뷰 페이지네이션(`['data']['content']`) 및 `reviews/my`(`['data']`) 경로는 이미 양쪽 서버 모두 정상 동작하므로 변경 없음
+
+                - **물건 상세 화면 채팅하기 버튼 `pending` 비활성화 조건 제거** (`item_detail_screen.dart`)
+                    - 대여자(lender) 입장에서 WAITING(pending) 상태 아이템의 채팅하기 버튼이 실서버에서 비활성화되던 문제 수정
+                    - 요청자는 `confirmed != null`일 때만 버튼이 표시되므로 pending 비활성화 조건이 불필요
+                    - `cancelled` 상태일 때만 비활성화하도록 변경
+
+    - ## version: 1.2.0
+        - ### commit: 알림 설정과 당직 설정 분리
+            - #### author: Seo JeongHun
+            - #### date: 2026-05-23
+            - feature:
+                - 미구현인 채팅 알림 설정 기능을 명확히 표시하여 알림 토글 기능을 구조화함
+                
+        - ### commit: DataManager 리팩토링 및 UI 안정성 개선
+            - #### author: Seo JeongHun
+            - #### date: 2026-05-27
+            - fix:
+                - **DataManager 공개 getter 5개 제거** (`data_manager.dart`)
+                    - `users`, `reviews`, `chattings`, `matches`, `rentalItems` public getter 삭제
+                    - 각 화면에서 직접 맵에 접근하던 코드를 `getCachedRentalItem`, `getAllChattings`, `getMatch`, `getAvailableRentalItems`, `getBorrowedItems`, `getLentItems` 등 독립 함수로 교체
+                - **마이페이지 상대방 이름 항상 "매칭 대기 중" 표시 버그 수정** (`user_profile_screen.dart`)
+                    - `_users` 캐시 미적재로 인해 모든 거래에서 이름이 표시되지 않던 문제 수정
+                    - 빌린 물건: `chatting.opponentName` 사용, 빌려준 물건: `item.requesterName` 사용으로 캐시 의존 제거
+                    - `userProfileScreenInitCache`에서 `chattingListScreenInitCache`를 병렬 실행하도록 수정
+                - **취소된 거래 채팅하기 버튼 숨김** (`item_detail_screen.dart`)
+                    - 기존 비활성화(disabled) 처리에서 버튼 자체를 숨기도록 변경
+                - **chat_screen Chatting 강제 unwrap 크래시 수정** (`chat_screen.dart`)
+                    - `initState`에서 `getChatting()!` 강제 unwrap → 캐시 미적재 시 빈 `Chatting` 객체 fallback으로 교체
+            - feature:
+                - **물건 상세정보·채팅 화면 로딩 오버레이 추가** (`item_detail_screen.dart`, `chat_screen.dart`)
+                    - 화면 진입 시 서버 응답 대기 중 모든 상호작용을 차단하는 반투명 오버레이(`ModalBarrier` + `CircularProgressIndicator`) 추가
+                    - init 완료 후 오버레이 해제
+                - **취소 시나리오 테스트 데이터 추가** (`mock_server_interceptor.dart`)
+                    - 신규 유저 2명(u5 정수현, u6 홍길동) 추가
+                    - 매치 후 취소된 빌린 물건(i_bc1), 매치 후 취소된 빌려준 물건(i_lc1), 매치 전 취소된 빌린 물건(i_bc2) 추가
+                    - 취소된 매치(m_bc1, m_lc1)와 채팅(c_bc1, c_lc1) 데이터 유지
+                - **테스트 데이터 리뷰 점수 정수화** (`mock_server_interceptor.dart`)
+                    - 리뷰 점수를 1~5 정수 값으로 통일 (4.5 → 4.0)
+                    - 유저 점수를 수신한 리뷰 평균과 일치하도록 수정 (u0: 4.75 → 4.5)
+
+        - ### commit: 전체 정적 코드 검토 및 버그 수정
+            - #### author: Seo JeongHun
+            - #### date: 2026-05-28
+            - fix:
+                - **크래시 수정 — 강제 언래핑 제거**
+                    - `other_user_profile_screen.dart`: `getUser()!` → `?? widget.user` 폴백 (첫 빌드 시 캐시 미적재로 NPE 크래시)
+                    - `chat_screen.dart`: `widget.match.chattingID!` 4곳 → `?? ''` (chattingID null 시 크래시)
+                    - `chatting_room_widget_factory.dart`: `opponentName[0]` → `isNotEmpty` 가드 + `'?'` 폴백
+                    - `rental_item_widget_factory.dart`: `requesterName[0]` → 동일 패턴 적용
+
+                - **로직 오류 수정**
+                    - `chatting_list.dart`: 채팅방에서 복귀 시 `rentalListScreenInitCache()` → `chattingListScreenInitCache()` (채팅 목록 미갱신 버그)
+                    - `item_detail_screen.dart`: 대여자 경로 `widget.item.matchedID` (초기 stale 값) → `currentItem.matchedID` (캐시 최신값)
+                    - `chat_screen.dart`: `pending → matchConfirmed` 로컬 상태만 변경하던 로직 → `_refreshMessages()` 호출로 서버 값 동기화
+                    - `chat_screen.dart`: `initState`에서 `chatScreenInitCache` 이중 호출 제거 (`_refreshMessages()` 중복 삭제)
+
+                - **에러 처리 개선**
+                    - `data_manager.dart`: `cancelMatch` 반환 타입 `void` → `bool` (성공 여부 전달)
+                    - `item_detail_screen.dart`: `cancelMatch` 실패 시 스낵바 표시 후 pop 차단 (실패해도 화면 닫히던 문제)
+                    - `data_manager.dart`: `updateMatchStatus` try/catch 추가 (DioException 미처리 누수 방지)
+
+                - **코드 정리**
+                    - `data_manager.dart`: `_readyFuture` 미초기화 `late final` 필드 제거
+                    - `data_manager.dart`: `chatScreenInitCache` 리뷰 파싱 `data['data']` 직접 접근 → `ApiClient.extractData()` 통일
+                    - `data_manager.dart`: Dio 성공 응답 후 도달 불가한 4xx 상태 검사 제거 (`addRentalItem`, `cancelMatch`, `postReview`, `createMatchWithChatting`)
+                    - `data_manager.dart`: `userProfileScreenInitCache`에서 `/api/v1/requests/me` 중복 호출 제거 (chattingListScreenInitCache 내부에서 이미 처리)
+
+                - **기타**
+                    - `rental_request_screen.dart`: `addRentalItem` await 누락으로 서버 응답 전에 성공 스낵바 표시되던 문제 수정
+                    - `review_widget_factory.dart`: `index < review.score` (double 비교) → `review.score.toInt()` (4.5점이 5개 별로 표시되던 오류)
+                    - `login_screen.dart`: 테스트용 알림 버튼 `kDebugMode` 블록으로 감싸 프로덕션 노출 방지
+
+                - **notification_manager 버그 수정**
+                    - `notification_manager.dart`: `_setupMessageHandlers` 반환 타입 `void` → `Future<void>` (await 불가로 onMessage·onMessageOpenedApp 리스너 미등록 레이스 컨디션)
+                    - `notification_manager.dart`: `await DataManager().ready` 제거 (`_readyFuture` 제거 후 컴파일 오류)
+
+        - ### commit: 채팅 버그 수정 및 UX 개선
+            - #### author: Seo JeongHun
+            - #### date: 2026-05-30
+            - fix:
+                - **채팅 메시지 순서 뒤섞임 수정** (`chatting.dart`)
+                    - `Chatting` 생성자·`addChat`·`addChats`에서 `_chats`를 `createdAt` 오름차순으로 정렬
+                    - `getLastMessageText()` / `getLastMessageTime()`의 `_chats.last`가 항상 실제 최신 메시지를 가리키도록 보장
+                    - 채팅 목록 화면의 마지막 메시지 문구가 간헐적으로 바뀌던 문제 해결
+
+                - **채팅방 진입 시 동시 API 경쟁 조건 수정** (`chatting_list.dart`)
+                    - `Navigator.push` 미 await으로 `chattingListScreenInitCache`가 채팅방 진입 중에 즉시 실행되어 `_chattings`를 덮어쓰던 문제 수정
+                    - `await Navigator.push(...)` 후 `chattingListScreenInitCache` 실행으로 변경 (채팅방에서 돌아올 때만 목록 갱신)
+
+            - feature:
+                - **채팅 입력창 줄바꿈 지원** (`chat_screen.dart`)
+                    - 엔터 키 입력 시 제출 → 줄바꿈으로 동작 변경 (`TextInputAction.newline`)
+                    - 최소 1줄, 최대 5줄까지 자동 확장 후 내부 스크롤 (`minLines: 1`, `maxLines: 5`)
+
+                - **채팅 목록 시간 표시 형식 개선** (`chatting_room_widget_factory.dart`)
+                    - 기존: 24시간 기준 오늘/이전 분기 → 개선: 날짜 기준 오늘/다른 날 분기
+                    - 오늘: `HH:mm`, 다른 날: `M/d HH:mm` 형식으로 날짜와 시간 함께 표시
+
+        - ### commit: 마이페이지 리뷰 로드 및 DataManager 개선
+            - #### author: Seo JeongHun
+            - #### date: 2026-05-30
+            - fix:
+                - **마이페이지 작성한 리뷰 탭 미표시 수정** (`data_manager.dart`, `review.dart`)
+                    - `userProfileScreenInitCache`에서 `GET /api/v1/reviews/my` 미호출로 작성한 리뷰가 항상 비어있던 문제 수정
+                    - 서버 응답에 `writerId` 필드가 없어 `getUserWriteReview` 필터가 동작하지 않던 문제 수정
+                    - 받은 리뷰(`revieweeId`)와 동일하게 작성한 리뷰 파싱 시 `..writerId = userId` cascade 설정
+                    - `chatScreenInitCache`의 `/api/v1/reviews/my` 파싱에도 `..writerId = myId` 추가
+                    - `Review.writerId` `final` → mutable로 변경 (cascade 설정 허용)
+
+                - **API 응답 직접 접근 제거** (`data_manager.dart`)
+                    - `otherUserProfileScreenInitCache`, `userProfileScreenInitCache`에서 `rootResponse['data']` 직접 접근 → `ApiClient.extractData()` 통일
+
+            - feature:
+                - **`Chatting.replaceChats()` 추가** (`chatting.dart`)
+                    - 기존 `copyWith(chats: chatList)` 대신 내부 리스트를 교체하는 `replaceChats()` 메서드 추가
+                    - 새 객체 생성 없이 clear → addAll → sort 처리로 오버헤드 감소
+                    - `chatScreenInitCache`에서 `copyWith` → `replaceChats()` 교체
+
+                - **`createMatchWithChatting` 파싱 개선** (`data_manager.dart`)
+                    - `Chatting.fromJson(...).copyWith(requestId: itemId)` → `fromJson` 전 맵에 `requestId` 주입으로 `copyWith` 제거
+
+        - ### commit: 알림 로직 개선 및 인증 구조 리팩토링
+            - #### author: Seo JeongHun
+            - #### date: 2026-05-31
+            - fix:
+                - **`initAutoLogin` 중복 API 호출 제거** (`login_manager.dart`, `data_manager.dart`)
+                    - 기존: `initAutoLogin` 완료 후 `DataManager().updateMainUser()`로 `/api/v1/users/me` 재호출
+                    - 변경: 이미 파싱한 `MainUser`를 `DataManager().cacheMainUser()`에 직접 전달
+                    - `cacheMainUser(MainUser user)` 메서드 신규 추가 (`data_manager.dart`)
+
+                - **알림 클릭 시 API 호출 제거** (`notification_manager.dart`, `models/rental_item.dart`)
+                    - 기존: `_handleNotificationClick` 내부에서 `getRentalItem()` → `itemDetailScreenInitCache()` 2회 API 호출 후 이동
+                    - 변경: `RentalItem.placeholder(id)` 팩토리로 즉시 `ItemDetailScreen` 이동, 화면 자체적으로 데이터 로드
+                    - API 실패 시 화면 이동 자체가 취소되던 문제 해결
+
+                - **알림 상단바(shade)에서 탭 시 동작하지 않던 버그 수정** (`notification_manager.dart`)
+                    - `onDidReceiveNotificationResponse`는 앱이 포어그라운드일 때만 동작
+                    - 상단바를 열어 탭하면 앱이 백그라운드로 전환되어 콜백이 누락되던 문제 수정
+                    - `onDidReceiveBackgroundNotificationResponse` + `IsolateNameServer` 패턴으로 백그라운드 isolate → 메인 isolate 전달 구조 추가
+
+                - **회원가입 후 FCM 토큰 미등록 버그 수정** (`login_manager.dart`, `main.dart`, `login_screen.dart`)
+                    - 기존: `login_screen.dart`에서만 `updateDeviceTokenToServer()` 호출 → 회원가입 경로 누락
+                    - 변경: `LoginManager.setLoginSuccessHandler` 콜백 패턴 도입
+                    - `initAutoLogin()` 성공 시 `_loginSuccessHandler` 호출 → 자동 로그인·수동 로그인·회원가입 모두 커버
+                    - `login_screen.dart`의 직접 호출 제거
+
+                - **앱 종료 상태 알림 탭 시 메인화면 플래시 수정** (`main.dart`)
+                    - `getInitialMessage()`를 `runApp()` 전에 호출하여 `requestId` 사전 확보
+                    - `_MyAppState.initState()`에서 `addPostFrameCallback`으로 즉시 `ItemDetailScreen` push
+
+                - **JWT 액세스 토큰 콘솔 출력 제거** (`notification_manager.dart`)
+                    - `_syncTokenToServer`에서 `log(token)`, `log(accessToken)` 제거 (보안)
+
+                - **`MyApp` 안정화** (`main.dart`)
+                    - `StatelessWidget` → `StatefulWidget` 전환
+                    - `home:` 방식으로 복귀 (`onGenerateInitialRoutes` + `navigatorKey` 병용 시 충돌 문제 해소)
+
+            - feature:
+                - **`RentalItem.placeholder(String id)` 팩토리 추가** (`models/rental_item.dart`)
+                    - 알림 클릭 시 API 없이 `ItemDetailScreen` 진입에 필요한 최소 객체 생성용
+
+                - **`handleInitialMessage(String? itemId)` 시그니처 변경** (`abstract_notification_manager.dart`)
+                    - 기존: 내부에서 `getInitialMessage()` 직접 호출
+                    - 변경: `main()`에서 미리 추출한 `itemId`를 파라미터로 수신
+
 - # feature/location
     - ## version: 1.1.0
         - ### commit: 위치 기반 캠퍼스 건물 인식 및 서버 연동 구현
@@ -345,6 +681,7 @@
                     - home_navigation.dart를 StatefulWidget으로 전환, initState에서 LocationManager 초기화 (로그인 후 메인 화면 진입 시점에 위치 권한 요청)
                     - rental_request_screen.dart의 현재 위치 버튼이 LocationManager가 판별한 건물명을 입력칸에 자동 입력하도록 변경
                     - 건물 미판별 시 직접 입력 안내 스낵바 표시, 위치 입력 필드 라벨/힌트를 건물명 기준으로 수정
+
 - # feature/buildng
     - ## version: 1.1.0
         - ### commit: rental_item이 place사용하도록 구조 변경
@@ -370,6 +707,125 @@
             - feature:
                 - main.dart 스낵바 속도 조절
                 - 상단바에 색 넣음
+
+    - ## version: 1.2.0
+        - ### commit: 유저 화면 디자인 개편
+            - #### author: Seo JeongHun
+            - #### date: 2026-05-30
+            - feature:
+                - 유저 화면 점수 하트 아이콘으로 변경
+                - 물건 거래 횟수 삭제
+
+        - ### commit: 테마 모드 영구 저장
+            - #### author: Seo JeongHun
+            - #### date: 2026-05-30
+            - feature:
+                - 테마 모드 매니저에 스토리지 저장 사용
+                - 어플 실행 시 스토리지에 저장된 값 불러와 사용함
+
+        - ### commit: 마이페이지 탭 필터 및 구분선 개선
+            - #### author: Seo JeongHun
+            - #### date: 2026-05-30
+            - feature:
+                - **마이페이지 탭 내 세그먼트 필터 추가** (`user_profile_screen.dart`)
+                    - 빌린 물건·빌려준 물건 탭: "진행 중" / "거래 완료" `SegmentedButton` 추가
+                        - 진행 중: `pending`, `matchConfirmed`, `inProgress` 상태 항목만 표시
+                        - 거래 완료: `returned`, `cancelled` 상태 항목만 표시
+                        - 탭별 독립 상태 관리 (`_borrowedInProgress`, `_lentInProgress`)
+                    - 리뷰 탭: "받은 리뷰" / "작성한 리뷰" `SegmentedButton` 추가
+                        - 받은 리뷰: `getUserReceivedReview` 사용
+                        - 작성한 리뷰: `getUserWriteReview` 사용
+                    - 세그먼트 버튼 우측 정렬 (`Align(Alignment.centerRight)`)
+                    - 고정 너비(`SizedBox(width: 250)`)로 선택 시 레이아웃 변동 방지
+                    - 빈 화면 메시지를 탭·필터 조합에 따라 4가지로 분기
+                        - 예: "진행 중인 빌린 물건이 없습니다", "완료된 빌려준 물건이 없습니다"
+                    - "받은 리뷰" 탭명 → "리뷰"로 변경
+
+                - **유저 정보 헤더 구분선 개선** (`lender_profile_screen.dart`)
+                    - 반응형 `SizedBox(width: screenWidth * 0.10)` → 고정 높이 `VerticalDivider`로 교체
+                    - 두께 2, 색상 grey, 너비 50의 세로 구분선 적용
+                
+                - 내 정보 탭에서 마이페이지로 이름 변경
+                
+        - ### commit: 대여 요청 화면 2단계 UI 개편 및 위치 새로고침 버튼 추가
+            - #### author: Seo JeongHun
+            - #### date: 2026-05-30
+            - feature:
+                - **대여 요청 화면 2단계 UI 구현** (`rental_request_screen.dart`)
+                    - 1단계: 로고 + 앱이름 + 검색창 + 자주 찾는 물건 그리드 표시
+                    - 2단계: 검색창 엔터 또는 추천 물건 탭 시 전환, 위치·금액·시간·설명 입력 폼 표시
+                    - 물건 입력창을 모두 지우면 1단계로 자동 복귀
+                    - `AnimatedContainer` + `OverflowBox` + `AnimatedOpacity`로 로고 영역 부드럽게 접힘
+                    - `AnimatedCrossFade`로 그리드 ↔ 폼 전환 시 크기·불투명도 동시 애니메이션
+                    - 모든 입력 필드 둥근 테두리 스타일 통일 (`_roundedDecoration` 헬퍼)
+                    - 이미지 로고로 전환 가능한 구조 (`_useAssetLogo` 상수)
+
+                - **위치 새로고침 버튼 추가** (`widgets/location_refresh_button.dart` 신규)
+                    - 지도핀 아이콘 + 현재 건물명 + 새로고침 아이콘으로 구성
+                    - `IconTheme.of(context).color`로 색상 자동 상속 (AppBar 배경색에 자동 대응)
+                    - 새로고침 중 `CircularProgressIndicator` 표시
+                    - 대여 요청 화면 및 대여 목록 화면 AppBar에 추가
+
+                - **LocationManager 개선** (`location_manager.dart`)
+                    - `_loadBuildings()` 완료 후 `notifyListeners()` 추가 (드롭다운 즉시 반영)
+                    - `refreshLocation()` 공개 메서드 추가 (Dwell Time 없이 즉시 건물 확정)
+                    - `_confirmBuildingChange()` async 전환: `_sendLocationToServer()` 완료 후 `notifyListeners()` 호출하여 위치 저장 → 목록 갱신 순서 보장
+
+                - **대여 목록 화면 위치 연동** (`rental_list_screen.dart`)
+                    - `LocationManager` 리스너 추가: 건물이 실제로 바뀔 때만 서버에서 목록 재요청
+                    - `_lastBuilding` 비교로 불필요한 중복 요청 방지
+
+                - **홈 네비게이션 초기화 순서 개선** (`home_navigation.dart`)
+                    - `initState`에서 `addPostFrameCallback`으로 `LocationManager.initialize()` 호출
+
+        - ### commit: 건물명 한/영 양방향 호환 및 대여 목록 화면 개선
+            - #### author: Seo JeongHun
+            - #### date: 2026-05-31
+            - fix:
+                - **대여 목록 화면 진입 시 앱 멈춤 수정** (`rental_list_screen.dart`)
+                    - `SingleChildScrollView` 안에 `ListView`가 중첩되어 unbounded height 오류로 앱이 멈추던 문제 수정
+                    - 단일 `ListView`로 통합, 빈 목록 분기를 `if/else` 조건으로 처리
+
+                - **위치 드롭다운 배경색 미적용 수정** (`rental_request_screen.dart`)
+                    - `Theme` 래퍼를 통한 `inputDecorationTheme` 설정이 `DropdownMenu` 내부 `TextField`에 전달되지 않던 문제 수정
+                    - `DropdownMenu.inputDecorationTheme` 직접 파라미터로 변경, `fillColor`, `enabledBorder`, `focusedBorder` 색상이 다른 입력 필드와 동일하게 적용됨
+
+                - **`getAvailableRentalItems` 위치 null 시 전체 목록 반환 문제 수정** (`data_manager.dart`)
+                    - 위치 미확정(캠퍼스 밖) 상태에서 모든 대여 요청이 표시되던 문제 수정
+                    - `currentBuilding == null`이면 빈 목록 반환
+
+            - feature:
+                - **건물명 한/영 양방향 변환 지원** (`location_manager.dart`)
+                    - `BuildingNameTransfer.toCode()` → `toEnglish()`로 메서드명 명확화
+                    - `BuildingNameTransfer.toKorean()` 추가: 영어 코드 → 한글명 역방향 변환
+                    - 건물 밖 이탈 시 서버에 `'OUTSIDE'` 전송 (기존: 전송 생략)
+
+                - **건물명 표시 한글화** (`rental_item_widget_factory.dart`, `item_detail_screen.dart`)
+                    - 대여 목록 카드 및 아이템 상세 화면의 위치 표시에 `BuildingNameTransfer.toKorean()` 적용
+                    - 서버에서 영어 코드로 오더라도 화면에는 항상 한글로 표시
+
+                - **대여 목록 화면 건물명 한/영 양방향 필터 적용** (`data_manager.dart`)
+                    - `getAvailableRentalItems`에서 한글명·영어 코드 중 어느 형태든 현재 건물과 일치하면 표시
+
+                - **당직 설정 타일 상단 고정** (`rental_list_screen.dart`)
+                    - `Column + Expanded` 구조로 변경하여 스크롤 시에도 당직 설정 타일이 상단에 고정
+                    - 롤백 `setState`에 `if (mounted)` 체크 추가
+
+        - ### commit: 앱 아이콘 및 이름 변경
+            - #### author: Seo JeongHun
+            - #### date: 2026-05-31
+            - feature:
+                - **앱 이름 변경**
+                    - Android `AndroidManifest.xml`의 `android:label` → `"빌릿 Villit"`
+                    - iOS `Info.plist`의 `CFBundleDisplayName` → `"빌릿 Villit"`
+
+                - **앱 아이콘 교체** (`pubspec.yaml`)
+                    - `flutter_launcher_icons: ^0.14.3` dev_dependency 추가
+                    - `villit_logo.png` 기반으로 Android·iOS 아이콘 자동 생성 (`flutter pub run flutter_launcher_icons`)
+                    - iOS App Store alpha 채널 경고 방지를 위해 `remove_alpha_ios: true` 설정
+
+                - **에셋 등록** (`pubspec.yaml`)
+                    - `assets/villit_logo.svg` pubspec.yaml assets 섹션에 추가
 
 - # feature/data_structure
     - ## version: 1.1.0

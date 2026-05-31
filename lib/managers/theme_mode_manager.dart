@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 
 class ThemeModeManager extends ChangeNotifier {
   static final ThemeModeManager _instance = ThemeModeManager._internal();
@@ -9,12 +10,26 @@ class ThemeModeManager extends ChangeNotifier {
 
   ThemeModeManager._internal();
 
-  ThemeMode _mode = ThemeMode.system; // 시스템, 라이트, 다크
+  static const _storage = FlutterSecureStorage();
+  static const _key = 'THEME_MODE';
+
+  ThemeMode _mode = ThemeMode.system;
 
   ThemeMode get mode => _mode;
 
-  void changeThemeMode(ThemeMode mode) {
+  Future<void> load() async {
+    final saved = await _storage.read(key: _key);
+    if (saved != null) {
+      _mode = ThemeMode.values.firstWhere(
+        (m) => m.name == saved,
+        orElse: () => ThemeMode.system,
+      );
+    }
+  }
+
+  void changeThemeMode(ThemeMode mode) async {
     _mode = mode;
-    notifyListeners(); // <--- 이 부분이 핵심! UI에게 변경을 알립니다.
+    notifyListeners();
+    await _storage.write(key: _key, value: mode.name);
   }
 }

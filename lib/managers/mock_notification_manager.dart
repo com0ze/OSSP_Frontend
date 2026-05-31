@@ -1,5 +1,5 @@
 import 'dart:developer';
-import 'package:open_source_software/managers/abstract_notification_manager.dart';
+import '/managers/abstract_notification_manager.dart';
 
 AbstractNotificationManager createManager() => MockNotificationManager();
 
@@ -18,6 +18,9 @@ class MockNotificationManager extends AbstractNotificationManager {
   Future<void> updateDeviceTokenToServer() async {
     log('이 환경에서는 기기 토큰 업데이트를 지원하지 않습니다');
   }
+
+  @override
+  Future<void> handleInitialMessage(String? itemId) async {}
 
   @override
   Future<void> showNotification({

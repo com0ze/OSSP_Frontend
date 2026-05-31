@@ -1,12 +1,29 @@
 import 'dart:convert';
 import 'dart:developer';
+import 'dart:isolate';
+import 'dart:ui';
+import 'package:dio/dio.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart'
     show TargetPlatform, defaultTargetPlatform;
+import 'package:flutter/material.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
-import 'package:open_source_software/managers/abstract_notification_manager.dart';
-import 'package:open_source_software/managers/mock_notification_manager.dart';
-import 'api_manager.dart';
+import '/app_keys.dart';
+import '/managers/abstract_notification_manager.dart';
+import '/managers/mock_notification_manager.dart';
+import '/managers/login_manager.dart';
+import '/api/api_client.dart';
+import '/models/rental_item.dart';
+import '/screens/item_detail_screen.dart';
+
+const String _kNotificationPortName = 'notification_tap_port';
+
+// 앱이 백그라운드일 때 알림 탭 처리 — 별도 isolate에서 실행되므로 top-level 필수.
+@pragma('vm:entry-point')
+void _onNotificationBackgroundTap(NotificationResponse response) {
+  IsolateNameServer.lookupPortByName(_kNotificationPortName)
+      ?.send(response.payload);
+}
 
 AbstractNotificationManager createManager() {
   if (defaultTargetPlatform == TargetPlatform.windows) {
@@ -23,7 +40,8 @@ class NotificationManager extends AbstractNotificationManager {
   final FirebaseMessaging _messaging = FirebaseMessaging.instance;
   final FlutterLocalNotificationsPlugin _localNotifications =
       FlutterLocalNotificationsPlugin();
-  final ApiManager _apiManager = ApiManager();
+  final ApiClient _apiClient = ApiClient();
+  final ReceivePort _port = ReceivePort();
 
   @override
   Future<void> initialize() async {
@@ -36,14 +54,23 @@ class NotificationManager extends AbstractNotificationManager {
 
     if (settings.authorizationStatus == AuthorizationStatus.authorized ||
         settings.authorizationStatus == AuthorizationStatus.provisional) {
+      // 백그라운드 탭 콜백을 메인 isolate로 전달하기 위한 포트 등록
+      IsolateNameServer.registerPortWithName(_port.sendPort, _kNotificationPortName);
+      _port.listen((payload) {
+        if (payload is String) {
+          log('🔔 알림 탭 감지 (background) — payload: $payload');
+          _handleNotificationClick(jsonDecode(payload));
+        }
+      });
       await _setupLocalNotifications();
-      _setupMessageHandlers();
+      await _setupMessageHandlers();
       _messaging.onTokenRefresh.listen(_syncTokenToServer);
     }
   }
 
   @override
   Future<void> updateDeviceTokenToServer() async {
+    if (!LoginManager().isLoggedIn) return;
     if (defaultTargetPlatform == TargetPlatform.iOS) {
       await _messaging.getAPNSToken();
     }
@@ -54,10 +81,14 @@ class NotificationManager extends AbstractNotificationManager {
   }
 
   Future<void> _syncTokenToServer(String token) async {
+    if (!LoginManager().isLoggedIn) return;
     try {
-      await _apiManager.dio.patch(
+      await _apiClient.dio.patch(
         '/api/v1/users/me/device-token',
         data: {'fcmToken': token},
+        options: Options(
+          headers: {'Authorization': 'Bearer ${LoginManager().accessToken}'},
+        ),
       );
       log('✅ 서버에 기기 토큰 갱신 성공');
     } catch (e) {
@@ -73,38 +104,35 @@ class NotificationManager extends AbstractNotificationManager {
     await _localNotifications.initialize(
       initSettings,
       onDidReceiveNotificationResponse: (res) {
+        log('🔔 알림 탭 감지 (foreground) — payload: ${res.payload}');
         if (res.payload != null) {
           _handleNotificationClick(jsonDecode(res.payload!));
         }
       },
+      onDidReceiveBackgroundNotificationResponse: _onNotificationBackgroundTap,
     );
   }
 
-  void _setupMessageHandlers() async {
-    final RemoteMessage? initialMessage = await _messaging.getInitialMessage();
-    if (initialMessage != null) {
-      _handleNotificationClick(initialMessage.data);
-    }
+  // 종료 상태에서 알림 클릭으로 앱 실행 시 처리.
+  // main()에서 getInitialMessage()를 미리 호출하고 itemId만 전달받는다.
+  @override
+  Future<void> handleInitialMessage(String? itemId) async {
+    if (itemId == null) return;
+    await _handleNotificationClick({
+      'type': 'RENTAL_REQUEST',
+      'requestId': itemId,
+    });
+  }
 
+  Future<void> _setupMessageHandlers() async {
     FirebaseMessaging.onMessage.listen((message) {
       if (message.notification == null) return;
+      final type = message.data['type'] as String?;
       _localNotifications.show(
-        message.notification.hashCode,
+        message.hashCode,
         message.notification!.title,
         message.notification!.body,
-        const NotificationDetails(
-          android: AndroidNotificationDetails(
-            'urgent_rental_channel',
-            '긴급 알림',
-            importance: Importance.max,
-            priority: Priority.high,
-          ),
-          iOS: DarwinNotificationDetails(
-            presentAlert: true, // ⭐️ 포그라운드에서 알림 배너 표시
-            presentSound: true, // ⭐️ 알림 소리 재생
-            presentBadge: true, // ⭐️ 앱 아이콘 배지 표시
-          ),
-        ),
+        _notificationDetails(type),
         payload: jsonEncode(message.data),
       );
     });
@@ -114,10 +142,53 @@ class NotificationManager extends AbstractNotificationManager {
     });
   }
 
-  void _handleNotificationClick(Map<String, dynamic> data) {
+  NotificationDetails _notificationDetails(String? type) {
+    switch (type) {
+      case 'RENTAL_REQUEST':
+        return const NotificationDetails(
+          android: AndroidNotificationDetails(
+            'urgent_rental_channel',
+            '대여 요청 알림',
+            channelDescription: '새로운 대여 요청 알림',
+            importance: Importance.max,
+            priority: Priority.high,
+            color: Color(0xFF2196F3),
+          ),
+          iOS: DarwinNotificationDetails(
+            presentAlert: true,
+            presentSound: true,
+            presentBadge: true,
+          ),
+        );
+      default:
+        return const NotificationDetails(
+          android: AndroidNotificationDetails(
+            'urgent_rental_channel',
+            '긴급 알림',
+            importance: Importance.max,
+            priority: Priority.high,
+          ),
+          iOS: DarwinNotificationDetails(
+            presentAlert: true,
+            presentSound: true,
+            presentBadge: true,
+          ),
+        );
+    }
+  }
+
+  Future<void> _handleNotificationClick(Map<String, dynamic> data) async {
     final String? type = data['type'];
+    log('🔔 _handleNotificationClick — type: $type, data: $data');
     if (type == 'RENTAL_REQUEST') {
-      log('🔗 라우팅: 대여 상세로 이동 (ID: ${data['requestId']})');
+      final String? requestId = data['requestId']?.toString();
+      if (requestId == null) return;
+      navigatorKey.currentState?.push(
+        MaterialPageRoute(
+          builder: (_) =>
+              ItemDetailScreen(item: RentalItem.placeholder(requestId)),
+        ),
+      );
     } else if (type == 'CHAT_MESSAGE') {
       log('🔗 라우팅: 채팅방으로 이동 (ID: ${data['roomId']})');
     }

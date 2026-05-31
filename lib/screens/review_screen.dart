@@ -1,10 +1,9 @@
 ﻿import 'package:flutter/material.dart';
-import 'package:open_source_software/extensions/theme_extension.dart';
-import 'package:open_source_software/managers/data_manager.dart';
-import 'package:open_source_software/models/match.dart';
-import 'package:open_source_software/models/rental_item.dart';
-import 'package:open_source_software/models/review.dart';
-import 'package:open_source_software/models/user.dart';
+import '/extensions/theme_extension.dart';
+import '/managers/data_manager.dart';
+import '/models/match.dart';
+import '/models/rental_item.dart';
+import '/models/user.dart';
 
 class ReviewScreen extends StatefulWidget {
   final RentalItem rentalItem;
@@ -23,7 +22,7 @@ class ReviewScreen extends StatefulWidget {
 }
 
 class _ReviewScreenState extends State<ReviewScreen> {
-  int _rating = 0;
+  double _rating = 0;
   final TextEditingController _commentController = TextEditingController();
 
   @override
@@ -32,7 +31,7 @@ class _ReviewScreenState extends State<ReviewScreen> {
     super.dispose();
   }
 
-  void _submitReview() {
+  Future<void> _submitReview() async {
     if (_rating == 0) {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
@@ -74,20 +73,13 @@ class _ReviewScreenState extends State<ReviewScreen> {
     );
 
     final DataManager dataManager = DataManager();
-    final review = Review(
-      id: '${widget.match.matchID}_${widget.reviewee.id}',
-      score: _rating,
+    await dataManager.postReview(
+      score: _rating.toInt(),
       reviewText: reviewText,
-      writer: widget.reviewee,
-      createdAt: DateTime.now(),
+      matchId: widget.match.matchID,
     );
 
-    if (widget.match.lenderID == widget.reviewee.id) {
-      dataManager.updateMatchLenderReview(widget.match.matchID, review);
-    } else {
-      dataManager.updateMatchRequesterReview(widget.match.matchID, review);
-    }
-
+    if (!mounted) return;
     Navigator.of(context).popUntil((route) => route.isFirst);
   }
 
