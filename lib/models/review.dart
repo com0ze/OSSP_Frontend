@@ -18,14 +18,14 @@ class Review {
 
   factory Review.fromJson(Map<String, dynamic> json) {
     return Review(
-      id: (json['reviewId'] ?? json['id'] ?? '').toString(),
-      score: ((json['score']) as num?)?.toDouble() ?? 0.0,
-      reviewText: (json['comments'] ?? json['reviewText'] ?? '') as String,
-      writerId: (json['reviewerId'] ?? json['writerId'] ?? '').toString(),
-      createdAt: json['createdAt'] != null
-          ? DateTime.parse(json['createdAt'] as String)
-          : DateTime.now(),
-    )
+        id: (json['reviewId'] ?? json['id'] ?? '').toString(),
+        score: ((json['score']) as num?)?.toDouble() ?? 0.0,
+        reviewText: (json['comments'] ?? json['reviewText'] ?? '') as String,
+        writerId: (json['reviewerId'] ?? json['writerId'] ?? '').toString(),
+        createdAt: json['createdAt'] != null
+            ? DateTime.parse(json['createdAt'] as String)
+            : DateTime.now(),
+      )
       ..revieweeId = json['revieweeId']?.toString()
       ..matchId = (json['matchId'] ?? '').toString()
       ..reviewerNickname = json['reviewerNickname'] as String?;

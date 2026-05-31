@@ -16,8 +16,8 @@ class Chat {
       createdAt: json['createdAt'] != null
           ? DateTime.parse(json['createdAt'] as String)
           : (json['sendTime'] != null
-              ? DateTime.parse(json['sendTime'] as String)
-              : DateTime.now()),
+                ? DateTime.parse(json['sendTime'] as String)
+                : DateTime.now()),
     );
   }
 
