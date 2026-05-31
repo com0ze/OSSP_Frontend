@@ -681,6 +681,32 @@
                     - home_navigation.dart를 StatefulWidget으로 전환, initState에서 LocationManager 초기화 (로그인 후 메인 화면 진입 시점에 위치 권한 요청)
                     - rental_request_screen.dart의 현재 위치 버튼이 LocationManager가 판별한 건물명을 입력칸에 자동 입력하도록 변경
                     - 건물 미판별 시 직접 입력 안내 스낵바 표시, 위치 입력 필드 라벨/힌트를 건물명 기준으로 수정
+                    
+    - ## version: 1.2.0
+        - ### commit: 백그라운드 위치 추적 지원
+            - #### author: Seo JeongHun
+            - #### date: 2026-06-01
+            - fix:
+                - **백그라운드 상태에서 위치 변경이 감지되지 않던 문제 수정** (`location_manager.dart`, `AndroidManifest.xml`)
+                    - 기존: `LocationSettings`(포어그라운드 전용) 사용으로 앱 백그라운드 전환 시 GPS 스트림 중단
+                    - 변경: 플랫폼별 전용 설정으로 교체하여 백그라운드에서도 위치 스트림 유지
+
+            - feature:
+                - **Android 포어그라운드 서비스 기반 백그라운드 위치 추적** (`AndroidManifest.xml`, `location_manager.dart`)
+                    - `FOREGROUND_SERVICE`, `FOREGROUND_SERVICE_LOCATION` 권한 추가
+                    - `GeolocatorLocationService` 포어그라운드 서비스 선언 (`foregroundServiceType="location"`)
+                    - `AndroidSettings` + `ForegroundNotificationConfig` 적용
+                        - 서비스 상태 알림 문구: "빌릿 Villit이 캠퍼스 건물을 감지하고 있습니다."
+                        - `enableWakeLock: true` 로 CPU 슬립 방지
+                    - "앱 사용 중 허용" 권한만으로 백그라운드 추적 가능 (포어그라운드 서비스이므로 "항상 허용" 불필요)
+
+                - **iOS 백그라운드 위치 추적** (`location_manager.dart`)
+                    - `AppleSettings` 적용
+                        - `allowBackgroundLocationUpdates: true` — 백그라운드 위치 수신 허용
+                        - `pauseLocationUpdatesAutomatically: false` — OS 자동 일시정지 비활성화
+                        - `activityType: ActivityType.fitness` — 보행 패턴에 최적화된 위치 갱신
+                        - `showBackgroundLocationIndicator: true` — 상태바 파란 위치 표시기 노출 (App Store 정책 준수)
+                    - `UIBackgroundModes: location` + "앱 사용 중 허용" 권한 조합으로 백그라운드 동작
 
 - # feature/buildng
     - ## version: 1.1.0

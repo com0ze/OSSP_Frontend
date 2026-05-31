@@ -1,7 +1,8 @@
 {
   "permissions": {
     "allow": [
-      "Read(//c/Users/Seo-JeongHun/.claude/projects/c--Users-Seo-JeongHun-source-StudioProjects-open-source-software/memory/**)"
+      "Read(//c/Users/Seo-JeongHun/.claude/projects/c--Users-Seo-JeongHun-source-StudioProjects-open-source-software/memory/**)",
+      "Bash(flutter doctor *)"
     ],
     "additionalDirectories": [
       "c:\\Users\\Seo-JeongHun\\.claude\\projects\\c--Users-Seo-JeongHun-source-StudioProjects-open-source-software\\memory"

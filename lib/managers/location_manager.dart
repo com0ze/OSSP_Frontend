@@ -168,6 +168,7 @@ class LocationManager extends ChangeNotifier {
         permission == LocationPermission.deniedForever) {
       return false;
     }
+
     return true;
   }
 
@@ -175,11 +176,35 @@ class LocationManager extends ChangeNotifier {
 
   /// 위치 스트림 구독을 시작한다.
   void _startTracking() {
-    // distanceFilter: 5m 이상 이동했을 때만 콜백 — 불필요한 갱신을 줄인다.
-    const LocationSettings settings = LocationSettings(
-      accuracy: LocationAccuracy.high,
-      distanceFilter: 5,
-    );
+    final LocationSettings settings;
+
+    if (defaultTargetPlatform == TargetPlatform.android) {
+      // Android: 포어그라운드 서비스로 백그라운드 위치 추적 유지
+      settings = AndroidSettings(
+        accuracy: LocationAccuracy.high,
+        distanceFilter: 5,
+        foregroundNotificationConfig: const ForegroundNotificationConfig(
+          notificationTitle: '위치 추적 중',
+          notificationText: '빌릿 Villit이 캠퍼스 건물을 감지하고 있습니다.',
+          enableWakeLock: true,
+        ),
+      );
+    } else if (defaultTargetPlatform == TargetPlatform.iOS) {
+      // iOS: allowBackgroundLocationUpdates로 백그라운드 위치 수신 허용
+      settings = AppleSettings(
+        accuracy: LocationAccuracy.high,
+        distanceFilter: 5,
+        activityType: ActivityType.fitness,
+        pauseLocationUpdatesAutomatically: false,
+        allowBackgroundLocationUpdates: true,
+        showBackgroundLocationIndicator: true,
+      );
+    } else {
+      settings = const LocationSettings(
+        accuracy: LocationAccuracy.high,
+        distanceFilter: 5,
+      );
+    }
 
     _positionSub = Geolocator.getPositionStream(
       locationSettings: settings,
