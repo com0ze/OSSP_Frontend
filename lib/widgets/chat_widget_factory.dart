@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:open_source_software/extensions/theme_extension.dart';
-import 'package:open_source_software/models/chat.dart';
-import 'package:open_source_software/widgets/widget_factory.dart';
+import '/extensions/theme_extension.dart';
+import '/models/chat.dart';
+import '/widgets/widget_factory.dart';
 
 class ChatWidgetFactory extends WidgetFactory {
   final Chat message;
@@ -11,7 +11,7 @@ class ChatWidgetFactory extends WidgetFactory {
 
   @override
   Widget makeWidget(BuildContext context) {
-    final isMe = message.sendUser.id == currentUserId;
+    final isMe = message.senderId == currentUserId;
 
     return Align(
       alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
@@ -29,14 +29,14 @@ class ChatWidgetFactory extends WidgetFactory {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              message.chatText,
+              message.content,
               style: TextStyle(
                 color: isMe ? context.onPrimaryColor : context.onTertiaryColor,
               ),
             ),
             const SizedBox(height: 4),
             Text(
-              _formatTime(message.sendTime),
+              _formatTime(message.createdAt),
               style: TextStyle(
                 fontSize: 10,
                 color: isMe

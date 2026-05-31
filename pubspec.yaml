@@ -15,7 +15,6 @@ dependencies:
   dart_geohash: ^2.1.0
   geofencing_api: ^2.0.0
 
-# --- 아래 6개 패키지 추가 ---
   firebase_core: ^4.0.0
   firebase_messaging: ^16.0.0
   flutter_local_notifications: ^17.1.2
@@ -23,12 +22,22 @@ dependencies:
   flutter_secure_storage: ^10.3.0
   dio: ^5.9.2
 
+  flutter_svg: ^2.3.0
+
 dev_dependencies:
   flutter_test:
     sdk: flutter
   flutter_lints: ^6.0.0
+  flutter_launcher_icons: ^0.14.3
+
+flutter_launcher_icons:
+  android: true
+  ios: true
+  image_path: "assets/villit_logo.png"
+  remove_alpha_ios: true
 
 flutter:
   uses-material-design: true
   assets:
     - assets/dongguk_campus.geojson
+    - assets/villit_logo.svg

@@ -1,11 +1,9 @@
 import 'package:flutter/material.dart';
-import 'package:open_source_software/managers/data_manager.dart';
-import 'package:open_source_software/managers/location_manager.dart';
-import 'package:open_source_software/managers/login_manager.dart';
-import 'package:open_source_software/screens/chatting_list.dart';
-import 'package:open_source_software/screens/rental_list_screen.dart';
-import 'package:open_source_software/screens/rental_request_screen.dart';
-import 'package:open_source_software/screens/user_profile_screen.dart';
+import '/screens/chatting_list.dart';
+import '/screens/rental_list_screen.dart';
+import '/screens/rental_request_screen.dart';
+import '/screens/user_profile_screen.dart';
+import '/managers/location_manager.dart';
 
 class HomeNavigation extends StatefulWidget {
   const HomeNavigation({super.key});
@@ -28,11 +26,12 @@ class _HomeNavigationState extends State<HomeNavigation> {
   void initState() {
     super.initState();
 
-    DataManager().initCache();
-    LocationManager().initialize();
-    LocationManager().onBuildingChanged = (buildingName) {
-      LoginManager().updateCurrentBuilding(buildingName);
-    };
+    // 로그인 후 메인 화면에 진입한 시점에 위치 추적을 시작한다.
+    // (앱 시작 시점이 아니라 이 시점에 권한을 요청해야 사용자 맥락에 자연스럽다)
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
+      await LocationManager().initialize();
+      if (mounted) setState(() {});
+    });
   }
 
   @override
@@ -66,7 +65,7 @@ class _HomeNavigationState extends State<HomeNavigation> {
           BottomNavigationBarItem(
             icon: Icon(Icons.person_outline),
             activeIcon: Icon(Icons.person),
-            label: '내 정보',
+            label: '마이페이지',
           ),
         ],
       ),

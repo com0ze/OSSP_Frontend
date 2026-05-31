@@ -4,17 +4,13 @@
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     
     <uses-permission android:name="android.permission.ACCESS_BACKGROUND_LOCATION" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE" />
-    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_LOCATION" />
-
+    
     <uses-permission android:name="android.permission.POST_NOTIFICATIONS"/>
     
     <application
-        android:label="open_source_software"
+        android:label="빌릿 Villit"
         android:name="${applicationName}"
-        android:icon="@mipmap/ic_launcher"
-        android:fullBackupContent="@xml/full_backup_content"
-        android:dataExtractionRules="@xml/backup_rules">
+        android:icon="@mipmap/ic_launcher">
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -37,11 +33,6 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
         </activity>
-        <service
-            android:name="com.baseflow.geolocator.GeolocatorAndroidService"
-            android:foregroundServiceType="location"
-            android:exported="false" />
-
         <!-- Don't delete the meta-data below.
              This is used by the Flutter tool to generate GeneratedPluginRegistrant.java -->
         <meta-data

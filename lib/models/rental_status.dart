@@ -3,7 +3,6 @@ enum RentalStatus {
   matchConfirmed,
   inProgress,
   returned,
-  reviewed,
   cancelled,
   otherUserMatched,
 }

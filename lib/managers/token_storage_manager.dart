@@ -9,7 +9,6 @@ class TokenStorageManager {
 
   static const String _accessKey = 'ACCESS_TOKEN';
   static const String _refreshKey = 'REFRESH_TOKEN';
-  static const String _fcmKey = 'FCM_TOKEN';
 
   Future<void> saveTokens(String access, String refresh) async {
     await _storage.write(key: _accessKey, value: access);
@@ -20,10 +19,6 @@ class TokenStorageManager {
       await _storage.read(key: _accessKey);
   Future<String?> getRefreshToken() async =>
       await _storage.read(key: _refreshKey);
-
-  Future<void> saveFcmToken(String token) async =>
-      await _storage.write(key: _fcmKey, value: token);
-  Future<String?> getFcmToken() async => await _storage.read(key: _fcmKey);
 
   Future<void> clearSessionTokens() async {
     await _storage.delete(key: _accessKey);

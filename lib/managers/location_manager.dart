@@ -1,10 +1,11 @@
 import 'dart:async';
 import 'dart:convert';
-import 'dart:io' show Platform;
+import 'dart:developer';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:geolocator/geolocator.dart';
-import 'package:open_source_software/models/building.dart';
+import 'package:maps_toolkit/maps_toolkit.dart';
+import 'package:open_source_software/models/campus_building.dart';
 import 'package:open_source_software/api/api_client.dart';
 
 /// 캠퍼스 건물 단위 위치를 관리하는 매니저 (싱글톤 + ChangeNotifier).
@@ -18,6 +19,41 @@ import 'package:open_source_software/api/api_client.dart';
 ///  6. 건물 전환 시 서버에 위치를 전송 (현재는 연결 지점만 마련, 8단계 갈래1)
 ///
 /// 기존 TestDataManager 와 동일하게 싱글톤 + ChangeNotifier 패턴을 따른다.
+
+class BuildingNameTransfer {
+  static const Map<String, String> _koreanToCode = {
+    '정보문화관': 'INFO_CULTURE',
+    '원흥관': 'WONHEUNG',
+    '만해광장': 'MANHAE_PLAZA',
+    '학림관': 'HAKRIM',
+    '금강관': 'GEUMGANG',
+    '본관': 'MAIN_BUILDING',
+    '팔정도': 'PALJEONGDO',
+    '신공학관': 'SHINGONG',
+    '중앙도서관': 'CENTRAL_LIBRARY',
+    '명진관': 'MYUNGJIN',
+    '과학관': 'SCIENCE',
+    '대운동장': 'MAIN_STADIUM',
+    '조소관': 'SCULPTURE',
+    '법학관': 'LAW_SCHOOL',
+    '혜화관': 'HYEHWA',
+    '사회과학관': 'SOCIAL_SCIENCE',
+    '문화관': 'CULTURE',
+  };
+
+  static final Map<String, String> _codeToKorean = Map.fromEntries(
+    _koreanToCode.entries.map((e) => MapEntry(e.value, e.key)),
+  );
+
+  /// 한글 건물명 → 영어 코드 (예: '정보문화관' → 'INFO_CULTURE').
+  /// 매핑에 없는 값은 원본 문자열을 그대로 반환.
+  static String toEnglish(String korean) => _koreanToCode[korean] ?? korean;
+
+  /// 영어 코드 → 한글 건물명 (예: 'INFO_CULTURE' → '정보문화관').
+  /// 매핑에 없는 값은 원본 문자열을 그대로 반환.
+  static String toKorean(String english) => _codeToKorean[english] ?? english;
+}
+
 class LocationManager extends ChangeNotifier {
   // ── 싱글톤 ──────────────────────────────────────────────
   static final LocationManager _instance = LocationManager._internal();
@@ -36,13 +72,13 @@ class LocationManager extends ChangeNotifier {
   // ── 상태 ───────────────────────────────────────────────
 
   /// 로드된 17개 캠퍼스 건물
-  final List<Building> _buildings = [];
+  final List<CampusBuilding> _buildings = [];
 
   /// 현재 확정된 건물. 건물 밖이면 null.
-  Building? _currentBuilding;
+  CampusBuilding? _currentBuilding;
 
   /// Dwell Time 판정 대기 중인 후보 건물.
-  Building? _candidateBuilding;
+  CampusBuilding? _candidateBuilding;
 
   /// 후보 건물이 처음 감지된 시각.
   DateTime? _candidateSince;
@@ -58,10 +94,13 @@ class LocationManager extends ChangeNotifier {
   String? get currentBuildingName => _currentBuilding?.name;
 
   /// 현재 확정된 건물 객체.
-  Building? get currentBuilding => _currentBuilding;
+  CampusBuilding? get currentBuilding => _currentBuilding;
 
   /// 초기화 완료 여부.
   bool get isInitialized => _isInitialized;
+
+  /// 로드된 모든 건물 이름 목록. initialize() 완료 전이면 빈 리스트.
+  List<String> get buildingNames => _buildings.map((b) => b.name).toList();
 
   /// 건물이 바뀐 순간 호출되는 콜백.
   ///
@@ -100,20 +139,20 @@ class LocationManager extends ChangeNotifier {
   Future<void> _loadBuildings() async {
     try {
       final String raw = await rootBundle.loadString(_geoJsonAssetPath);
-      final Map<String, dynamic> json =
-          jsonDecode(raw) as Map<String, dynamic>;
+      final Map<String, dynamic> json = jsonDecode(raw) as Map<String, dynamic>;
       final List<dynamic> features = json['features'] as List<dynamic>;
 
       _buildings.clear();
       for (final feature in features) {
         _buildings.add(
-          Building.fromGeoJsonFeature(feature as Map<String, dynamic>),
+          CampusBuilding.fromGeoJsonFeature(feature as Map<String, dynamic>),
         );
       }
       debugPrint('[Location] GeoJSON 로드 성공 — ${_buildings.length}개 건물');
     } catch (e) {
       debugPrint('[Location] GeoJSON 로드 실패: $e');
     }
+    notifyListeners();
   }
 
   /// 위치 서비스 활성화 및 권한을 확인한다. (geolocator 표준 절차)
@@ -135,33 +174,16 @@ class LocationManager extends ChangeNotifier {
   // ── 위치 추적 ───────────────────────────────────────────
 
   /// 위치 스트림 구독을 시작한다.
-  ///
-  /// Android: Foreground Service로 실행해 백그라운드에서도 스트림이 유지된다.
-  /// 그 외 플랫폼: 기본 LocationSettings 사용.
   void _startTracking() {
-    final LocationSettings settings;
+    // distanceFilter: 5m 이상 이동했을 때만 콜백 — 불필요한 갱신을 줄인다.
+    const LocationSettings settings = LocationSettings(
+      accuracy: LocationAccuracy.high,
+      distanceFilter: 5,
+    );
 
-    if (!kIsWeb && Platform.isAndroid) {
-      settings = AndroidSettings(
-        accuracy: LocationAccuracy.high,
-        distanceFilter: 5,
-        intervalDuration: const Duration(seconds: 10),
-        foregroundNotificationConfig: const ForegroundNotificationConfig(
-          notificationTitle: '위치 서비스',
-          notificationText: '캠퍼스 건물 위치를 추적 중입니다',
-          notificationChannelName: '위치 서비스',
-          enableWakeLock: true,
-        ),
-      );
-    } else {
-      settings = const LocationSettings(
-        accuracy: LocationAccuracy.high,
-        distanceFilter: 5,
-      );
-    }
-
-    _positionSub = Geolocator.getPositionStream(locationSettings: settings)
-        .listen(_onPositionUpdate);
+    _positionSub = Geolocator.getPositionStream(
+      locationSettings: settings,
+    ).listen(_onPositionUpdate);
   }
 
   /// 권한 허용 후 외부에서 추적을 재시도할 때 사용.
@@ -171,12 +193,27 @@ class LocationManager extends ChangeNotifier {
     if (permitted) _startTracking();
   }
 
+  /// 현재 GPS 위치를 즉시 조회해 건물을 확정하고 서버에 전송한다.
+  /// Dwell Time 없이 바로 확정하므로 수동 새로고침에 적합하다.
+  Future<void> refreshLocation() async {
+    try {
+      final position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.high,
+        ),
+      );
+      final point = LatLng(position.latitude, position.longitude);
+      final detected = _detectBuilding(point);
+      await _confirmBuildingChange(detected);
+    } catch (e) {
+      debugPrint('[Location] 수동 위치 갱신 실패: $e');
+    }
+  }
+
   /// 새 GPS 좌표가 들어올 때마다 호출된다.
   void _onPositionUpdate(Position position) {
-    final Building? detected = _detectBuilding(
-      position.latitude,
-      position.longitude,
-    );
+    final LatLng point = LatLng(position.latitude, position.longitude);
+    final CampusBuilding? detected = _detectBuilding(point);
     _applyDwellTime(detected);
   }
 
@@ -185,9 +222,9 @@ class LocationManager extends ChangeNotifier {
   /// 17개 폴리곤을 순회해 첫 번째로 포함되는 건물을 반환한다.
   /// 폴리곤이 겹치는 경우 리스트 순서상 먼저 나온 건물이 우선한다.
   /// 어느 건물에도 속하지 않으면 null(건물 밖)을 반환한다.
-  Building? _detectBuilding(double lat, double lng) {
+  CampusBuilding? _detectBuilding(LatLng point) {
     for (final building in _buildings) {
-      if (building.containsLocation(lat, lng)) return building;
+      if (building.contains(point)) return building;
     }
     return null;
   }
@@ -196,7 +233,7 @@ class LocationManager extends ChangeNotifier {
   ///
   /// 감지된 건물이 현재 건물과 같으면 후보를 초기화하고 끝낸다.
   /// 다르면 후보로 잡아두고, 같은 후보가 5초 이상 유지될 때만 확정한다.
-  void _applyDwellTime(Building? detected) {
+  void _applyDwellTime(CampusBuilding? detected) {
     // 감지 결과가 이미 확정된 현재 건물과 같음 → 후보 취소, 변화 없음
     if (detected?.name == _currentBuilding?.name) {
       _candidateBuilding = null;
@@ -220,18 +257,18 @@ class LocationManager extends ChangeNotifier {
   }
 
   /// 건물 전환을 확정하고 외부에 알린다.
-  void _confirmBuildingChange(Building? newBuilding) {
+  Future<void> _confirmBuildingChange(CampusBuilding? newBuilding) async {
     _currentBuilding = newBuilding;
     _candidateBuilding = null;
     _candidateSince = null;
 
     debugPrint('[Location] 건물 전환 확정 → ${newBuilding?.name ?? "건물 밖"}');
 
+    // 서버에 위치 전송 완료 후 UI 갱신 — 목록 요청이 새 위치 기준으로 처리되도록 순서 보장
+    await _sendLocationToServer(newBuilding?.name);
+
     // UI 자동 갱신 (ListenableBuilder 등이 반응)
     notifyListeners();
-
-    // 서버에 위치 전송 (8단계)
-    _sendLocationToServer(newBuilding?.name);
 
     // 외부 콜백 (화면 등에서 추가 동작이 필요할 때)
     onBuildingChanged?.call(newBuilding?.name);
@@ -247,26 +284,24 @@ class LocationManager extends ChangeNotifier {
   /// API 명세: PATCH /users/location, body: { "currentBuilding": "원흥관" }
   Future<void> _sendLocationToServer(String? buildingName) async {
     if (buildingName == null) {
-      debugPrint('[Location] 건물 밖 — 서버 전송 생략');
-      return;
+      log('[Location] 건물 밖 — 건물 이름 변경');
+      buildingName = 'OUTSIDE';
     }
 
-    debugPrint('[Location] (예정) 서버로 위치 전송 → $buildingName');
+    log('[Location] 서버로 위치 전송 → $buildingName');
 
     // ── 백엔드 연결 시 아래 주석을 해제하세요 ──────────────────
-    
-     try {
-       await ApiClient.dio.patch(
-         '/api/v1/users/location',
-         data: {'currentBuilding': buildingName},
-       );
-       debugPrint('[Location] 서버 위치 갱신 성공 → $buildingName');
-     } catch (e) {
-       debugPrint('[Location] 서버 위치 갱신 실패: $e');
-     }
-    
-    // ※ ApiClient 를 쓰려면 파일 상단에 아래 import 추가:
-    //   import 'package:open_source_software/api/api_client.dart';
+    //
+    try {
+      await ApiClient().dio.patch(
+        '/api/v1/users/location',
+        data: {'currentBuilding': BuildingNameTransfer.toEnglish(buildingName)},
+      );
+      log('[Location] 서버 위치 갱신 성공 → $buildingName');
+    } catch (e) {
+      log('[Location] 서버 위치 갱신 실패: $e');
+    }
+
     // ─────────────────────────────────────────────────────
   }
 

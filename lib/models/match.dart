@@ -3,40 +3,31 @@ class Match {
   final String rentalItemID;
   final String requesterID;
   final String lenderID;
-  final String chattingID;
-  final String? requesterReviewID;
-  final String? lenderReviewID;
+  final String? chattingID;
+  // final String? requesterReviewID;
+  // final String? lenderReviewID;
 
   const Match({
     required this.matchID,
     required this.rentalItemID,
     required this.requesterID,
     required this.lenderID,
-    required this.chattingID,
-    this.requesterReviewID,
-    this.lenderReviewID,
+    this.chattingID,
+    // this.requesterReviewID,
+    // this.lenderReviewID,
   });
 
   factory Match.fromJson(Map<String, dynamic> json) {
     return Match(
-      matchID: json['matchID'],
-      rentalItemID: json['rentalItemID'],
-      requesterID: json['requesterID'],
-      lenderID: json['lenderID'],
-      chattingID: json['chattingID'],
-      requesterReviewID: json['requesterReviewID'],
-      lenderReviewID: json['lenderReviewID'],
-    );
-  }
-
-  // POST /api/v1/requests/{requestId}/accept 응답
-  factory Match.fromApi(Map<String, dynamic> json, {String chattingID = ''}) {
-    return Match(
-      matchID: json['matchId'].toString(),
-      rentalItemID: json['requestId'].toString(),
-      requesterID: json['requesterId']?.toString() ?? '',
-      lenderID: json['providerId'].toString(),
-      chattingID: chattingID,
+      matchID: (json['matchId'] ?? json['matchID'] ?? '').toString(),
+      rentalItemID: (json['requestId'] ?? json['rentalItemID'] ?? '')
+          .toString(),
+      requesterID: (json['requesterId'] ?? json['requesterID'] ?? '')
+          .toString(),
+      lenderID: (json['providerId'] ?? json['lenderID'] ?? '').toString(),
+      chattingID: (json['roomId'] ?? json['chattingID'] ?? '').toString(),
+      // requesterReviewID: json['requesterReviewID'] as String?,
+      // lenderReviewID: json['lenderReviewID'] as String?,
     );
   }
 
@@ -47,8 +38,8 @@ class Match {
       'requesterID': requesterID,
       'lenderID': lenderID,
       'chattingID': chattingID,
-      'requesterReviewID': requesterReviewID,
-      'lenderReviewID': lenderReviewID,
+      // 'requesterReviewID': requesterReviewID,
+      // 'lenderReviewID': lenderReviewID,
     };
   }
 
@@ -67,8 +58,8 @@ class Match {
       requesterID: requesterID ?? this.requesterID,
       lenderID: lenderID ?? this.lenderID,
       chattingID: chattingID ?? this.chattingID,
-      requesterReviewID: requesterReviewID ?? this.requesterReviewID,
-      lenderReviewID: lenderReviewID ?? this.lenderReviewID,
+      // requesterReviewID: requesterReviewID ?? this.requesterReviewID,
+      // lenderReviewID: lenderReviewID ?? this.lenderReviewID,
     );
   }
 }

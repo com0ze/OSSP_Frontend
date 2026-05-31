@@ -1,8 +1,8 @@
 ﻿import 'package:flutter/material.dart';
-import 'package:open_source_software/extensions/theme_extension.dart';
-import 'package:open_source_software/managers/data_manager.dart';
-import 'package:open_source_software/models/rental_item.dart';
-import 'package:open_source_software/widgets/widget_factory.dart';
+import '/extensions/theme_extension.dart';
+import '/managers/location_manager.dart';
+import '/models/rental_item.dart';
+import '/widgets/widget_factory.dart';
 
 class RentalItemWidgetFactory extends WidgetFactory {
   final RentalItem item;
@@ -23,8 +23,6 @@ class RentalItemWidgetFactory extends WidgetFactory {
 
   @override
   Widget makeWidget(BuildContext context) {
-    final dataManager = DataManager();
-    final requester = dataManager.getUserById(item.requesterID);
     return Card(
       margin: const EdgeInsets.only(bottom: 12),
       child: InkWell(
@@ -37,15 +35,20 @@ class RentalItemWidgetFactory extends WidgetFactory {
             children: [
               Row(
                 children: [
-                  Expanded(
-                    child: Text(
-                      item.title,
-                      style: const TextStyle(
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                      ),
+                  Icon(
+                    Icons.shopping_basket,
+                    size: 16,
+                    color: context.primaryColor,
+                  ),
+                  const SizedBox(width: 4),
+                  Text(
+                    item.product.name,
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
+                  const Spacer(),
                   Text(
                     _getTimeAgo(item.createdAt),
                     style: TextStyle(
@@ -59,30 +62,12 @@ class RentalItemWidgetFactory extends WidgetFactory {
               Row(
                 children: [
                   Icon(
-                    Icons.shopping_basket,
-                    size: 16,
-                    color: context.primaryColor,
-                  ),
-                  const SizedBox(width: 4),
-                  Text(
-                    item.product.name,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 8),
-              Row(
-                children: [
-                  Icon(
                     Icons.location_on,
                     size: 16,
                     color: context.primaryColor,
                   ),
                   const SizedBox(width: 4),
-                  Text(DataManager.placeById(item.placeID)?.name ?? item.placeID),
+                  Text(BuildingNameTransfer.toKorean(item.buildingName)),
                   const Spacer(),
                   Text(
                     '${item.price.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}원',
@@ -107,17 +92,17 @@ class RentalItemWidgetFactory extends WidgetFactory {
                   CircleAvatar(
                     radius: 12,
                     child: Text(
-                      requester.name[0],
+                      item.requesterName.isNotEmpty
+                          ? item.requesterName[0]
+                          : '?',
                       style: const TextStyle(fontSize: 12),
                     ),
                   ),
                   const SizedBox(width: 6),
-                  Text(requester.name, style: const TextStyle(fontSize: 14)),
-                  const SizedBox(width: 8),
-                  Icon(Icons.star, size: 14, color: context.starColor),
-                  const SizedBox(width: 2),
                   Text(
-                    '${requester.score}점',
+                    item.requesterName.isNotEmpty
+                        ? item.requesterName
+                        : '알 수 없음',
                     style: const TextStyle(fontSize: 14),
                   ),
                 ],

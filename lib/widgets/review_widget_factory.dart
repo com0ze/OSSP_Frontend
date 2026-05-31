@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:open_source_software/extensions/theme_extension.dart';
-import 'package:open_source_software/models/review.dart';
-import 'package:open_source_software/widgets/widget_factory.dart';
+import '/extensions/theme_extension.dart';
+import '/managers/data_manager.dart';
+import '/models/review.dart';
+import '/widgets/widget_factory.dart';
 
 class ReviewWidgetFactory extends WidgetFactory {
   final Review review;
@@ -20,7 +21,7 @@ class ReviewWidgetFactory extends WidgetFactory {
             Row(
               children: [
                 Text(
-                  review.writer.name,
+                  review.reviewerNickname ?? DataManager().getUser(review.writerId)?.name ?? review.writerId,
                   style: const TextStyle(
                     fontWeight: FontWeight.bold,
                     fontSize: 14,
@@ -30,7 +31,7 @@ class ReviewWidgetFactory extends WidgetFactory {
                 ...List.generate(
                   5,
                   (index) => Icon(
-                    index < review.score ? Icons.star : Icons.star_border,
+                    index < review.score.toInt() ? Icons.star : Icons.star_border,
                     color: context.starColor,
                     size: 20,
                   ),
