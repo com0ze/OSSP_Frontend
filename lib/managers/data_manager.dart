@@ -377,7 +377,7 @@ class DataManager extends ChangeNotifier {
       // 1. 명세서에 명시된 키(Key)와 데이터 타입에 맞게 Map을 구성합니다.
       final Map<String, dynamic> requestData = {
         "itemName": product.name,
-        "buildingName": placeId,
+        "buildingName": BuildingNameTransfer.toEnglish(placeId),
         "rewardAmt": price, // int 타입
         "duration": duration, // int 타입
         "memo": description,
@@ -412,8 +412,10 @@ class DataManager extends ChangeNotifier {
     final currentBuilding = LocationManager().currentBuildingName;
     return _rentalItems.values.where((i) {
       if (i.isMatched || i.requesterID == currentUserId) return false;
-      if (currentBuilding != null) return i.buildingName == currentBuilding;
-      return true;
+      if (currentBuilding == null) return false;
+      return i.buildingName == currentBuilding ||
+          i.buildingName == BuildingNameTransfer.toEnglish(currentBuilding) ||
+          i.buildingName == BuildingNameTransfer.toKorean(currentBuilding);
     }).toList();
   }
 

@@ -263,17 +263,12 @@ class _RentalRequestScreenState extends State<RentalRequestScreen> {
       key: const ValueKey('phase2'),
       crossAxisAlignment: CrossAxisAlignment.stretch,
       children: [
-        const SizedBox(height: 16),
-        const Text(
-          '대여하고 싶은 위치를 입력해주세요',
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 32),
         ListenableBuilder(
           listenable: LocationManager(),
           builder: (context, _) {
-            return Theme(
-              data: Theme.of(context).copyWith(
+            return DropdownMenu<String>(
+                expandedInsets: EdgeInsets.zero,
                 inputDecorationTheme: InputDecorationTheme(
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(30),
@@ -289,9 +284,6 @@ class _RentalRequestScreenState extends State<RentalRequestScreen> {
                   filled: true,
                   fillColor: Colors.grey.shade50,
                 ),
-              ),
-              child: DropdownMenu<String>(
-                expandedInsets: EdgeInsets.zero,
                 controller: _placeMenuController,
                 initialSelection: _selectedPlaceId,
                 label: const Text('위치'),
@@ -338,16 +330,10 @@ class _RentalRequestScreenState extends State<RentalRequestScreen> {
                   _selectedPlaceId = value;
                   _placeError = null;
                 }),
-              ),
-            );
+              );
           },
         ),
-        const SizedBox(height: 16),
-        const Text(
-          '지불할 금액을 입력해주세요',
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 32),
         TextFormField(
           controller: _priceController,
           keyboardType: TextInputType.number,
@@ -363,21 +349,16 @@ class _RentalRequestScreenState extends State<RentalRequestScreen> {
             return null;
           },
         ),
-        const SizedBox(height: 16),
-        const Text(
-          '대여하고 싶은 시간을 입력해주세요',
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 32),
         TextFormField(
           controller: _durationController,
           keyboardType: TextInputType.number,
           decoration: _roundedDecoration(
             context: context,
             label: '대여 시간',
-            hint: '예: 60',
+            hint: '예: 2',
             prefixIcon: const Icon(Icons.timer_outlined),
-            suffixText: '분',
+            suffixText: '시간',
           ),
           validator: (value) {
             if (value == null || value.isEmpty) return '대여 시간을 입력해주세요';
@@ -386,12 +367,7 @@ class _RentalRequestScreenState extends State<RentalRequestScreen> {
             return null;
           },
         ),
-        const SizedBox(height: 16),
-        const Text(
-          '빌려줄 사람에게 설명해주세요',
-          style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-        ),
-        const SizedBox(height: 16),
+        const SizedBox(height: 32),
         TextFormField(
           controller: _descriptionController,
           maxLines: 3,

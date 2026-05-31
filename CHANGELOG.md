@@ -735,6 +735,39 @@
                 - **홈 네비게이션 초기화 순서 개선** (`home_navigation.dart`)
                     - `initState`에서 `addPostFrameCallback`으로 `LocationManager.initialize()` 호출
 
+        - ### commit: 건물명 한/영 양방향 호환 및 대여 목록 화면 개선
+            - #### author: Seo JeongHun
+            - #### date: 2026-05-31
+            - fix:
+                - **대여 목록 화면 진입 시 앱 멈춤 수정** (`rental_list_screen.dart`)
+                    - `SingleChildScrollView` 안에 `ListView`가 중첩되어 unbounded height 오류로 앱이 멈추던 문제 수정
+                    - 단일 `ListView`로 통합, 빈 목록 분기를 `if/else` 조건으로 처리
+
+                - **위치 드롭다운 배경색 미적용 수정** (`rental_request_screen.dart`)
+                    - `Theme` 래퍼를 통한 `inputDecorationTheme` 설정이 `DropdownMenu` 내부 `TextField`에 전달되지 않던 문제 수정
+                    - `DropdownMenu.inputDecorationTheme` 직접 파라미터로 변경, `fillColor`, `enabledBorder`, `focusedBorder` 색상이 다른 입력 필드와 동일하게 적용됨
+
+                - **`getAvailableRentalItems` 위치 null 시 전체 목록 반환 문제 수정** (`data_manager.dart`)
+                    - 위치 미확정(캠퍼스 밖) 상태에서 모든 대여 요청이 표시되던 문제 수정
+                    - `currentBuilding == null`이면 빈 목록 반환
+
+            - feature:
+                - **건물명 한/영 양방향 변환 지원** (`location_manager.dart`)
+                    - `BuildingNameTransfer.toCode()` → `toEnglish()`로 메서드명 명확화
+                    - `BuildingNameTransfer.toKorean()` 추가: 영어 코드 → 한글명 역방향 변환
+                    - 건물 밖 이탈 시 서버에 `'OUTSIDE'` 전송 (기존: 전송 생략)
+
+                - **건물명 표시 한글화** (`rental_item_widget_factory.dart`, `item_detail_screen.dart`)
+                    - 대여 목록 카드 및 아이템 상세 화면의 위치 표시에 `BuildingNameTransfer.toKorean()` 적용
+                    - 서버에서 영어 코드로 오더라도 화면에는 항상 한글로 표시
+
+                - **대여 목록 화면 건물명 한/영 양방향 필터 적용** (`data_manager.dart`)
+                    - `getAvailableRentalItems`에서 한글명·영어 코드 중 어느 형태든 현재 건물과 일치하면 표시
+
+                - **당직 설정 타일 상단 고정** (`rental_list_screen.dart`)
+                    - `Column + Expanded` 구조로 변경하여 스크롤 시에도 당직 설정 타일이 상단에 고정
+                    - 롤백 `setState`에 `if (mounted)` 체크 추가
+
 - # feature/data_structure
     - ## version: 1.1.0
         - ### commit: 데이터 매니저 통합

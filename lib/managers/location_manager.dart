@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:developer';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart' show rootBundle;
 import 'package:geolocator/geolocator.dart';
@@ -40,9 +41,17 @@ class BuildingNameTransfer {
     '문화관': 'CULTURE',
   };
 
+  static final Map<String, String> _codeToKorean = Map.fromEntries(
+    _koreanToCode.entries.map((e) => MapEntry(e.value, e.key)),
+  );
+
   /// 한글 건물명 → 영어 코드 (예: '정보문화관' → 'INFO_CULTURE').
   /// 매핑에 없는 값은 원본 문자열을 그대로 반환.
-  static String toCode(String korean) => _koreanToCode[korean] ?? korean;
+  static String toEnglish(String korean) => _koreanToCode[korean] ?? korean;
+
+  /// 영어 코드 → 한글 건물명 (예: 'INFO_CULTURE' → '정보문화관').
+  /// 매핑에 없는 값은 원본 문자열을 그대로 반환.
+  static String toKorean(String english) => _codeToKorean[english] ?? english;
 }
 
 class LocationManager extends ChangeNotifier {
@@ -275,22 +284,22 @@ class LocationManager extends ChangeNotifier {
   /// API 명세: PATCH /users/location, body: { "currentBuilding": "원흥관" }
   Future<void> _sendLocationToServer(String? buildingName) async {
     if (buildingName == null) {
-      debugPrint('[Location] 건물 밖 — 서버 전송 생략');
-      return;
+      log('[Location] 건물 밖 — 건물 이름 변경');
+      buildingName = 'OUTSIDE';
     }
 
-    debugPrint('[Location] (예정) 서버로 위치 전송 → $buildingName');
+    log('[Location] 서버로 위치 전송 → $buildingName');
 
     // ── 백엔드 연결 시 아래 주석을 해제하세요 ──────────────────
     //
     try {
       await ApiClient().dio.patch(
         '/api/v1/users/location',
-        data: {'currentBuilding': BuildingNameTransfer.toCode(buildingName)},
+        data: {'currentBuilding': BuildingNameTransfer.toEnglish(buildingName)},
       );
-      debugPrint('[Location] 서버 위치 갱신 성공 → $buildingName');
+      log('[Location] 서버 위치 갱신 성공 → $buildingName');
     } catch (e) {
-      debugPrint('[Location] 서버 위치 갱신 실패: $e');
+      log('[Location] 서버 위치 갱신 실패: $e');
     }
 
     // ─────────────────────────────────────────────────────

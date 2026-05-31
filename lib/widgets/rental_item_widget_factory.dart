@@ -1,5 +1,6 @@
 ﻿import 'package:flutter/material.dart';
 import '/extensions/theme_extension.dart';
+import '/managers/location_manager.dart';
 import '/models/rental_item.dart';
 import '/widgets/widget_factory.dart';
 
@@ -66,7 +67,7 @@ class RentalItemWidgetFactory extends WidgetFactory {
                     color: context.primaryColor,
                   ),
                   const SizedBox(width: 4),
-                  Text(item.buildingName),
+                  Text(BuildingNameTransfer.toKorean(item.buildingName)),
                   const Spacer(),
                   Text(
                     '${item.price.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]},')}원',

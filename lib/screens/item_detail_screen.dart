@@ -1,6 +1,7 @@
 ﻿import 'package:flutter/material.dart';
 import '/extensions/theme_extension.dart';
 import '/managers/data_manager.dart';
+import '/managers/location_manager.dart';
 import '/managers/login_manager.dart';
 import '/models/match.dart';
 import '/models/rental_item.dart';
@@ -129,7 +130,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                             _InfoRow(
                               icon: Icons.location_on,
                               label: '위치',
-                              value: currentItem.buildingName,
+                              value: BuildingNameTransfer.toKorean(currentItem.buildingName),
                             ),
                             const SizedBox(height: 12),
                             _InfoRow(
