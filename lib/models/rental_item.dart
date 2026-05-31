@@ -34,6 +34,16 @@ class RentalItem {
     this.rentalStatus = RentalStatus.pending,
   });
 
+  factory RentalItem.placeholder(String id) => RentalItem(
+        id: id,
+        product: Product(name: '', category: ''),
+        buildingName: '',
+        price: 0,
+        description: '',
+        requesterID: '',
+        createdAt: DateTime.now(),
+      );
+
   factory RentalItem.fromJson(Map<String, dynamic> json) {
     final itemName = json['itemName'] as String?;
     return RentalItem(

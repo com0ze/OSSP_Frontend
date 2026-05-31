@@ -39,6 +39,11 @@ class DataManager extends ChangeNotifier {
     _rentalItems.clear();
   }
 
+  void cacheMainUser(MainUser user) {
+    _users[user.id] = user;
+    changeData();
+  }
+
   // 메인 유저 최신화
   Future<void> updateMainUser() async {
     String myId = loginManager.currentUser.id;

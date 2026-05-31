@@ -26,6 +26,11 @@ class LoginManager {
     _forceLogoutHandler = handler;
   }
 
+  static Future<void> Function()? _loginSuccessHandler;
+  static void setLoginSuccessHandler(Future<void> Function() handler) {
+    _loginSuccessHandler = handler;
+  }
+
   final _tokenStorage = TokenStorageManager();
   final ApiClient apiClient = ApiClient();
 
@@ -78,11 +83,12 @@ class LoginManager {
 
     try {
       final res = await apiClient.dio.get('/api/v1/users/me');
-      _session = _Session(
-        user: MainUser.fromJson(ApiClient.extractData(res.data) as Map<String, dynamic>),
-        accessToken: token,
+      final mainUser = MainUser.fromJson(
+        ApiClient.extractData(res.data) as Map<String, dynamic>,
       );
-      DataManager().updateMainUser();
+      _session = _Session(user: mainUser, accessToken: token);
+      DataManager().cacheMainUser(mainUser);
+      _loginSuccessHandler?.call();
     } catch (_) {
       await _tokenStorage.clearSessionTokens();
     }

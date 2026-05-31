@@ -1,5 +1,7 @@
 import 'dart:convert';
 import 'dart:developer';
+import 'dart:isolate';
+import 'dart:ui';
 import 'package:dio/dio.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter/foundation.dart'
@@ -9,10 +11,19 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import '/app_keys.dart';
 import '/managers/abstract_notification_manager.dart';
 import '/managers/mock_notification_manager.dart';
-import '/managers/data_manager.dart';
 import '/managers/login_manager.dart';
 import '/api/api_client.dart';
+import '/models/rental_item.dart';
 import '/screens/item_detail_screen.dart';
+
+const String _kNotificationPortName = 'notification_tap_port';
+
+// 앱이 백그라운드일 때 알림 탭 처리 — 별도 isolate에서 실행되므로 top-level 필수.
+@pragma('vm:entry-point')
+void _onNotificationBackgroundTap(NotificationResponse response) {
+  IsolateNameServer.lookupPortByName(_kNotificationPortName)
+      ?.send(response.payload);
+}
 
 AbstractNotificationManager createManager() {
   if (defaultTargetPlatform == TargetPlatform.windows) {
@@ -30,6 +41,7 @@ class NotificationManager extends AbstractNotificationManager {
   final FlutterLocalNotificationsPlugin _localNotifications =
       FlutterLocalNotificationsPlugin();
   final ApiClient _apiClient = ApiClient();
+  final ReceivePort _port = ReceivePort();
 
   @override
   Future<void> initialize() async {
@@ -42,6 +54,14 @@ class NotificationManager extends AbstractNotificationManager {
 
     if (settings.authorizationStatus == AuthorizationStatus.authorized ||
         settings.authorizationStatus == AuthorizationStatus.provisional) {
+      // 백그라운드 탭 콜백을 메인 isolate로 전달하기 위한 포트 등록
+      IsolateNameServer.registerPortWithName(_port.sendPort, _kNotificationPortName);
+      _port.listen((payload) {
+        if (payload is String) {
+          log('🔔 알림 탭 감지 (background) — payload: $payload');
+          _handleNotificationClick(jsonDecode(payload));
+        }
+      });
       await _setupLocalNotifications();
       await _setupMessageHandlers();
       _messaging.onTokenRefresh.listen(_syncTokenToServer);
@@ -62,8 +82,6 @@ class NotificationManager extends AbstractNotificationManager {
 
   Future<void> _syncTokenToServer(String token) async {
     if (!LoginManager().isLoggedIn) return;
-    log(token);
-    log(LoginManager().accessToken);
     try {
       await _apiClient.dio.patch(
         '/api/v1/users/me/device-token',
@@ -86,21 +104,24 @@ class NotificationManager extends AbstractNotificationManager {
     await _localNotifications.initialize(
       initSettings,
       onDidReceiveNotificationResponse: (res) {
+        log('🔔 알림 탭 감지 (foreground) — payload: ${res.payload}');
         if (res.payload != null) {
           _handleNotificationClick(jsonDecode(res.payload!));
         }
       },
+      onDidReceiveBackgroundNotificationResponse: _onNotificationBackgroundTap,
     );
   }
 
   // 종료 상태에서 알림 클릭으로 앱 실행 시 처리.
-  // navigator와 로그인이 준비된 뒤(runApp 첫 프레임)에 호출해야 한다.
+  // main()에서 getInitialMessage()를 미리 호출하고 itemId만 전달받는다.
   @override
-  Future<void> handleInitialMessage() async {
-    final RemoteMessage? initialMessage = await _messaging.getInitialMessage();
-    if (initialMessage != null) {
-      await _handleNotificationClick(initialMessage.data);
-    }
+  Future<void> handleInitialMessage(String? itemId) async {
+    if (itemId == null) return;
+    await _handleNotificationClick({
+      'type': 'RENTAL_REQUEST',
+      'requestId': itemId,
+    });
   }
 
   Future<void> _setupMessageHandlers() async {
@@ -126,7 +147,7 @@ class NotificationManager extends AbstractNotificationManager {
       case 'RENTAL_REQUEST':
         return const NotificationDetails(
           android: AndroidNotificationDetails(
-            'rental_request_channel',
+            'urgent_rental_channel',
             '대여 요청 알림',
             channelDescription: '새로운 대여 요청 알림',
             importance: Importance.max,
@@ -158,13 +179,15 @@ class NotificationManager extends AbstractNotificationManager {
 
   Future<void> _handleNotificationClick(Map<String, dynamic> data) async {
     final String? type = data['type'];
+    log('🔔 _handleNotificationClick — type: $type, data: $data');
     if (type == 'RENTAL_REQUEST') {
       final String? requestId = data['requestId']?.toString();
       if (requestId == null) return;
-      final item = await DataManager().getRentalItem(requestId);
-      if (item == null) return;
       navigatorKey.currentState?.push(
-        MaterialPageRoute(builder: (_) => ItemDetailScreen(item: item)),
+        MaterialPageRoute(
+          builder: (_) =>
+              ItemDetailScreen(item: RentalItem.placeholder(requestId)),
+        ),
       );
     } else if (type == 'CHAT_MESSAGE') {
       log('🔗 라우팅: 채팅방으로 이동 (ID: ${data['roomId']})');

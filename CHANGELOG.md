@@ -601,6 +601,49 @@
                 - **`createMatchWithChatting` 파싱 개선** (`data_manager.dart`)
                     - `Chatting.fromJson(...).copyWith(requestId: itemId)` → `fromJson` 전 맵에 `requestId` 주입으로 `copyWith` 제거
 
+        - ### commit: 알림 로직 개선 및 인증 구조 리팩토링
+            - #### author: Seo JeongHun
+            - #### date: 2026-05-31
+            - fix:
+                - **`initAutoLogin` 중복 API 호출 제거** (`login_manager.dart`, `data_manager.dart`)
+                    - 기존: `initAutoLogin` 완료 후 `DataManager().updateMainUser()`로 `/api/v1/users/me` 재호출
+                    - 변경: 이미 파싱한 `MainUser`를 `DataManager().cacheMainUser()`에 직접 전달
+                    - `cacheMainUser(MainUser user)` 메서드 신규 추가 (`data_manager.dart`)
+
+                - **알림 클릭 시 API 호출 제거** (`notification_manager.dart`, `models/rental_item.dart`)
+                    - 기존: `_handleNotificationClick` 내부에서 `getRentalItem()` → `itemDetailScreenInitCache()` 2회 API 호출 후 이동
+                    - 변경: `RentalItem.placeholder(id)` 팩토리로 즉시 `ItemDetailScreen` 이동, 화면 자체적으로 데이터 로드
+                    - API 실패 시 화면 이동 자체가 취소되던 문제 해결
+
+                - **알림 상단바(shade)에서 탭 시 동작하지 않던 버그 수정** (`notification_manager.dart`)
+                    - `onDidReceiveNotificationResponse`는 앱이 포어그라운드일 때만 동작
+                    - 상단바를 열어 탭하면 앱이 백그라운드로 전환되어 콜백이 누락되던 문제 수정
+                    - `onDidReceiveBackgroundNotificationResponse` + `IsolateNameServer` 패턴으로 백그라운드 isolate → 메인 isolate 전달 구조 추가
+
+                - **회원가입 후 FCM 토큰 미등록 버그 수정** (`login_manager.dart`, `main.dart`, `login_screen.dart`)
+                    - 기존: `login_screen.dart`에서만 `updateDeviceTokenToServer()` 호출 → 회원가입 경로 누락
+                    - 변경: `LoginManager.setLoginSuccessHandler` 콜백 패턴 도입
+                    - `initAutoLogin()` 성공 시 `_loginSuccessHandler` 호출 → 자동 로그인·수동 로그인·회원가입 모두 커버
+                    - `login_screen.dart`의 직접 호출 제거
+
+                - **앱 종료 상태 알림 탭 시 메인화면 플래시 수정** (`main.dart`)
+                    - `getInitialMessage()`를 `runApp()` 전에 호출하여 `requestId` 사전 확보
+                    - `_MyAppState.initState()`에서 `addPostFrameCallback`으로 즉시 `ItemDetailScreen` push
+
+                - **JWT 액세스 토큰 콘솔 출력 제거** (`notification_manager.dart`)
+                    - `_syncTokenToServer`에서 `log(token)`, `log(accessToken)` 제거 (보안)
+
+                - **`MyApp` 안정화** (`main.dart`)
+                    - `StatelessWidget` → `StatefulWidget` 전환
+                    - `home:` 방식으로 복귀 (`onGenerateInitialRoutes` + `navigatorKey` 병용 시 충돌 문제 해소)
+
+            - feature:
+                - **`RentalItem.placeholder(String id)` 팩토리 추가** (`models/rental_item.dart`)
+                    - 알림 클릭 시 API 없이 `ItemDetailScreen` 진입에 필요한 최소 객체 생성용
+
+                - **`handleInitialMessage(String? itemId)` 시그니처 변경** (`abstract_notification_manager.dart`)
+                    - 기존: 내부에서 `getInitialMessage()` 직접 호출
+                    - 변경: `main()`에서 미리 추출한 `itemId`를 파라미터로 수신
 
 - # feature/location
     - ## version: 1.1.0

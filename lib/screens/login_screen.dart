@@ -43,7 +43,6 @@ class _LoginScreenState extends State<LoginScreen> {
         setState(() => _isLoading = false);
 
         if (success) {
-          activeNotificationManager.updateDeviceTokenToServer();
           // 로그인 성공 시 화면 전환
           Navigator.of(context).pushReplacement(
             MaterialPageRoute(builder: (context) => const HomeNavigation()),
