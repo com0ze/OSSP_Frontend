@@ -717,13 +717,17 @@
 
     - ## version: 1.3.0
         - ### commit: 대여 요청 화면 위치 드롭다운 자동 반영
-            - #### author: Seo JeongHun, Lee JaeWon
+            - #### author: Seo JeongHun
             - #### date: 2026-06-01
-                - **대여 요청 화면 위치 드롭다운 자동 반영** (`rental_request_screen.dart`)
+            - feature:
+                - **대여 요청 화면 위치 드롭다운 자동 반영** (`rental_request_screen.dart`, `location_refresh_button.dart`)
                     - 화면 진입 시 현위치 즉시 반영
                     - GPS 이동·새로고침 버튼으로 위치 변경 시 드롭다운 자동 업데이트
                     - 사용자가 수동 선택한 경우 GPS 자동 변경 무시 (`_userManuallySelected` 플래그)
-                    - 새로고침 버튼은 플래그 리셋 후 강제 반영
+                    - 새로고침 버튼 탭 시 `onBeforeRefresh` 콜백으로 플래그 리셋 후 강제 반영
+                    - 드롭다운 하단 상태 안내 텍스트 추가
+                        - 자동 입력 상태: `현위치가 자동으로 입력됩니다` (회색)
+                        - 수동 고정 상태: `사용자 선택으로 고정됩니다` (주황색)
 
 - # feature/buildng
     - ## version: 1.1.0

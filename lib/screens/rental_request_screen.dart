@@ -346,7 +346,20 @@ class _RentalRequestScreenState extends State<RentalRequestScreen> {
             );
           },
         ),
-        const SizedBox(height: 32),
+        const SizedBox(height: 4),
+        Padding(
+          padding: const EdgeInsets.only(left: 16),
+          child: Text(
+            _userManuallySelected ? '사용자 선택으로 고정됩니다' : '현위치가 자동으로 입력됩니다',
+            style: TextStyle(
+              fontSize: 11,
+              color: _userManuallySelected
+                  ? Colors.orange.shade600
+                  : Colors.grey.shade500,
+            ),
+          ),
+        ),
+        const SizedBox(height: 20),
         TextFormField(
           controller: _priceController,
           keyboardType: TextInputType.number,
