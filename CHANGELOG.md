@@ -58,6 +58,15 @@
                 - 브랜치 통합
                 - api 버그 수정
                 - 일부 위젯 수정
+    
+    - ## version: 1.3.0
+        - ### commit: 브랜치 통합
+            - #### author: Seo JeongHun, Lee JaeWon
+            - #### date: 2026-06-01
+            - feature: 
+                - 브랜치 통합
+                - api 버그 수정
+                - GPS 로직 수정
                 
 - # feature/notification
     - ## version: 1.0.1
