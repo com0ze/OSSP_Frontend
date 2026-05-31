@@ -2,7 +2,9 @@ import 'package:flutter/material.dart';
 import '/managers/location_manager.dart';
 
 class LocationRefreshButton extends StatefulWidget {
-  const LocationRefreshButton({super.key});
+  final VoidCallback? onBeforeRefresh;
+
+  const LocationRefreshButton({super.key, this.onBeforeRefresh});
 
   @override
   State<LocationRefreshButton> createState() => _LocationRefreshButtonState();
@@ -13,6 +15,8 @@ class _LocationRefreshButtonState extends State<LocationRefreshButton> {
 
   Future<void> _onRefreshTap() async {
     if (_isRefreshing) return;
+    // GPS 값을 신뢰하겠다는 의사 표시 — 수동 선택 플래그를 먼저 리셋한다.
+    widget.onBeforeRefresh?.call();
     setState(() => _isRefreshing = true);
     await LocationManager().refreshLocation();
     if (mounted) setState(() => _isRefreshing = false);

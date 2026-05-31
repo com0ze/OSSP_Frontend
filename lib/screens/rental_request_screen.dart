@@ -24,6 +24,7 @@ class _RentalRequestScreenState extends State<RentalRequestScreen> {
   String? _selectedPlaceId;
   String? _placeError;
   final _placeMenuController = TextEditingController();
+  bool _userManuallySelected = false;
 
   // 로고(160) + SizedBox(8) + 앱이름 텍스트(~28) + SizedBox(20) + 여유
   static const _logoSectionHeight = 220.0;
@@ -51,6 +52,8 @@ class _RentalRequestScreenState extends State<RentalRequestScreen> {
   void initState() {
     super.initState();
     _itemNameController.addListener(_onItemNameChanged);
+    LocationManager().addListener(_onLocationChanged);
+    // 화면 빌드 시점의 현위치를 즉시 반영
     final currentBuilding = LocationManager().currentBuildingName;
     if (currentBuilding != null) {
       _selectedPlaceId = currentBuilding;
@@ -64,8 +67,23 @@ class _RentalRequestScreenState extends State<RentalRequestScreen> {
     }
   }
 
+  // 위치 새로고침 버튼 또는 실제 이동으로 건물이 바뀔 때 드롭다운에 반영.
+  // 사용자가 수동 선택한 경우(_userManuallySelected)에는 GPS 자동 변경을 무시한다.
+  // 새로고침 버튼은 onBeforeRefresh에서 플래그를 false로 리셋하므로 항상 반영된다.
+  void _onLocationChanged() {
+    if (!mounted) return;
+    if (_userManuallySelected) return;
+    final newBuilding = LocationManager().currentBuildingName;
+    if (newBuilding == _selectedPlaceId) return;
+    setState(() {
+      _selectedPlaceId = newBuilding;
+      _placeMenuController.text = newBuilding ?? '';
+    });
+  }
+
   @override
   void dispose() {
+    LocationManager().removeListener(_onLocationChanged);
     _itemNameController.removeListener(_onItemNameChanged);
     _itemNameController.dispose();
     _priceController.dispose();
@@ -323,6 +341,7 @@ class _RentalRequestScreenState extends State<RentalRequestScreen> {
               onSelected: (value) => setState(() {
                 _selectedPlaceId = value;
                 _placeError = null;
+                _userManuallySelected = true;
               }),
             );
           },
@@ -401,7 +420,13 @@ class _RentalRequestScreenState extends State<RentalRequestScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        actions: const [LocationRefreshButton(), SizedBox(width: 8)],
+        actions: [
+          LocationRefreshButton(
+            onBeforeRefresh: () =>
+                setState(() => _userManuallySelected = false),
+          ),
+          const SizedBox(width: 8),
+        ],
       ),
       body: Form(
         key: _formKey,

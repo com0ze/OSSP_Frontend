@@ -61,8 +61,6 @@
     
     - ## version: 1.3.0
         - ### commit: 브랜치 통합
-            - #### author: Seo JeongHun, Lee JaeWon
-            - #### date: 2026-06-01
             - feature: 
                 - 브랜치 통합
                 - api 버그 수정
@@ -716,6 +714,16 @@
                         - `activityType: ActivityType.fitness` — 보행 패턴에 최적화된 위치 갱신
                         - `showBackgroundLocationIndicator: true` — 상태바 파란 위치 표시기 노출 (App Store 정책 준수)
                     - `UIBackgroundModes: location` + "앱 사용 중 허용" 권한 조합으로 백그라운드 동작
+
+    - ## version: 1.3.0
+        - ### commit: 대여 요청 화면 위치 드롭다운 자동 반영
+            - #### author: Seo JeongHun, Lee JaeWon
+            - #### date: 2026-06-01
+                - **대여 요청 화면 위치 드롭다운 자동 반영** (`rental_request_screen.dart`)
+                    - 화면 진입 시 현위치 즉시 반영
+                    - GPS 이동·새로고침 버튼으로 위치 변경 시 드롭다운 자동 업데이트
+                    - 사용자가 수동 선택한 경우 GPS 자동 변경 무시 (`_userManuallySelected` 플래그)
+                    - 새로고침 버튼은 플래그 리셋 후 강제 반영
 
 - # feature/buildng
     - ## version: 1.1.0
