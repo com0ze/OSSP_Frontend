@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '/extensions/theme_extension.dart';
 import '/managers/active_notification_manager.dart';
 import '/managers/login_manager.dart';
@@ -70,11 +71,15 @@ class _LoginScreenState extends State<LoginScreen> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.stretch,
                 children: [
-                  Icon(
-                    Icons.shopping_bag,
-                    size: 80,
-                    color: context.primaryColor,
-                  ), // TODO:: 앱 아이콘으로 변경
+                  SvgPicture.asset(
+                    'assets/villit_logo.svg',
+                    width: 160,
+                    height: 160,
+                    colorFilter: ColorFilter.mode(
+                      context.primaryColor,
+                      BlendMode.srcIn,
+                    ),
+                  ),
                   const SizedBox(height: 24),
                   const Text(
                     '빌릿 Villit',

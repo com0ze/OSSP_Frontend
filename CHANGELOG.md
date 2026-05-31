@@ -768,6 +768,22 @@
                     - `Column + Expanded` 구조로 변경하여 스크롤 시에도 당직 설정 타일이 상단에 고정
                     - 롤백 `setState`에 `if (mounted)` 체크 추가
 
+        - ### commit: 앱 아이콘 및 이름 변경
+            - #### author: Seo JeongHun
+            - #### date: 2026-05-31
+            - feature:
+                - **앱 이름 변경**
+                    - Android `AndroidManifest.xml`의 `android:label` → `"빌릿 Villit"`
+                    - iOS `Info.plist`의 `CFBundleDisplayName` → `"빌릿 Villit"`
+
+                - **앱 아이콘 교체** (`pubspec.yaml`)
+                    - `flutter_launcher_icons: ^0.14.3` dev_dependency 추가
+                    - `villit_logo.png` 기반으로 Android·iOS 아이콘 자동 생성 (`flutter pub run flutter_launcher_icons`)
+                    - iOS App Store alpha 채널 경고 방지를 위해 `remove_alpha_ios: true` 설정
+
+                - **에셋 등록** (`pubspec.yaml`)
+                    - `assets/villit_logo.svg` pubspec.yaml assets 섹션에 추가
+
 - # feature/data_structure
     - ## version: 1.1.0
         - ### commit: 데이터 매니저 통합

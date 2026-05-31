@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter_svg/flutter_svg.dart';
 import '/extensions/theme_extension.dart';
 import '/managers/data_manager.dart';
 import '/managers/location_manager.dart';
@@ -23,10 +24,6 @@ class _RentalRequestScreenState extends State<RentalRequestScreen> {
   String? _selectedPlaceId;
   String? _placeError;
   final _placeMenuController = TextEditingController();
-
-  // 이미지 로고로 전환하려면 true로 변경
-  static const _useAssetLogo = false;
-  static const _logoAssetPath = 'assets/logo.png';
 
   // 로고(160) + SizedBox(8) + 앱이름 텍스트(~28) + SizedBox(20) + 여유
   static const _logoSectionHeight = 220.0;
@@ -115,9 +112,12 @@ class _RentalRequestScreenState extends State<RentalRequestScreen> {
   }
 
   Widget _buildLogo(BuildContext context) {
-    return _useAssetLogo
-        ? Image.asset(_logoAssetPath, height: 160)
-        : Icon(Icons.school_rounded, size: 160, color: context.primaryColor);
+    return SvgPicture.asset(
+      'assets/villit_logo.svg',
+      width: 160,
+      height: 160,
+      colorFilter: ColorFilter.mode(context.primaryColor, BlendMode.srcIn),
+    );
   }
 
   void _goToPhase2(String itemName) {
@@ -268,69 +268,63 @@ class _RentalRequestScreenState extends State<RentalRequestScreen> {
           listenable: LocationManager(),
           builder: (context, _) {
             return DropdownMenu<String>(
-                expandedInsets: EdgeInsets.zero,
-                inputDecorationTheme: InputDecorationTheme(
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(30),
-                  ),
-                  enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(30),
-                    borderSide: BorderSide(color: Colors.grey.shade300),
-                  ),
-                  focusedBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(30),
-                    borderSide: BorderSide(color: context.primaryColor),
-                  ),
-                  filled: true,
-                  fillColor: Colors.grey.shade50,
+              expandedInsets: EdgeInsets.zero,
+              inputDecorationTheme: InputDecorationTheme(
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(30),
                 ),
-                controller: _placeMenuController,
-                initialSelection: _selectedPlaceId,
-                label: const Text('위치'),
-                leadingIcon: const Icon(Icons.location_on),
-                hintText: '장소를 선택해주세요',
-                errorText: _placeError,
-                menuHeight: 260,
-                enableFilter: false,
-                requestFocusOnTap: false,
-                menuStyle: MenuStyle(
-                  elevation: const WidgetStatePropertyAll(6),
-                  shape: WidgetStatePropertyAll(
-                    RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                  ),
-                  padding: const WidgetStatePropertyAll(
-                    EdgeInsets.symmetric(vertical: 4),
+                enabledBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(30),
+                  borderSide: BorderSide(color: Colors.grey.shade300),
+                ),
+                focusedBorder: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(30),
+                  borderSide: BorderSide(color: context.primaryColor),
+                ),
+                filled: true,
+                fillColor: Colors.grey.shade50,
+              ),
+              controller: _placeMenuController,
+              initialSelection: _selectedPlaceId,
+              label: const Text('위치'),
+              leadingIcon: const Icon(Icons.location_on),
+              hintText: '장소를 선택해주세요',
+              errorText: _placeError,
+              menuHeight: 260,
+              enableFilter: false,
+              requestFocusOnTap: false,
+              menuStyle: MenuStyle(
+                elevation: const WidgetStatePropertyAll(6),
+                shape: WidgetStatePropertyAll(
+                  RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
                   ),
                 ),
-                dropdownMenuEntries: LocationManager().buildingNames.map((
-                  name,
-                ) {
-                  final isSelected = _selectedPlaceId == name;
-                  return DropdownMenuEntry(
-                    value: name,
-                    label: name,
-                    leadingIcon: isSelected
-                        ? Icon(
-                            Icons.check,
-                            size: 18,
-                            color: context.primaryColor,
-                          )
-                        : const SizedBox(width: 18),
-                    style: MenuItemButton.styleFrom(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 16,
-                        vertical: 4,
-                      ),
+                padding: const WidgetStatePropertyAll(
+                  EdgeInsets.symmetric(vertical: 4),
+                ),
+              ),
+              dropdownMenuEntries: LocationManager().buildingNames.map((name) {
+                final isSelected = _selectedPlaceId == name;
+                return DropdownMenuEntry(
+                  value: name,
+                  label: name,
+                  leadingIcon: isSelected
+                      ? Icon(Icons.check, size: 18, color: context.primaryColor)
+                      : const SizedBox(width: 18),
+                  style: MenuItemButton.styleFrom(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 4,
                     ),
-                  );
-                }).toList(),
-                onSelected: (value) => setState(() {
-                  _selectedPlaceId = value;
-                  _placeError = null;
-                }),
-              );
+                  ),
+                );
+              }).toList(),
+              onSelected: (value) => setState(() {
+                _selectedPlaceId = value;
+                _placeError = null;
+              }),
+            );
           },
         ),
         const SizedBox(height: 32),
