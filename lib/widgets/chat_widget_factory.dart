@@ -51,6 +51,10 @@ class ChatWidgetFactory extends WidgetFactory {
   }
 
   String _formatTime(DateTime dateTime) {
-    return '${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
+    final now = DateTime.now();
+    final hhmm = '${dateTime.hour.toString().padLeft(2, '0')}:${dateTime.minute.toString().padLeft(2, '0')}';
+    final isToday = now.year == dateTime.year && now.month == dateTime.month && now.day == dateTime.day;
+    if (isToday) return hhmm;
+    return '${dateTime.month}/${dateTime.day} $hhmm';
   }
 }

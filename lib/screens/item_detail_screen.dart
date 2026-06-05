@@ -319,7 +319,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                   context,
                   currentItem: currentItem,
                   match: match,
-                  showChat: !currentItem.isMatched,
+                  showChat: currentItem.rentalStatus == RentalStatus.pending,
                   showCancel: isPreRental,
                   isRequester: false,
                 );
@@ -494,9 +494,9 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
     return '${date.year}.${date.month.toString().padLeft(2, '0')}.${date.day.toString().padLeft(2, '0')}';
   }
 
-  String _formatDuration(int seconds) {
-    final h = seconds ~/ 3600;
-    final m = (seconds % 3600) ~/ 60;
+  String _formatDuration(int minutes) {
+    final h = minutes ~/ 60;
+    final m = minutes % 60;
     return '${h.toString().padLeft(2, '0')}시간${m.toString().padLeft(2, '0')}분';
   }
 }

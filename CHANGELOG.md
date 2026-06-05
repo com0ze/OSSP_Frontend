@@ -73,7 +73,23 @@
                 - 브랜치 통합
                 - 디자인 수정 사항 반영
                 - 버그 수정
-                
+
+    - ## version: 1.4.0
+        - ### commit: 버그 수정 및 UI 개선 및 최종 업데이트
+            - #### author: Seo JeongHun
+            - #### date: 2026-06-05
+            - fix:
+                - 물건 상세 정보 화면 대여 시간 분 단위 표시 오류 수정 (`item_detail_screen.dart`)
+                    - `_formatDuration`이 초 단위로 계산하여 2시간이 "00시간02분"으로 표시되던 문제 수정
+                    - `duration` 필드가 분 단위임을 반영하여 `/60` 기준으로 변경
+                - 수락하기 버튼 매치 후에도 표시되던 문제 수정 (`item_detail_screen.dart`)
+                    - `isMatched` 대신 `rentalStatus == RentalStatus.pending` 조건으로 교체
+                    - 서버 응답에 `matchId`가 없어도 올바르게 버튼 숨김 처리
+            - feature:
+                - 채팅 메시지 시간 표시 형식 개선 (`chat_widget_factory.dart`)
+                    - 오늘: `HH:mm`, 다른 날: `M/d HH:mm` 형식으로 분기
+                    - 채팅 목록과 동일한 날짜 기준 포맷 적용
+
 - # feature/notification
     - ## version: 1.0.1
         - ### commit: notification manager 생성
