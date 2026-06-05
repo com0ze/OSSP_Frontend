@@ -133,6 +133,10 @@ class LocationManager extends ChangeNotifier {
     _startTracking();
     _isInitialized = true;
     debugPrint('[Location] 초기화 완료 — 건물 ${_buildings.length}개 로드');
+
+    // 앱 시작 시 스트림의 첫 이벤트(distanceFilter 충족)를 기다리지 않고
+    // 즉시 현재 위치를 확정한다.
+    await refreshLocation();
   }
 
   /// GeoJSON asset 을 읽어 _buildings 에 17개 건물을 채운다. (4단계)

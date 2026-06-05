@@ -465,7 +465,8 @@ class DataManager extends ChangeNotifier {
       resChattingData['requestId'] = itemId;
 
       Chatting chatting = Chatting.fromJson(resChattingData);
-      Match match = Match.fromJson(resMatchData);
+      // match API 응답에는 roomId가 없으므로 chatting.id를 직접 주입한다.
+      Match match = Match.fromJson(resMatchData).copyWith(chattingID: chatting.id);
 
       _chattings[chatting.id] = chatting;
       _matches[match.matchID] = match;

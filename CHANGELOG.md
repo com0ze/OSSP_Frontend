@@ -874,6 +874,44 @@
                 - **에셋 등록** (`pubspec.yaml`)
                     - `assets/villit_logo.svg` pubspec.yaml assets 섹션에 추가
 
+    - ## version: 1.3.0
+        - ### commit: 다크모드 대응 및 화면 개선
+            - #### author: Seo JeongHun
+            - #### date: 2026-06-05
+            - fix:
+                - **대여 요청 화면 다크모드 미적용 수정** (`rental_request_screen.dart`)
+                    - 하드코딩된 라이트모드 전용 색상을 테마 기반 색상으로 전면 교체
+                    - `fillColor`: `Colors.grey.shade50` → `colorScheme.surfaceContainerHighest`
+                    - `enabledBorder`: `Colors.grey.shade300` → `colorScheme.outlineVariant`
+                    - 자주 찾는 물건 그리드 아이템 배경: `Colors.white` → `colorScheme.surfaceContainerHighest`
+                    - 자주 찾는 물건 그리드 아이템 테두리: `Colors.grey.shade200` → `colorScheme.outlineVariant`
+                    - "자주 찾음" 뱃지 배경: `Colors.orange.shade50` → `Colors.orange.withValues(alpha: 0.15)`
+                    - 위치 상태 안내 텍스트 색상: `Colors.grey.shade500` → `colorScheme.onSurfaceVariant`
+
+                - **물건 상세 정보 화면 거래 횟수 0건 표시 제거** (`item_detail_screen.dart`)
+                    - 서버가 거래 횟수(`rentalCount`)를 응답하지 않아 항상 0으로 표시되던 문제 수정
+                    - 요청자 정보 영역의 `거래 N건` 텍스트 및 앞 여백(`SizedBox`) 제거
+
+                - **로그아웃 시 캐시 미초기화 수정** (`login_manager.dart`)
+                    - 로그아웃 후에도 `DataManager` 캐시가 남아 이전 사용자 데이터가 노출되던 문제 수정
+                    - `logout()` 내부에서 `DataManager().clearCache()` 호출 추가
+                    - `forceLogout()` 경로도 `logout()` 경유이므로 함께 적용
+
+                - **앱 시작 시 위치 미반영 수정** (`location_manager.dart`)
+                    - `getPositionStream`의 `distanceFilter: 5` 조건으로 첫 위치 이벤트가 즉시 오지 않아 건물 미감지 상태로 시작되던 문제 수정
+                    - `initialize()` 완료 후 `refreshLocation()` 즉시 호출하여 앱 시작 시 현위치 확정
+
+                - **수락하기 버튼 진입 시 채팅방 STOMP 구독 실패 수정** (`data_manager.dart`)
+                    - `createMatchWithChatting`에서 match API 응답에 `roomId`가 없어 `match.chattingID`가 빈 문자열로 설정되던 문제 수정
+                    - chatting API 응답의 `chatting.id`를 `match.copyWith(chattingID: chatting.id)`로 주입
+                    - 첫 진입 시 올바른 roomId로 STOMP 구독되어 채팅 수신 정상화
+
+            - feature:
+                - **물건 상세 정보 화면 버튼 UI 개선** (`item_detail_screen.dart`)
+                    - 기존 `채팅하기` 버튼 → `수락하기`로 텍스트 변경
+                    - 대여자: 매치 전(`isMatched == false`)에만 수락하기 버튼 표시
+                    - 요청자: 수락하기 버튼 완전 비표시 (채팅은 채팅 목록에서 진입)
+
 - # feature/data_structure
     - ## version: 1.1.0
         - ### commit: 데이터 매니저 통합

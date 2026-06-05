@@ -114,6 +114,7 @@ class LoginManager {
 
   Future<void> logout() async {
     _session = null;
+    DataManager().clearCache();
     await _tokenStorage.clearSessionTokens();
   }
 

@@ -229,15 +229,6 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                                                   fontSize: 14,
                                                 ),
                                               ),
-                                              const SizedBox(width: 12),
-                                              Text(
-                                                '거래 ${requester.rentalCount}건',
-                                                style: TextStyle(
-                                                  fontSize: 14,
-                                                  color: context
-                                                      .onSurfaceVariantColor,
-                                                ),
-                                              ),
                                             ],
                                           ),
                                         ],
@@ -310,7 +301,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                   context,
                   currentItem: currentItem,
                   match: confirmedMatch,
-                  showChat: confirmedMatch != null,
+                  showChat: false,
                   showCancel: isPreRental,
                   isRequester: true,
                 );
@@ -328,7 +319,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                   context,
                   currentItem: currentItem,
                   match: match,
-                  showChat: true,
+                  showChat: !currentItem.isMatched,
                   showCancel: isPreRental,
                   isRequester: false,
                 );
@@ -373,7 +364,7 @@ class _ItemDetailScreenState extends State<ItemDetailScreen> {
                     ),
                   ),
                   child: const Text(
-                    '채팅하기',
+                    '수락하기',
                     style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
                   ),
                 ),

@@ -110,7 +110,7 @@ class _RentalRequestScreenState extends State<RentalRequestScreen> {
       border: OutlineInputBorder(borderRadius: BorderRadius.circular(30)),
       enabledBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(30),
-        borderSide: BorderSide(color: Colors.grey.shade300),
+        borderSide: BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
       ),
       focusedBorder: OutlineInputBorder(
         borderRadius: BorderRadius.circular(30),
@@ -125,7 +125,7 @@ class _RentalRequestScreenState extends State<RentalRequestScreen> {
         borderSide: const BorderSide(color: Colors.red),
       ),
       filled: true,
-      fillColor: Colors.grey.shade50,
+      fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
     );
   }
 
@@ -213,9 +213,9 @@ class _RentalRequestScreenState extends State<RentalRequestScreen> {
               },
               child: Container(
                 decoration: BoxDecoration(
-                  color: Colors.white,
+                  color: Theme.of(context).colorScheme.surfaceContainerHighest,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.grey.shade200),
+                  border: Border.all(color: Theme.of(context).colorScheme.outlineVariant),
                   boxShadow: [
                     BoxShadow(
                       color: Colors.black.withValues(alpha: 0.05),
@@ -242,7 +242,7 @@ class _RentalRequestScreenState extends State<RentalRequestScreen> {
                             vertical: 2,
                           ),
                           decoration: BoxDecoration(
-                            color: Colors.orange.shade50,
+                            color: Colors.orange.withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(8),
                           ),
                           child: Text(
@@ -293,14 +293,14 @@ class _RentalRequestScreenState extends State<RentalRequestScreen> {
                 ),
                 enabledBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(30),
-                  borderSide: BorderSide(color: Colors.grey.shade300),
+                  borderSide: BorderSide(color: Theme.of(context).colorScheme.outlineVariant),
                 ),
                 focusedBorder: OutlineInputBorder(
                   borderRadius: BorderRadius.circular(30),
                   borderSide: BorderSide(color: context.primaryColor),
                 ),
                 filled: true,
-                fillColor: Colors.grey.shade50,
+                fillColor: Theme.of(context).colorScheme.surfaceContainerHighest,
               ),
               controller: _placeMenuController,
               initialSelection: _selectedPlaceId,
@@ -355,7 +355,7 @@ class _RentalRequestScreenState extends State<RentalRequestScreen> {
               fontSize: 11,
               color: _userManuallySelected
                   ? Colors.orange.shade600
-                  : Colors.grey.shade500,
+                  : context.onSurfaceVariantColor,
             ),
           ),
         ),
